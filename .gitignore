@@ -42,3 +42,6 @@ markdown.xml
 vz-pixelplay.jks
 keystore.properties
 local.properties
+
+# APK signature sidecar files — build artifacts, not source
+*.idsig
