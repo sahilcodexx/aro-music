@@ -25,6 +25,17 @@ object SourceType {
     const val JIOSAAVN = 7
     const val SOUNDCLOUD = 8
 
+    /**
+     * New cloud sources must be numbered above `JIOSAAVN`.
+     *
+     * `MusicDao` spells the "ignore folder filters for cloud sources" condition
+     * as a literal `source_type >= 7` in ~38 queries rather than referencing a
+     * constant, so the boundary is the number 7 and not this file. Appending a
+     * new value here is enough to make it bypass folder filtering; renumbering
+     * the existing constants above it would silently break that.
+     */
+    const val INNERTUBE = 9
+
     /** Derive source type from a content URI string (fallback for migration / conversion). */
     fun fromContentUri(uri: String): Int = when {
         uri.startsWith("telegram://") -> TELEGRAM
@@ -35,6 +46,7 @@ object SourceType {
         uri.startsWith("jellyfin://") -> JELLYFIN
         uri.startsWith("jiosaavn://") -> JIOSAAVN
         uri.startsWith("soundcloud://") -> SOUNDCLOUD
+        uri.startsWith("innertube://") -> INNERTUBE
         else -> LOCAL
     }
 }

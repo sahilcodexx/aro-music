@@ -84,10 +84,19 @@ object LocalArtworkUri {
             !normalized.startsWith("gdrive://") &&
             !normalized.startsWith("jiosaavn://") &&
             !normalized.startsWith("soundcloud://") &&
+            !normalized.startsWith("innertube://") &&
             !normalized.startsWith("itunes://")
     }
 
-    /** Returns true if this is a streaming (cloud) URI that stores the stream URL in filePath. */
+    /**
+     * Returns true if this is a streaming (cloud) URI that stores the stream URL in filePath.
+     *
+     * Deliberately excludes `innertube://`: YouTube stream URLs are signed and
+     * expire within hours, so they are never persisted on the song. Those URIs
+     * are resolved by the player at playback time instead, and reporting them
+     * here would make [com.aro.music.utils.MediaItemBuilder.playbackUri] treat an
+     * empty `filePath` as a stream URL.
+     */
     fun isStreamingUri(contentUriString: String): Boolean {
         val normalized = contentUriString.lowercase()
         return normalized.startsWith("jiosaavn://") ||
