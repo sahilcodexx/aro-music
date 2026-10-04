@@ -1,5 +1,9 @@
 [versions]
 accompanistDrawablepainter = "0.37.3"
+# Local fork of MetrolistGroup/innertubex rebuilt against this project's
+# Kotlin 2.3.21 / AGP 9.2.1 / Ktor 3.5.0. Upstream ships only Kotlin 2.4.10
+# builds, whose metadata cannot be read by Kotlin 2.3.21.
+innertubex = "0.7.4-local"
 agp = "9.2.1"
 app = "1.7.0"
 googleGenai = "1.53.0"
@@ -111,6 +115,14 @@ playServicesWearable = "20.0.1"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistDrawablepainter" }
+
+# InnerTubeX: InnerTube (YouTube Music) search / stream / queue / suggestions.
+# Published to ~/.m2 by the local Android-only fork in /tmp/opencode/innertubex.
+innertubex = { module = "com.github.MetrolistGroup:innertubex", version.ref = "innertubex" }
+innertubex-ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+innertubex-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+innertubex-ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+innertubex-quickjs = { module = "io.github.dokar3:quickjs-kt", version = "1.0.14" }
 
 lifecycleprocess = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycleRuntimeKtx" }
 junitplatformlauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitJupiter" }

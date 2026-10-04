@@ -19,6 +19,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Local InnerTubeX fork (published via publishToMavenLocal).
+        mavenLocal()
         maven("https://jitpack.io") {
             content {
                 includeGroup("com.github.FaceOnLive")

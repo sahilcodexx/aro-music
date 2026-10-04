@@ -248,6 +248,15 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
 
+    // InnerTubeX (local Kotlin 2.3.21 fork) - YouTube Music search, stream
+    // extraction, queue and suggestions. Needs a Ktor client engine because the
+    // caller owns the HttpClient handed to InnerTube.
+    implementation(libs.innertubex)
+    implementation(libs.innertubex.ktor.client.okhttp)
+    implementation(libs.innertubex.ktor.client.content.negotiation)
+    implementation(libs.innertubex.ktor.serialization.json)
+    implementation(libs.innertubex.quickjs)
+
     // Identity & Background
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.play.services.wearable)
