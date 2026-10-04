@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 
+import com.aro.music.data.innertube.InnerTubeIds
 import com.aro.music.data.model.Song
 import com.aro.music.data.repository.ArtistImageRepository
 import dagger.Lazy
@@ -29,6 +30,7 @@ import com.aro.music.data.database.TelegramChannelEntity
 import com.aro.music.data.database.TelegramDao
 import com.aro.music.data.database.toAlbum
 import com.aro.music.data.database.toArtist
+import com.aro.music.data.database.toEntity
 import com.aro.music.data.database.toSearchHistoryItem
 import com.aro.music.data.database.toSong
 import com.aro.music.data.database.toEntityWithoutPaths
@@ -58,7 +60,6 @@ import com.aro.music.utils.StorageUtils
 import com.aro.music.utils.toHexString
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -83,6 +84,7 @@ import androidx.paging.filter
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.SupervisorJob
@@ -104,12 +106,22 @@ class MusicRepositoryImpl @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val artistImageRepository: ArtistImageRepository,
     private val folderTreeBuilder: FolderTreeBuilder,
-    private val streamingRepository: com.aro.music.data.streaming.StreamingRepository
+    private val streamingRepository: com.aro.music.data.streaming.StreamingRepository,
+    private val innerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository
 ) : MusicRepository {
 
     companion object {
         /** Maximum number of search results to load at once to avoid memory issues with large libraries. */
         private const val SEARCH_RESULTS_LIMIT = 100
+        private const val TRENDING_LIBRARY_LIMIT = 50
+
+        /**
+         * How many remote playlists a search resolves to a real track list.
+         *
+         * Each one costs a browse request, so this is deliberately small: a
+         * search page returns dozens of playlists and a user scrolls a few.
+         */
+        private const val REMOTE_PLAYLIST_RESOLVE_LIMIT = 4
         private const val UNKNOWN_GENRE_NAME = "Unknown"
         private const val UNKNOWN_GENRE_ID = "unknown"
     }
@@ -170,52 +182,46 @@ class MusicRepositoryImpl @Inject constructor(
             .distinctBy { (_, name) -> name.trim().lowercase() }
             .toList()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+    /**
+     * Library songs.
+     *
+     * [StreamingRepository] already walks InnerTube → JioSaavn → iTunes and
+     * swallows per-backend failures, so this used to wrap it in a 5 × 5s retry
+     * loop "for Vercel cold start". That just meant a dead backend stalled the
+     * library for 25 seconds before rendering an empty list; a single pass over
+     * the fallback chain fails fast instead.
+     */
     override fun getAudioFiles(): Flow<List<Song>> = flow {
-        // Retry up to 5 times with 5s gap — handles Vercel cold start
-        var attempt = 0
-        val maxAttempts = 5
-        val retryDelayMs = 5_000L
-        while (attempt < maxAttempts) {
-            attempt++
-            val songs = try {
-                streamingRepository.getTrendingSongs(limit = 50)
-            } catch (e: Exception) {
-                android.util.Log.w("MusicRepo", "getAudioFiles attempt $attempt failed: ${e.javaClass.simpleName}")
-                emptyList()
-            }
-            if (songs.isNotEmpty()) {
-                emit(songs)
-                return@flow
-            }
-            if (attempt < maxAttempts) delay(retryDelayMs)
-        }
-        emit(emptyList()) // all attempts failed
+        val songs = streamingRepository.getTrendingSongs(limit = TRENDING_LIBRARY_LIMIT)
+        emit(songs.withFavoriteState())
     }.flowOn(Dispatchers.IO)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getPaginatedSongs(sortOption: SortOption, storageFilter: com.aro.music.data.model.StorageFilter): Flow<PagingData<Song>> {
-        // Retry up to 5 times with 5s gap — handles Vercel cold start
-        return flow<PagingData<Song>> {
-            var attempt = 0
-            val maxAttempts = 5
-            val retryDelayMs = 5_000L
-            while (attempt < maxAttempts) {
-                attempt++
-                val songs = try {
-                    streamingRepository.getTrendingSongs(limit = 50)
-                } catch (e: Exception) {
-                    android.util.Log.w("MusicRepo", "getPaginatedSongs attempt $attempt failed: ${e.javaClass.simpleName}")
-                    emptyList()
-                }
-                if (songs.isNotEmpty()) {
-                    emit(PagingData.from(songs))
-                    return@flow
-                }
-                if (attempt < maxAttempts) delay(retryDelayMs)
-            }
-            emit(PagingData.from(emptyList())) // all attempts failed
-        }.flowOn(Dispatchers.IO)
+    override fun getPaginatedSongs(
+        sortOption: SortOption,
+        storageFilter: com.aro.music.data.model.StorageFilter,
+    ): Flow<PagingData<Song>> = flow {
+        val songs = streamingRepository.getTrendingSongs(limit = TRENDING_LIBRARY_LIMIT)
+        emit(PagingData.from(songs.withFavoriteState()))
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * Stamps the persisted favourite flag onto freshly fetched streaming rows.
+     *
+     * Search and library results come straight from the network with
+     * `isFavorite = false`, so without this a favourited track shows up
+     * un-favourited the next time it is fetched. Ids are stable per backend
+     * (see `InnerTubeIds`), so the favourites table is a reliable join key.
+     */
+    private suspend fun List<Song>.withFavoriteState(): List<Song> {
+        if (isEmpty()) return this
+        val favoriteIds = try {
+            favoritesDao.getFavoriteSongIdsOnce().map(Long::toString).toSet()
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Could not read favourite ids: ${e.message}")
+            return this
+        }
+        if (favoriteIds.isEmpty()) return this
+        return map { song -> if (song.id in favoriteIds) song.copy(isFavorite = true) else song }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -464,8 +470,72 @@ class MusicRepositoryImpl @Inject constructor(
         }.conflate().flowOn(Dispatchers.IO)
     }
 
+    /**
+     * Album metadata for the detail screen.
+     *
+     * An InnerTube album has no Room row until it is opened, so the header is
+     * fetched from the album browse response and stored. This has to happen
+     * independently of [getSongsForAlbum] because the detail screen combines
+     * the two and renders an error whenever the album is missing — without this,
+     * opening an album would flash "album not found" until the track fetch
+     * happened to write the album row as a side effect.
+     */
     override fun getAlbumById(id: Long): Flow<Album?> {
-        return musicDao.getAlbumById(id).map { it?.toAlbum() }
+        val fromRoom = musicDao.getAlbumById(id).map { it?.toAlbum() }
+        if (!InnerTubeIds.isAlbumId(id)) {
+            return fromRoom.flowOn(Dispatchers.IO)
+        }
+        return flow {
+            val cached = fromRoom.first()
+            if (cached != null) {
+                emit(cached)
+                return@flow
+            }
+            val browseId = innerTubeRepository.browseIdForAlbum(id)
+            if (browseId == null) {
+                Log.w("MusicRepository", "No browseId registered for album $id")
+                emitAll(fromRoom)
+                return@flow
+            }
+            try {
+                val album = innerTubeRepository.getAlbum(browseId)
+                if (album != null) {
+                    persistRemoteAlbum(album)
+                } else {
+                    Log.w("MusicRepository", "InnerTube album $id returned no header")
+                }
+            } catch (e: Exception) {
+                Log.w("MusicRepository", "Album header fetch failed for $id: ${e.message}")
+            }
+            emitAll(fromRoom)
+        }.flowOn(Dispatchers.IO)
+    }
+
+    /**
+     * Stores an album header, plus the artist row it points at.
+     *
+     * `Album` carries no artist id of its own, so the artist is keyed by the
+     * album's own synthetic id space via [InnerTubeIds] to keep it distinct from
+     * a local artist of the same name.
+     */
+    private suspend fun persistRemoteAlbum(album: Album) {
+        try {
+            val artistId = InnerTubeIds.artistId("album:${album.id}")
+            musicDao.insertArtists(
+                listOf(
+                    com.aro.music.data.database.ArtistEntity(
+                        id = artistId,
+                        name = album.artist.ifBlank { album.albumArtist.orEmpty() },
+                        trackCount = album.songCount,
+                        imageUrl = null,
+                        customImageUri = null,
+                    )
+                )
+            )
+            musicDao.insertAlbums(listOf(album.toEntity(artistId)))
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Could not persist album ${album.id}: ${e.message}")
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -501,10 +571,113 @@ class MusicRepositoryImpl @Inject constructor(
         }.conflate().flowOn(Dispatchers.IO)
     }
 
+    /**
+     * Tracks of an album.
+     *
+     * A YouTube Music album has no local rows until it is opened, so an empty
+     * Room result for an InnerTube id triggers a network fetch; the fetched
+     * tracks are then written to Room, which means the album also becomes a real
+     * row for the library tabs and for favourites. Local albums never enter this
+     * branch because their ids are positive MediaStore ids.
+     */
     override fun getSongsForAlbum(albumId: Long): Flow<List<Song>> {
-        return musicDao.getSongsByAlbumId(albumId).map { entities ->
+        val fromRoom = musicDao.getSongsByAlbumId(albumId).map { entities ->
             entities.map { it.toSong() }.sortedBy { it.trackNumber }
+        }
+        if (!InnerTubeIds.isAlbumId(albumId)) {
+            return fromRoom.flowOn(Dispatchers.IO)
+        }
+        return flow {
+            val cached = fromRoom.first()
+            if (cached.isNotEmpty()) {
+                emit(cached)
+                return@flow
+            }
+            val fetched = fetchInnerTubeAlbumTracks(albumId)
+            // Re-read from Room rather than emitting [fetched] directly, so the
+            // favourite flag and any normalisation Room applies are consistent
+            // with every other album in the app.
+            emitAll(fromRoom)
+            if (fetched.isEmpty()) {
+                Log.w("MusicRepository", "InnerTube album $albumId returned no tracks")
+            }
         }.flowOn(Dispatchers.IO)
+    }
+
+    /**
+     * Fetches an InnerTube album's tracks and persists them with their album and
+     * artist parent rows.
+     */
+    private suspend fun fetchInnerTubeAlbumTracks(albumId: Long): List<Song> {
+        val browseId = innerTubeRepository.browseIdForAlbum(albumId) ?: run {
+            Log.w("MusicRepository", "No browseId registered for album $albumId")
+            return emptyList()
+        }
+        return try {
+            val tracks = innerTubeRepository.getAlbumTracks(browseId)
+            if (tracks.isNotEmpty()) {
+                persistRemoteTracks(tracks)
+            }
+            tracks
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Album track fetch failed for $albumId: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Writes network tracks to Room together with the album and artist rows
+     * their foreign keys require.
+     *
+     * Grouped by album rather than assuming a single one, because a playlist
+     * spans many albums while an album fetch does not. Rows are derived from the
+     * tracks themselves, so they are self-consistent without needing the album
+     * browse response. `insertAlbums`/`insertArtists` merge on conflict, so this
+     * is safe to re-run.
+     */
+    private suspend fun persistRemoteTracks(tracks: List<Song>) {
+        if (tracks.isEmpty()) return
+        try {
+            val byArtist = tracks.groupBy { it.artistId }
+                .filterKeys { it != 0L }
+            if (byArtist.isNotEmpty()) {
+                musicDao.insertArtists(
+                    byArtist.map { (artistId, artistTracks) ->
+                        com.aro.music.data.database.ArtistEntity(
+                            id = artistId,
+                            name = artistTracks.first().displayArtist,
+                            trackCount = artistTracks.size,
+                            imageUrl = artistTracks.first().albumArtUriString,
+                            customImageUri = null,
+                        )
+                    }
+                )
+            }
+
+            val byAlbum = tracks.groupBy { it.albumId }.filterKeys { it != 0L }
+            if (byAlbum.isNotEmpty()) {
+                musicDao.insertAlbums(
+                    byAlbum.map { (albumId, albumTracks) ->
+                        val sample = albumTracks.first()
+                        com.aro.music.data.database.AlbumEntity(
+                            id = albumId,
+                            title = sample.album.ifBlank { "Unknown album" },
+                            artistName = sample.displayArtist,
+                            artistId = sample.artistId,
+                            albumArtUriString = sample.albumArtUriString,
+                            songCount = albumTracks.size,
+                            dateAdded = sample.dateAdded,
+                            year = sample.year,
+                            albumArtist = sample.albumArtist,
+                        )
+                    }
+                )
+            }
+
+            musicDao.insertSongs(tracks.map { it.toEntityWithoutPaths() })
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Could not persist remote tracks: ${e.message}")
+        }
     }
 
     override fun getArtistById(artistId: Long): Flow<Artist?> {
@@ -540,9 +713,42 @@ class MusicRepositoryImpl @Inject constructor(
             .flowOn(Dispatchers.IO)
     }
 
+    /**
+     * Songs of an artist.
+     *
+     * Mirrors [getSongsForAlbum]: an InnerTube artist id with no local rows is
+     * filled from the network on first open, then behaves like any other artist.
+     */
     override fun getSongsForArtist(artistId: Long): Flow<List<Song>> {
-        return musicDao.getSongsForArtist(artistId).map { entities ->
+        val fromRoom = musicDao.getSongsForArtist(artistId).map { entities ->
             entities.map { it.toSong() }
+        }
+        if (!InnerTubeIds.isArtistId(artistId)) {
+            return fromRoom.flowOn(Dispatchers.IO)
+        }
+        return flow {
+            val cached = fromRoom.first()
+            if (cached.isNotEmpty()) {
+                emit(cached)
+                return@flow
+            }
+            val browseId = innerTubeRepository.browseIdForArtist(artistId)
+            if (browseId == null) {
+                Log.w("MusicRepository", "No browseId registered for artist $artistId")
+                emitAll(fromRoom)
+                return@flow
+            }
+            try {
+                val tracks = innerTubeRepository.getArtistSongs(browseId)
+                if (tracks.isNotEmpty()) {
+                    persistRemoteTracks(tracks)
+                } else {
+                    Log.w("MusicRepository", "InnerTube artist $artistId returned no songs")
+                }
+            } catch (e: Exception) {
+                Log.w("MusicRepository", "Artist song fetch failed for $artistId: ${e.message}")
+            }
+            emitAll(fromRoom)
         }.flowOn(Dispatchers.IO)
     }
 
@@ -562,10 +768,10 @@ class MusicRepositoryImpl @Inject constructor(
 
     override fun searchSongs(query: String, titleOnly: Boolean): Flow<List<Song>> {
         if (query.isBlank()) return flowOf(emptyList())
-        // Bypass DB entirely — fetch directly from streaming API and emit results
+        // Bypass DB entirely — fetch directly from the streaming backends.
         return flow {
             val songs = streamingRepository.searchSongs(query = query, limit = SEARCH_RESULTS_LIMIT)
-            emit(songs)
+            emit(songs.withFavoriteState())
         }.flowOn(Dispatchers.IO)
     }
 
@@ -584,12 +790,62 @@ class MusicRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
+    /**
+     * Playlists matching [query] — the user's own, plus YouTube Music's.
+     *
+     * The search screen resolves a playlist row by observing `songIds`
+     * immediately, so remote rows have to carry a real track list rather than
+     * being handed over empty (which the UI would render as an empty playlist).
+     * That costs one browse request per playlist, so it is bounded by
+     * [REMOTE_PLAYLIST_RESOLVE_LIMIT] and the requests run concurrently — doing
+     * them in sequence added seconds to every search.
+     *
+     * User playlists are listed first and win name ties, because they are the
+     * ones the user can actually edit.
+     */
     override suspend fun searchPlaylists(query: String): List<Playlist> {
         if (query.isBlank()) return emptyList()
-        return playlistPreferencesRepository.userPlaylistsFlow.first()
-            .filter { playlist ->
-                playlist.name.contains(query, ignoreCase = true)
+
+        val local = playlistPreferencesRepository.userPlaylistsFlow.first()
+            .filter { playlist -> playlist.name.contains(query, ignoreCase = true) }
+
+        val remote = try {
+            withContext(Dispatchers.IO) {
+                val candidates = innerTubeRepository
+                    .searchPlaylists(query = query)
+                    .take(REMOTE_PLAYLIST_RESOLVE_LIMIT)
+
+                coroutineScope {
+                    candidates.map { candidate ->
+                        async {
+                            runCatching {
+                                innerTubeRepository.resolveRemotePlaylist(
+                                    browseId = candidate.browseId,
+                                    title = candidate.title,
+                                    artworkUrl = candidate.artworkUrl,
+                                )
+                            }.getOrNull()
+                        }
+                    }.awaitAll()
+                }
+                    .filterNotNull()
+                    .filter { it.songs.isNotEmpty() }
+                    .onEach {
+                        // The search screen resolves the row through
+                        // `getSongsByIds`, which reads Room — so the tracks have
+                        // to be stored, not just carried on the model.
+                        persistRemoteTracks(it.songs)
+                    }
+                    .map { it.playlist }
             }
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Remote playlist search failed for '$query': ${e.message}")
+            emptyList()
+        }
+
+        if (remote.isEmpty()) return local
+        val localNames = local.map { it.name.lowercase() }.toSet()
+        return local + remote.filterNot { it.name.lowercase() in localNames }
     }
 
     override fun searchAll(query: String, filterType: SearchFilterType): Flow<List<SearchResultItem>> {
@@ -795,7 +1051,15 @@ class MusicRepositoryImpl @Inject constructor(
         if (isFavorite) {
             // Upsert the song into the songs table so the INNER JOIN in getFavoriteSongs* works.
             // This is required for streaming songs that are not stored locally.
+            //
+            // `songs` has foreign keys onto `albums` (CASCADE) and `artists`
+            // (SET NULL) with FK enforcement on, so the parent rows have to exist
+            // first or the insert is rejected. Streaming songs arrive with a
+            // synthetic album/artist id and no corresponding rows, which is why
+            // this previously threw and left a favourite pointing at a missing
+            // song — invisible in the favourites list. Insert the parents first.
             try {
+                upsertStreamingSongParents(song)
                 musicDao.insertSongsIgnoreConflicts(listOf(song.toEntityWithoutPaths()))
             } catch (e: Exception) {
                 Log.w("MusicRepository", "Could not upsert song ${song.id} before favoriting: ${e.message}")
@@ -810,6 +1074,86 @@ class MusicRepositoryImpl @Inject constructor(
             favoritesDao.removeFavorite(id)
         }
     }
+
+    /**
+     * Creates placeholder [ArtistEntity]/[AlbumEntity] rows for a remote song so
+     * the song insert satisfies its foreign keys.
+     *
+     * Only real ids are materialised — a song with no album or no artist keeps
+     * `0`, which matches no parent row and so needs none. `insertAlbums` and
+     * `insertArtists` merge on conflict, so this is safe to re-run and will not
+     * overwrite a richer local row.
+     */
+    private suspend fun upsertStreamingSongParents(song: com.aro.music.data.model.Song) {
+        if (song.artistId != 0L && song.artist.isNotBlank()) {
+            musicDao.insertArtists(
+                listOf(
+                    com.aro.music.data.database.ArtistEntity(
+                        id = song.artistId,
+                        name = song.artist,
+                        trackCount = 0,
+                        imageUrl = null,
+                        customImageUri = null,
+                    )
+                )
+            )
+        }
+        if (song.albumId != 0L && song.album.isNotBlank()) {
+            musicDao.insertAlbums(
+                listOf(
+                    com.aro.music.data.database.AlbumEntity(
+                        id = song.albumId,
+                        title = song.album,
+                        artistName = song.artist,
+                        artistId = song.artistId,
+                        albumArtUriString = song.albumArtUriString,
+                        songCount = 0,
+                        dateAdded = song.dateAdded,
+                        year = song.year,
+                        albumArtist = song.albumArtist,
+                    )
+                )
+            )
+        }
+    }
+
+    /**
+     * A single playlist by id, from either store.
+     *
+     * The playlist detail screen used to look only in the user's playlists, so
+     * opening a YouTube Music playlist from search landed on "not found". Remote
+     * playlists are fetched here and their tracks written to Room, which is what
+     * `getSongsByIds` then reads to render the detail screen.
+     */
+    override suspend fun getPlaylistById(playlistId: String): Playlist? {
+        playlistPreferencesRepository.userPlaylistsFlow.first()
+            .find { it.id == playlistId }
+            ?.let { return it }
+
+        if (!isRemotePlaylistId(playlistId)) return null
+
+        return try {
+            val resolved = innerTubeRepository.getRemotePlaylist(playlistId) ?: run {
+                Log.w("MusicRepository", "Remote playlist $playlistId not found")
+                return null
+            }
+            persistRemoteTracks(resolved.songs)
+            resolved.playlist
+        } catch (e: Exception) {
+            Log.w("MusicRepository", "Remote playlist fetch failed for $playlistId: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * True for a YouTube Music playlist browseId.
+     *
+     * `VL` is the browse prefix for playlists (`VLPL…` for user playlists,
+     * `VLOL…` for auto-mixes), and generated local playlist ids are UUID-like,
+     * so this cannot misidentify one of the user's own playlists.
+     */
+    private fun isRemotePlaylistId(playlistId: String): Boolean =
+        playlistId.startsWith("VL", ignoreCase = true)
 
     override suspend fun getFavoriteSongIdsOnce(): Set<String> = withContext(Dispatchers.IO) {
         favoritesDao.getFavoriteSongIdsOnce()

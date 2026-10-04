@@ -238,7 +238,15 @@ interface MusicRepository {
     fun searchSongs(query: String, titleOnly: Boolean = false): Flow<List<Song>>
     fun searchAlbums(query: String, minTracks: Int = 1): Flow<List<Album>>
     fun searchArtists(query: String): Flow<List<Artist>>
-    suspend fun searchPlaylists(query: String): List<Playlist> // Mantener suspend, ya que no hay Flow aún
+    suspend fun searchPlaylists(query: String): List<Playlist>
+
+    /**
+     * A single playlist by id — the user's own, or a YouTube Music one.
+     *
+     * Remote ids are YouTube browse ids (`VLPL…`), which cannot collide with a
+     * generated local playlist id. Returns null when neither store has it.
+     */
+    suspend fun getPlaylistById(playlistId: String): Playlist? // Mantener suspend, ya que no hay Flow aún
     fun searchAll(query: String, filterType: SearchFilterType): Flow<List<SearchResultItem>>
 
     // Search History

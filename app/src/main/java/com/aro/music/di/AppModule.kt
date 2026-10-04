@@ -372,7 +372,8 @@ object AppModule {
         favoritesDao: FavoritesDao,
         artistImageRepository: ArtistImageRepository,
         folderTreeBuilder: FolderTreeBuilder,
-        streamingRepository: com.aro.music.data.streaming.StreamingRepository
+        streamingRepository: com.aro.music.data.streaming.StreamingRepository,
+        innerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository
     ): MusicRepository {
         return MusicRepositoryImpl(
             context = context,
@@ -388,7 +389,8 @@ object AppModule {
             favoritesDao = favoritesDao,
             artistImageRepository = artistImageRepository,
             folderTreeBuilder = folderTreeBuilder,
-            streamingRepository = streamingRepository
+            streamingRepository = streamingRepository,
+            innerTubeRepository = innerTubeRepository
         )
     }
 

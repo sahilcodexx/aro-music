@@ -4,7 +4,6 @@ import com.aro.music.data.model.SearchFilterType
 import com.aro.music.data.model.SearchHistoryItem
 import com.aro.music.data.model.SearchResultItem
 import com.aro.music.data.repository.MusicRepository
-import com.aro.music.data.streaming.StreamingRepository
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -12,12 +11,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -38,16 +37,10 @@ import kotlinx.coroutines.FlowPreview
 @Singleton
 class SearchStateHolder @Inject constructor(
     private val musicRepository: MusicRepository,
-    private val streamingRepository: StreamingRepository,
 ) {
     private companion object {
         const val SEARCH_DEBOUNCE_MS = 300L
     }
-
-    private data class SearchRequest(
-        val query: String,
-        val requestId: Long,
-    )
 
     // Search State
     private val _searchResults = MutableStateFlow<ImmutableList<SearchResultItem>>(persistentListOf())
@@ -59,10 +52,13 @@ class SearchStateHolder @Inject constructor(
     private val _searchHistory = MutableStateFlow<ImmutableList<SearchHistoryItem>>(persistentListOf())
     val searchHistory = _searchHistory.asStateFlow()
 
-    private val searchRequests = MutableSharedFlow<SearchRequest>(
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
+    /**
+     * Latest query text. Typed input lands here and is debounced by
+     * [observeSearchRequests]; the filter is combined with it so switching tabs
+     * re-runs the search that is already on screen.
+     */
+    private val _activeQuery = MutableStateFlow("")
+
     private val latestSearchRequestId = AtomicLong(0L)
 
     private var scope: CoroutineScope? = null
@@ -80,36 +76,40 @@ class SearchStateHolder @Inject constructor(
     private fun observeSearchRequests() {
         searchJob?.cancel()
         searchJob = scope?.launch {
-            searchRequests
-                .debounce(SEARCH_DEBOUNCE_MS)
-                .collectLatest { request ->
-                    val normalizedQuery = request.query
-
-                    if (normalizedQuery.isBlank()) {
+            // Debouncing the query rather than the request means a filter change
+            // re-runs the current query immediately, without re-entering the
+            // 300ms debounce window.
+            combine(
+                _activeQuery.debounce(SEARCH_DEBOUNCE_MS),
+                _selectedSearchFilter,
+            ) { query, filter -> query to filter }
+                .collectLatest { (query, filter) ->
+                    if (query.isBlank()) {
                         if (_searchResults.value.isNotEmpty()) {
                             _searchResults.value = persistentListOf()
                         }
                         return@collectLatest
                     }
 
+                    val requestId = latestSearchRequestId.incrementAndGet()
                     try {
-                        // Call streaming API directly — no DB round-trip
-                        val streamingSongs = withContext(Dispatchers.IO) {
-                            streamingRepository.searchSongs(query = normalizedQuery, limit = 20)
-                        }
-                        if (request.requestId != latestSearchRequestId.get()) return@collectLatest
-                        if (streamingSongs.isNotEmpty()) {
-                            _searchResults.value = streamingSongs
-                                .map { SearchResultItem.SongItem(it) }
-                                .toImmutableList()
-                        } else {
-                            _searchResults.value = persistentListOf()
-                        }
+                        // Routed through MusicRepository so the selected filter is
+                        // honoured and favourite state is merged in. The previous
+                        // implementation called the streaming API directly, which
+                        // made the ALL/SONGS/ALBUMS/ARTISTS/PLAYLISTS chips render
+                        // but never change the results.
+                        val results = withContext(Dispatchers.IO) {
+                            musicRepository.searchAll(query = query, filterType = filter)
+                        }.first()
+
+                        // A newer keystroke arrived while this one was in flight.
+                        if (requestId != latestSearchRequestId.get()) return@collectLatest
+                        _searchResults.value = results.toImmutableList()
                     } catch (_: CancellationException) {
                         // Superseded by a newer query; ignore.
                     } catch (e: Exception) {
-                        if (request.requestId == latestSearchRequestId.get()) {
-                            Timber.e(e, "Error performing search for query: $normalizedQuery")
+                        if (requestId == latestSearchRequestId.get()) {
+                            Timber.e(e, "Error performing search for query: $query")
                             _searchResults.value = persistentListOf()
                         }
                     }
@@ -118,6 +118,7 @@ class SearchStateHolder @Inject constructor(
     }
 
     fun updateSearchFilter(filterType: SearchFilterType) {
+        if (_selectedSearchFilter.value == filterType) return
         _selectedSearchFilter.value = filterType
     }
 
@@ -152,15 +153,11 @@ class SearchStateHolder @Inject constructor(
     fun performSearch(query: String) {
         val normalizedQuery = query.trim()
 
-        val requestId = latestSearchRequestId.incrementAndGet()
-
-        if (normalizedQuery.isBlank()) {
-            if (_searchResults.value.isNotEmpty()) {
-                _searchResults.value = persistentListOf()
-            }
+        if (normalizedQuery.isBlank() && _searchResults.value.isNotEmpty()) {
+            _searchResults.value = persistentListOf()
         }
 
-        searchRequests.tryEmit(SearchRequest(normalizedQuery, requestId))
+        _activeQuery.value = normalizedQuery
     }
 
     fun deleteSearchHistoryItem(query: String) {

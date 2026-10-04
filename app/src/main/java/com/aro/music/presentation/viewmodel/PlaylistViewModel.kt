@@ -226,6 +226,19 @@ class PlaylistViewModel @Inject constructor(
                     // Obtener la playlist de las preferencias del usuario
                     val playlist = playlistPreferencesRepository.userPlaylistsFlow.first()
                         .find { it.id == playlistId }
+                        // A YouTube Music playlist id reached from search is not in
+                        // the local store; ask the repository, which falls back to
+                        // the network. Without this the row reports "not found".
+                        ?: withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            runCatching { musicRepository.getPlaylistById(playlistId) }
+                                .onFailure {
+                                    Log.w(
+                                        "PlaylistVM",
+                                        "Remote playlist lookup failed for $playlistId: ${it.message}"
+                                    )
+                                }
+                                .getOrNull()
+                        }
 
                     if (playlist != null) {
                         val orderMode = _uiState.value.playlistOrderModes[playlistId]

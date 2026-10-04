@@ -46,6 +46,8 @@ class MusicRepositoryImplTest {
     private val mockSongRepository: SongRepository = mockk(relaxed = true)
     private val mockFavoritesDao: FavoritesDao = mockk(relaxed = true)
     private val mockArtistImageRepository: ArtistImageRepository = mockk(relaxed = true)
+    private val mockStreamingRepository: com.aro.music.data.streaming.StreamingRepository = mockk(relaxed = true)
+    private val mockInnerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -113,7 +115,9 @@ class MusicRepositoryImplTest {
 
             favoritesDao = mockFavoritesDao,
             artistImageRepository = mockArtistImageRepository,
-            folderTreeBuilder = mockk(relaxed = true)
+            folderTreeBuilder = mockk(relaxed = true),
+            streamingRepository = mockStreamingRepository,
+            innerTubeRepository = mockInnerTubeRepository
         )
     }
 
