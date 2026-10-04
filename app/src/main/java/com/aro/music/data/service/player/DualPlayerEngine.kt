@@ -54,6 +54,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 
+import com.aro.music.data.innertube.InnerTubeIds
+import com.aro.music.data.innertube.InnerTubeRepository
 import com.aro.music.data.netease.NeteaseStreamProxy
 import com.aro.music.data.navidrome.NavidromeStreamProxy
 import com.aro.music.data.qqmusic.QqMusicStreamProxy
@@ -82,6 +84,7 @@ class DualPlayerEngine @Inject constructor(
     private val navidromeStreamProxy: NavidromeStreamProxy,
     private val jellyfinStreamProxy: com.aro.music.data.jellyfin.JellyfinStreamProxy,
     private val gdriveStreamProxy: com.aro.music.data.gdrive.GDriveStreamProxy,
+    private val innerTubeRepository: InnerTubeRepository,
     private val telegramCacheManager: com.aro.music.data.telegram.TelegramCacheManager,
     private val connectivityStateHolder: com.aro.music.presentation.viewmodel.ConnectivityStateHolder
 ) {
@@ -89,7 +92,7 @@ class DualPlayerEngine @Inject constructor(
         private const val AUDIO_OFFLOAD_BUFFERING_FALLBACK_MS = 4_000L
         private const val MAX_AUXILIARY_TIMELINE_ITEMS = 200
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
-        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "netease", "qqmusic", "navidrome", "jellyfin", "gdrive")
+        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "netease", "qqmusic", "navidrome", "jellyfin", "gdrive", "innertube")
     }
 
     data class TransitionTarget(
@@ -719,6 +722,7 @@ class DualPlayerEngine @Inject constructor(
             "navidrome" -> resolveNavidromeUriAsync(uriString)
             "jellyfin" -> resolveJellyfinUriAsync(uriString)
             "gdrive" -> resolveGDriveUriAsync(uriString)
+            "innertube" -> resolveInnerTubeUriAsync(uriString)
             else -> null
         }
 
@@ -782,6 +786,32 @@ class DualPlayerEngine @Inject constructor(
         }
         if (!gdriveStreamProxy.ensureReady(5_000L)) return@withContext null
         gdriveStreamProxy.resolveGDriveUri(uriString)?.let { Uri.parse(it) }
+    }
+
+    /**
+     * Resolves `innertube://<videoId>` to a signed YouTube audio stream.
+     *
+     * This has to happen at playback time rather than at fetch time: YouTube
+     * stream URLs are signed and expire within hours, so a URL stored on a
+     * search result would be dead by the time the user pressed play. The
+     * [resolvedUriCache] above handles the common case of re-preparing the same
+     * track across the dual-player hand-off.
+     */
+    private suspend fun resolveInnerTubeUriAsync(uriString: String): Uri? = withContext(Dispatchers.IO) {
+        val videoId = InnerTubeIds.videoIdFromContentUri(uriString) ?: return@withContext null
+
+        if (!connectivityStateHolder.isOnline.value) {
+            connectivityStateHolder.triggerOfflineBlockedEvent()
+            return@withContext null
+        }
+
+        val stream = innerTubeRepository.resolveStream(videoId)
+        if (stream == null) {
+            Timber.tag("DualPlayerEngine")
+                .w("InnerTube refused playback for %s (region locked or removed)", videoId)
+            return@withContext null
+        }
+        Uri.parse(stream.audioUrl)
     }
 
     suspend fun resolveMediaItem(mediaItem: MediaItem): MediaItem {
