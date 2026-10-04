@@ -32,9 +32,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeExtendedFloatingActionButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -83,8 +84,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aro.music.R
 import com.aro.music.data.model.Song
-import com.aro.music.data.preferences.CollagePattern
-import com.aro.music.presentation.components.AlbumArtCollage
 import com.aro.music.presentation.components.BetaInfoBottomSheet
 import com.aro.music.presentation.components.Beta05CleanInstallDisclaimerDialog
 import com.aro.music.presentation.components.ChangelogBottomSheet
@@ -101,6 +100,7 @@ import com.aro.music.presentation.components.RecentlyPlayedSection
 import com.aro.music.presentation.components.RecentlyPlayedSectionMinSongsToShow
 import com.aro.music.presentation.components.SmartImage
 import com.aro.music.presentation.components.StatsOverviewCard
+import com.aro.music.presentation.components.YourMixSongGrid
 import com.aro.music.presentation.model.collectRecentlyPlayedSongIds
 import com.aro.music.presentation.model.mapRecentlyPlayedSongs
 import com.aro.music.presentation.components.subcomps.PlayingEqIcon
@@ -390,32 +390,15 @@ fun HomeScreen(
                     }
                 }
 
-                // Collage
+                // Your Mix song grid
                 if (yourMixSongs.isNotEmpty()) {
                     item(
-                        key = "album_art_collage",
-                        contentType = "album_art_collage"
+                        key = "your_mix_song_grid",
+                        contentType = "your_mix_song_grid"
                     ) {
-                        val basePattern = settingsUiState.collagePattern
-                        val isAutoRotate = settingsUiState.collageAutoRotate
-                        val patterns = remember { CollagePattern.entries }
-
-                        val activePattern = if (isAutoRotate) {
-                            var rotationIndex by rememberSaveable { mutableIntStateOf(-1) }
-                            LaunchedEffect(Unit) { rotationIndex++ }
-                            remember(rotationIndex) {
-                                patterns[rotationIndex.coerceAtLeast(0) % patterns.size]
-                            }
-                        } else {
-                            basePattern
-                        }
-
-                        AlbumArtCollage(
+                        YourMixSongGrid(
                             modifier = Modifier.fillMaxWidth(),
                             songs = yourMixSongs,
-                            padding = 14.dp,
-                            height = 400.dp,
-                            pattern = activePattern,
                             onSongClick = { song ->
                                 if (usesFallbackHomeMix) {
                                     playerViewModel.showAndPlaySongFromLibrary(song, queueName = "Your Mix")
@@ -702,61 +685,49 @@ fun YourMixHeader(
     isShuffleEnabled: Boolean = false,
     onPlayShuffled: () -> Unit
 ) {
-    val buttonCorners = 68.dp
     val colors = MaterialTheme.colorScheme
 
     val titleStyle = rememberYourMixTitleStyle()
 
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(256.dp)
-            .padding(16.dp)
+            .padding(start = 20.dp, end = 14.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 48.dp, start = 12.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             // Your Mix Title
             Text(
                 text = stringResource(R.string.home_your_mix_title),
                 style = titleStyle,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
+                color = colors.onSurface
             )
 
             // Artist/Song subtitle
             Text(
                 text = song,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                modifier = Modifier.padding(start = 8.dp)
+                color = colors.onSurface.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
         // Play Button - color changes based on shuffle state
-        LargeExtendedFloatingActionButton(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 12.dp),
+        FilledIconButton(
             onClick = onPlayShuffled,
-            containerColor = if (isShuffleEnabled) colors.primary else colors.tertiaryContainer,
-            contentColor = if (isShuffleEnabled) colors.onPrimary else colors.onTertiaryContainer,
-            shape = AbsoluteSmoothCornerShape(
-                cornerRadiusTL = buttonCorners,
-                smoothnessAsPercentTR = 60,
-                cornerRadiusBR = buttonCorners,
-                smoothnessAsPercentTL = 60,
-                cornerRadiusBL = buttonCorners,
-                smoothnessAsPercentBR = 60,
-                cornerRadiusTR = buttonCorners,
-                smoothnessAsPercentBL = 60,
+            modifier = Modifier.size(48.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = if (isShuffleEnabled) colors.primary else colors.tertiaryContainer,
+                contentColor = if (isShuffleEnabled) colors.onPrimary else colors.onTertiaryContainer
             )
         ) {
             Icon(
                 painter = painterResource(R.drawable.rounded_shuffle_24),
                 contentDescription = stringResource(R.string.cd_shuffle_play),
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -886,9 +857,9 @@ private fun rememberYourMixTitleStyle(): TextStyle {
                     )
                 )
             ),
-            fontWeight = FontWeight(760),
-            fontSize = 64.sp,
-            lineHeight = 62.sp
+            fontWeight = FontWeight(700),
+            fontSize = 30.sp,
+            lineHeight = 34.sp
         )
     }
 }
