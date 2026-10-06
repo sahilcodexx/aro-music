@@ -5,8 +5,14 @@ import com.aro.music.data.model.Artist
 import com.aro.music.data.model.ArtistRef
 import com.aro.music.data.model.Playlist
 import com.aro.music.data.model.Song
+import com.metrolist.innertubex.models.YouTubeClient
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,22 +55,110 @@ class InnerTubeRepository @Inject constructor(
         const val PARAMS_ARTISTS = "EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D"
         const val PARAMS_PLAYLISTS = "EgeKAQQoADgBagwQDhAKEAMQBRAJEAQ%3D"
 
-        /** Charts browse id and its region-scoped params. */
-        private const val BROWSE_CHARTS = "FEmusic_charts"
-        private const val CHARTS_PARAMS = "ggMGCgQIgAQ%3D"
+        /**
+         * Browse id for the starter feed.
+         *
+         * `FEmusic_charts` is artist/album tiles only (50 renderers, 0 playable,
+         * verified against the live response), and `FEmusic_explore` is mood and
+         * album tiles that carry no `videoId` either — that is what made the home
+         * screen show "No data to show yet": 41 rows parsed, all of them filtered
+         * out for a missing playtime. `FEmusic_home` is what Meld browses
+         * (`YouTube.kt`: `browse(WEB_REMIX, "FEmusic_home", …)`): its shelves are
+         * `musicTwoRowItemRenderer` song tiles whose navigation endpoint is a
+         * `watchEndpoint`, so every playable row arrives with a `videoId`.
+         */
+        private const val BROWSE_HOME = "FEmusic_home"
 
         /** Placeholder when a search row has no artist byline. */
         private const val UNKNOWN_ARTIST = "Unknown artist"
 
         /** `Playlist.source` discriminator for YouTube Music playlists. */
         const val SOURCE_INNERTUBE = "INNERTUBE"
+
+        /**
+         * Prefix that turns a `next` request into a radio mix of that track.
+         * YouTube treats `RDAMVM<videoId>` as "automix from this seed".
+         */
+        private const val RADIO_PLAYLIST_PREFIX = "RDAMVM"
     }
+
+    /**
+     * De-duplicates concurrent identical catalogue fetches.
+     *
+     * The library, the home feed and the application start-up prefetch all ask for
+     * trending songs within a second of each other. Without this they each issued
+     * their own browse, and three simultaneous parses of a multi-megabyte response
+     * were enough to exhaust the heap.
+     */
+    private val requestScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
+    private val requestMutex = kotlinx.coroutines.sync.Mutex()
+    private val inFlight = mutableMapOf<String, Deferred<Any?>>()
+
+    private suspend fun <T> share(key: String, block: suspend () -> T): T {
+        @Suppress("UNCHECKED_CAST")
+        val deferred = requestMutex.withLock {
+            (inFlight[key]?.takeUnless { it.isCompleted }
+                ?: requestScope.async { block() }.also { inFlight[key] = it }) as Deferred<T>
+        }
+        return try {
+            deferred.await()
+        } finally {
+            requestMutex.withLock {
+                if (deferred.isCompleted && inFlight[key] === deferred) inFlight.remove(key)
+            }
+        }
+    }
+
+    @Volatile private var homeCache: List<Song> = emptyList()
+    @Volatile private var homeFetchedAt = 0L
+
+    @Volatile private var homeRoot: kotlinx.serialization.json.JsonObject? = null
+    @Volatile private var homeRootFetchedAt = 0L
+
+    private suspend fun homeRoot(): kotlinx.serialization.json.JsonObject? {
+        homeRoot?.takeIf { System.currentTimeMillis() - homeRootFetchedAt < 5 * 60_000L }?.let { return it }
+        return share("home-root") {
+            engine.browse(browseId = BROWSE_HOME)?.also {
+                homeRoot = it
+                homeRootFetchedAt = System.currentTimeMillis()
+            }
+        }
+    }
+
+    suspend fun getHomePage(continuation: String? = null): HomeCatalogPage = withContext(Dispatchers.IO) {
+        val root = if (continuation == null) homeRoot() else engine.browse(BROWSE_HOME, continuation = continuation)
+        HomeCatalogPage(mapHomeSections(root), InnerTubeSearchParser.parse(root).continuation)
+    }
+
+    suspend fun getExploreSections(): List<HomeCatalogSection> = share("explore") {
+        mapHomeSections(engine.browse("FEmusic_explore"))
+    }
+
+    private fun mapHomeSections(root: kotlinx.serialization.json.JsonObject?): List<HomeCatalogSection> =
+        InnerTubeSearchParser.parseHomeSections(root).map { section ->
+            HomeCatalogSection(section.title, section.label, buildList {
+                section.songs.mapTo(this) { HomeCatalogItem.Track(it.toSong()) }
+                section.albums.mapTo(this) { album ->
+                    val id = InnerTubeIds.albumId(album.browseId)
+                    registry.putAlbum(id, album.browseId)
+                    HomeCatalogItem.AlbumItem(album.toAlbum(id))
+                }
+                section.playlists.mapTo(this) { HomeCatalogItem.PlaylistItem(it) }
+                section.artists.mapTo(this) { artist ->
+                    val id = InnerTubeIds.artistId(artist.browseId)
+                    registry.putArtist(id, artist.browseId)
+                    HomeCatalogItem.ArtistItem(artist.toArtist(id))
+                }
+            }.distinctBy { it.id })
+        }
 
     /** Searches YouTube Music for songs matching [query]. */
     suspend fun searchSongs(query: String, limit: Int = 20): List<Song> =
-        withContext(Dispatchers.IO) {
-            val page = engine.search(query = query, params = PARAMS_SONGS)
-            page.tracks.take(limit).map { it.toSong() }
+        share("songs:$query") {
+            withContext(Dispatchers.IO) {
+                val page = engine.search(query = query, params = PARAMS_SONGS)
+                page.tracks.take(limit).map { it.toSong() }
+            }
         }
 
     /** Second and later pages of a song search, for infinite scroll. */
@@ -178,22 +272,117 @@ class InnerTubeRepository @Inject constructor(
      * Returns an empty list when the charts feed is unavailable, which lets
      * [com.aro.music.data.streaming.StreamingRepository] fall back.
      */
-    suspend fun getTrendingSongs(limit: Int = 30): List<Song> =
-        withContext(Dispatchers.IO) {
-            val root = engine.browse(browseId = BROWSE_CHARTS, params = CHARTS_PARAMS)
-            if (root == null) {
-                Timber.w("$TAG: charts browse unavailable")
-                return@withContext emptyList()
+    suspend fun getTrendingSongs(limit: Int = 30): List<Song> {
+        val ttl = if (homeCache.isEmpty()) 20_000L else 5 * 60_000L
+        if (System.currentTimeMillis() - homeFetchedAt < ttl) return homeCache.take(limit)
+        return share("home") {
+            val root = homeRoot()
+            // Playable song rows routinely carry album/artist metadata. Their
+            // videoId, rather than the absence of that metadata, identifies them.
+            val direct = InnerTubeSearchParser.parse(root).tracks.map { it.toSong() }
+            val songs = if (direct.isNotEmpty()) direct else {
+                // Anonymous home may contain only playlist/album shelves. Resolve
+                // a real shelf source instead of substituting keyword searches.
+                val playlists = InnerTubeSearchParser.parsePlaylists(root).take(2)
+                coroutineScope {
+                    playlists.map { playlist -> async { browseTracks(playlist.browseId, limit = 50) } }.map { it.await() }.flatten()
+                }
             }
-            val page = InnerTubeSearchParser.parse(root)
-            val tracks = page.tracks.take(limit).map { it.toSong() }
-            Timber.d("$TAG: charts → ${tracks.size} tracks")
-            tracks
+            homeCache = songs.distinctBy { it.id }
+            homeFetchedAt = System.currentTimeMillis()
+            Timber.d("$TAG: home resolved ${homeCache.size} songs")
+            homeCache.take(limit)
         }
+    }
+
+    /**
+ * One page of a radio feed.
+ *
+ * [continuation] is null once the feed is exhausted, which is how the queue knows
+ * to stop asking for more.
+ */
+data class InnerTubeRadioPage(
+    val songs: List<Song>,
+    val continuation: String?,
+)
+
+/**
+ * Fetches YouTube Music's radio for a seed track.
+ *
+ * Passing `playlistId = "RDAMVM<videoId>"` to the `next` endpoint is what asks
+ * for a *radio mix* rather than an album or playlist — this is the same trick
+ * Meld's `YouTubeQueue` uses, and it is what makes the queue effectively endless.
+ *
+ * [continuation] must be echoed back on each subsequent call to walk the feed.
+ */
+suspend fun radioPage(
+    seedVideoId: String,
+    continuation: String? = null,
+): InnerTubeRadioPage = withContext(Dispatchers.IO) {
+    val page = engine.next(
+        videoId = seedVideoId,
+        playlistId = RADIO_PLAYLIST_PREFIX + seedVideoId,
+        continuation = continuation,
+    )
+    InnerTubeRadioPage(
+        songs = page.tracks.map { it.toSong() },
+        continuation = page.continuation,
+    )
+}    fun headersFor(audioUrl: String) = engine.headersFor(audioUrl)
 
     /** Resolves a playable stream. Returns null when YouTube refuses playback. */
     suspend fun resolveStream(videoId: String): InnerTubeStream? =
         withContext(Dispatchers.IO) { engine.extractStream(videoId) }
+
+    /**
+     * Live query suggestions for the search field, Meld's `YouTube
+     * .searchSuggestions` port.
+     *
+     * Returns text completions plus recommended playable items; the repository
+     * maps the items through the same [toSong] conversion as search rows so the
+     * UI can navigate with them unchanged. Fails soft — an empty result is the
+     * caller's signal to show only history.
+     */
+    suspend fun getSuggestions(query: String): InnerTubeSuggestionResult =
+        withContext(Dispatchers.IO) {
+            val root = engine.searchSuggestions(query)
+                ?: return@withContext InnerTubeSuggestionResult(emptyList(), emptyList())
+            val parsed = InnerTubeSearchParser.parseSuggestions(root)
+            InnerTubeSuggestionResult(
+                queries = parsed.queries,
+                songs = parsed.recommendedItems.map { it.toSong() },
+            )
+        }
+
+    /**
+     * Lyrics for an InnerTube track, straight from YouTube Music — Meld's
+     * `YouTubeLyricsProvider` chain in order: the track's line-timed lyrics
+     * page, then the WEB_REMIX plain shelf, then video captions.
+     *
+     * This is what gives streaming songs synced lyrics without LRCLIB: the
+     * timed browse goes out as ANDROID_MUSIC, which is the only client YouTube
+     * serves per-line cue ranges to.
+     */
+    suspend fun getYouTubeLyrics(videoId: String): String? =
+        withContext(Dispatchers.IO) {
+            val nextRoot = engine.nextRaw(videoId = videoId)
+            val endpoint = InnerTubeSearchParser.findLyricsEndpoint(nextRoot)
+
+            if (endpoint != null) {
+                engine.timedLyrics(browseId = endpoint.first, params = endpoint.second)
+                    ?.let { return@withContext it }
+
+                val plainRoot = engine.browseRaw(
+                    browseId = endpoint.first,
+                    params = endpoint.second,
+                    clients = listOf(YouTubeClient.WEB_REMIX),
+                )
+                InnerTubeSearchParser.parsePlainLyrics(plainRoot)
+                    ?.let { return@withContext it }
+            }
+
+            engine.transcript(videoId)
+        }
 
     // ── mapping ─────────────────────────────────────────────────────────────
 
@@ -217,7 +406,7 @@ class InnerTubeRepository @Inject constructor(
             // Empty: the player resolves a signed URL from the content URI.
             path = "",
             contentUriString = InnerTubeIds.contentUri(videoId),
-            albumArtUriString = artworkUrl,
+            albumArtUriString = InnerTubeArtwork.forSong(artworkUrl, InnerTubeIds.contentUri(videoId)),
             duration = (durationSeconds ?: 0).toLong() * 1000L,
             genre = null,
             lyrics = null,
@@ -283,6 +472,18 @@ class InnerTubeRepository @Inject constructor(
         )
 
     /**
+ * Live search suggestions mapped to app models.
+ *
+ * [queries] are the plain text completions for the dropdown; [songs] are the
+ * recommended playable items, already converted with the same [InnerTubeTrack
+ * .toSong] mapping search rows use so navigation needs no special case.
+ */
+data class InnerTubeSuggestionResult(
+    val queries: List<String>,
+    val songs: List<Song>,
+)
+
+/**
  * A resolved remote playlist: the model for the UI plus the tracks behind it.
  *
  * The tracks are returned separately because [Playlist] carries only

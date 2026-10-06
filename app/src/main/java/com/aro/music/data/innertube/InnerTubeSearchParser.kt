@@ -39,6 +39,34 @@ internal object InnerTubeSearchParser {
         return InnerTubeSearchPage(tracks.values.toList(), findContinuation(root))
     }
 
+    fun parseHomeSections(root: JsonObject?): List<InnerTubeHomeSection> =
+        collectRenderers(root, setOf("musicCarouselShelfRenderer")).mapNotNull { shelf ->
+            val header = shelf["header"].asObj()?.get("musicCarouselShelfBasicHeaderRenderer").asObj()
+                ?: return@mapNotNull null
+            val title = header["title"].asObj()?.runsText()?.joinToString("")?.takeIf { it.isNotBlank() }
+                ?: return@mapNotNull null
+            val songs = mutableListOf<InnerTubeTrack>()
+            val albums = mutableListOf<InnerTubeAlbum>()
+            val artists = mutableListOf<InnerTubeArtist>()
+            val playlists = mutableListOf<InnerTubePlaylist>()
+            collectRenderers(shelf, ITEM_RENDERERS).forEach { item ->
+                val payload = item.unwrapItemPayload() ?: return@forEach
+                // Prefer the tile's primary browse target. A playlist's play
+                // overlay can have a videoId without making the tile a song.
+                val browseId = payload.browseEndpoint()
+                when {
+                    browseId?.startsWith("VL") == true -> parsePlaylist(item)?.let(playlists::add)
+                    browseId?.startsWith("MPRE") == true -> parseAlbum(item)?.let(albums::add)
+                    browseId?.startsWith("UC") == true -> parseArtist(item)?.let(artists::add)
+                    else -> parseItem(item)?.let(songs::add)
+                }
+            }
+            if (songs.isEmpty() && albums.isEmpty() && artists.isEmpty() && playlists.isEmpty()) return@mapNotNull null
+            InnerTubeHomeSection(title, header["strapline"].asObj()?.runsText()?.joinToString(""),
+                songs.distinctBy { it.videoId }, albums.distinctBy { it.browseId },
+                artists.distinctBy { it.browseId }, playlists.distinctBy { it.browseId })
+        }
+
     /**
      * Parses albums out of an album-filtered search.
      *
@@ -118,6 +146,17 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
     )
 }
 
+/**
+ * True when the tree holds at least one recognised item renderer.
+ *
+ * Used to decide whether a client returned real content, as distinct from
+ * parsing the tree into a specific item type. The charts browse legitimately
+ * contains artist rows that are not tracks, so a track count would reject a
+ * perfectly good response.
+ */
+fun containsItemRenderer(root: JsonObject?): Boolean =
+    collectRenderers(root, ITEM_RENDERERS).isNotEmpty()
+
 /** Depth-limited DFS that yields each recognised item renderer exactly once. */
     private fun collectRenderers(root: JsonObject?, keys: Set<String>): List<JsonObject> {
         if (root == null) return emptyList()
@@ -135,8 +174,16 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
         if (depth > MAX_DEPTH) return
         when (node) {
             is JsonObject -> for (entry in node) {
-                val child = entry.value.asObj() ?: continue
-                if (entry.key in keys) out += child else collect(child, keys, depth + 1, out)
+                // Same array-descent requirement as [walk]: dropping array
+                // children hides everything under `tabs[]`.
+                when (val child = entry.value) {
+                    is JsonObject ->
+                        if (entry.key in keys) out += child
+                        else collect(child, keys, depth + 1, out)
+
+                    is JsonArray -> collect(child, keys, depth + 1, out)
+                    else -> Unit
+                }
             }
 
             is JsonArray -> node.forEach { collect(it, keys, depth + 1, out) }
@@ -183,6 +230,7 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
             "musicResponsiveListItemRenderer",
         ) ?: this
 
+    private val DURATION_REGEX = Regex("""\d+:[0-5]\d(?::[0-5]\d)?""")
     private val YEAR_REGEX = Regex("""\d{4}""")
     private val SONG_COUNT_REGEX = Regex("""(\d[\d,]*)\s+songs?""", RegexOption.IGNORE_CASE)
 
@@ -191,7 +239,7 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
         subtitleRuns(node)
             .map { it.trim() }
             .filter { it.isNotEmpty() && it != "•" }
-            .dropWhile { it.equals("Song", true) || it.equals("Video", true) || it.equals("Album", true) }
+            .dropWhile(::isTypeLabel)
 
     /**
      * Title of a page *header* renderer.
@@ -213,21 +261,32 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
             text.equals("Video", true) ||
             text.equals("Album", true) ||
             text.equals("Playlist", true) ||
-            text.equals("Artist", true)
+            text.equals("Artist", true) ||
+            text.equals("EP", true) ||
+            text.equals("Single", true)
 
     /** Depth-limited DFS. An unbounded walk risks pathological traversals. */
     private fun walk(node: JsonElement, out: MutableMap<String, InnerTubeTrack>, depth: Int) {
         if (depth > MAX_DEPTH) return
         when (node) {
-            is JsonObject -> {
-                for (entry in node) {
-                    val key = entry.key
-                    val child = entry.value.asObj() ?: continue
-                    if (key in ITEM_RENDERERS) {
-                        parseItem(child)?.let { out.putIfAbsent(it.videoId, it) }
-                    } else {
-                        walk(child, out, depth + 1)
-                    }
+            is JsonObject -> for (entry in node) {
+                val key = entry.key
+                // Dispatch on the child's real type. An earlier version did
+                // `entry.value.asObj() ?: continue`, which silently dropped every
+                // JsonArray child — and the whole renderer tree hangs off
+                // `contents.tabbedSearchResultsRenderer.tabs[]`, so that skipped
+                // the entire response and reported "no results" on a perfectly
+                // good 200.
+                when (val child = entry.value) {
+                    is JsonObject ->
+                        if (key in ITEM_RENDERERS) {
+                            parseItem(child)?.let { out.putIfAbsent(it.videoId, it) }
+                        } else {
+                            walk(child, out, depth + 1)
+                        }
+
+                    is JsonArray -> walk(child, out, depth + 1)
+                    else -> Unit
                 }
             }
 
@@ -271,21 +330,68 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
         payload["watchEndpoint"].asObj()?.str("videoId")?.let { return it }
         payload["navigationEndpoint"].asObj()?.get("watchEndpoint").asObj()
             ?.str("videoId")?.let { return it }
+
+        // Charts, shelves and carousels hang the play target off the thumbnail
+        // overlay instead of the row itself, so without this the whole charts
+        // browse parsed to zero tracks.
+        payload["overlay"].asObj()
+            ?.get("musicItemThumbnailOverlayRenderer").asObj()
+            ?.get("content").asObj()
+            ?.get("musicPlayButtonRenderer").asObj()
+            ?.get("playNavigationEndpoint").asObj()
+            ?.get("watchEndpoint").asObj()
+            ?.str("videoId")
+            ?.let { return it }
+
         return null
     }
 
     private fun findTitle(node: JsonObject): String? {
-        // Structured flex columns used by music list items.
-        node["flexColumns"].asArr()?.forEach { column ->
-            val flex = column.asObj()?.firstObj(
-                "musicResponsiveListItemFlexColumnRenderer",
-                "musicTwoRowItemFlexColumnRenderer",
-            )
-            flex?.runsText()?.firstOrNull()?.let { return it }
-        }
+        // Music list rows carry their text in `flexColumns[i].<flexRenderer>.text.runs`.
+        // The runs are NOT directly on the flex renderer, so reading `.runs` there
+        // silently yields nothing and every row gets discarded for a missing title.
+        flexColumnText(node, 0)?.let { return it }
+
+        // Fall back to any flex column that has text, for rows with no leading title.
+        flexColumnTexts(node).firstOrNull { it.isNotBlank() }?.let { return it }
+
         node["title"].asObj()?.runsText()?.firstOrNull()?.let { return it }
         node.str("title")?.let { return it }
         return null
+    }
+
+    /**
+     * Text runs of the nth flex column, or null when absent.
+     *
+     * Handles both shapes seen in the wild: the current
+     * `...FlexColumnRenderer.text.runs` and the flatter `...FlexColumnRenderer.runs`.
+     */
+    private fun flexColumnRuns(node: JsonObject, index: Int): List<String>? {
+        val flex = node["flexColumns"].asArr()?.getOrNull(index)?.asObj()?.firstObj(
+            "musicResponsiveListItemFlexColumnRenderer",
+            "musicTwoRowItemFlexColumnRenderer",
+            "musicMultiRowItemFlexColumnRenderer",
+        ) ?: return null
+        val text = flex["text"].asObj()
+        return text?.runsText()?.takeIf { it.isNotEmpty() }
+            ?: flex.runsText().takeIf { it.isNotEmpty() }
+    }
+
+    /** Concatenated text of the nth flex column, e.g. "KARMA & Sez On The Beat". */
+    private fun flexColumnText(node: JsonObject, index: Int): String? =
+        flexColumnRuns(node, index)
+            ?.joinToString("")
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+    /** All flex columns that carry text, in order. */
+    private fun flexColumnTexts(node: JsonObject): List<String> {
+        val out = mutableListOf<String>()
+        val columns = node["flexColumns"].asArr() ?: return out
+        for (i in columns.indices) {
+            flexColumnText(node, i)?.let(out::add)
+        }
+        return out
     }
 
     private fun subtitleRuns(node: JsonObject): List<String> {
@@ -296,24 +402,68 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
     }
 
     private fun findArtist(node: JsonObject): String {
+        // Music list rows have no `subtitle` member at all — the byline lives in
+        // the second flex column, e.g. "KARMA & Sez On The Beat • Album • 2020".
+        // Split on the separator so a leading "Song"/"Video" label and bullet
+        // separators never leak into the artist name.
+        flexColumnRuns(node, 1)
+            ?.joinToString("")
+            ?.split(BYLINE_SEPARATOR)
+            ?.map { it.trim() }
+            ?.firstOrNull { it.isNotBlank() && !it.equals("Song", true) && !it.equals("Video", true) }
+            ?.let { return it }
+
         cleanedSubtitleRuns(node).firstOrNull()?.let { return it }
 
+        // Long byline, used by two-row renderers and by queue rows.
         val byline = (node["longBylineText"].asObj()?.runsText()
             ?: node["longBylineText"].asArr()?.mapNotNull { it.asObj()?.str("text") }
             ).orEmpty()
-        return byline.firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+        byline.firstOrNull { it.isNotBlank() }?.let { return it.trim() }
+
+        // Short byline, which carries "Artist • Album" or "Artist • Song".
+        (node["shortBylineText"].asObj()?.runsText()
+            ?: node["shortBylineText"].asArr()?.mapNotNull { it.asObj()?.str("text") }
+            ).orEmpty()
+            .firstOrNull { it.isNotBlank() && it != "•" }
+            ?.let { return it.trim().substringBefore(" •").trim() }
+
+        return ""
     }
 
-    private fun findAlbum(node: JsonObject): String? = cleanedSubtitleRuns(node).getOrNull(1)
+    private val BYLINE_SEPARATOR = Regex("\\s*(?:•|\\|)\\s*|\\s+&\\s+|\\s+,\\s+")
+
+    private fun findAlbum(node: JsonObject): String? {
+        // Third flex column on list rows: "Album • 2020".
+        flexColumnRuns(node, 2)
+            ?.joinToString("")
+            ?.split(BYLINE_SEPARATOR)
+            ?.map { it.trim() }
+            ?.firstOrNull { it.isNotBlank() && !it.matches(YEAR_REGEX) }
+            ?.let { return it }
+
+        return cleanedSubtitleRuns(node).getOrNull(1)
+    }
 
     private fun findDurationSeconds(node: JsonObject): Int? {
-        val text = (node["lengthText"].asObj()?.runsText()?.joinToString("")
-            ?: node["lengthText"].asArr()?.mapNotNull { it.asObj()?.str("text") }?.joinToString("")
+        // List rows put the duration in the first *fixed* column, not a flex one.
+        val fixed = node["fixedColumns"].asArr()?.firstOrNull()?.asObj()
+            ?.firstObj("musicResponsiveListItemFixedColumnRenderer")
+            ?.get("text").asObj()
+            ?.runsText()
+            ?.joinToString("")
+            ?.takeIf { it.isNotBlank() }
+
+        val text = fixed
+            ?: node["lengthText"].asObj()?.runsText()?.joinToString("")?.takeIf { it.isNotBlank() }
+            ?: node["lengthText"].asArr()?.mapNotNull { it.asObj()?.str("text") }?.joinToString("")?.takeIf { it.isNotBlank() }
+            ?: node["lengthText"].asObj()?.str("simpleText")
             ?: node.str("lengthSeconds")
-            ) ?: return null
+            ?: (cleanedSubtitleRuns(node) + flexColumnRuns(node, 1).orEmpty().joinToString("").split(BYLINE_SEPARATOR).map { it.trim() }).firstOrNull { it.matches(DURATION_REGEX) }
+            ?: return null
 
         text.toIntOrNull()?.let { return it }
-        val parts = text.split(':').mapNotNull { it.trim().toIntOrNull() }
+        val parts = text.trim().split(':').mapNotNull { it.trim().toIntOrNull() }
         return when (parts.size) {
             2 -> parts[0] * 60 + parts[1]
             3 -> parts[0] * 3600 + parts[1] * 60 + parts[2]
@@ -322,14 +472,15 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
     }
 
     private fun findArtwork(node: JsonObject): String? {
-        val thumbs = node["thumbnail"].asObj()
-            ?.get("musicThumbnailRenderer").asObj()
-            ?.get("thumbnail").asObj()
-            ?.get("thumbnails").asArr()
-            ?: return null
-
-        // Thumbnails arrive smallest first; take the largest.
-        return thumbs.mapNotNull { it.asObj()?.str("url") }.lastOrNull()
+        // Radio uses thumbnail.thumbnails; list rows and carousels wrap it
+        // in musicThumbnailRenderer under thumbnail or thumbnailRenderer.
+        val thumbnail = node["thumbnailRenderer"].asObj() ?: node["thumbnail"].asObj() ?: return null
+        val image = thumbnail["musicThumbnailRenderer"].asObj()?.get("thumbnail").asObj() ?: thumbnail
+        val thumbs = image["thumbnails"].asArr() ?: return null
+        val largest = thumbs.mapNotNull { it.asObj() }
+            .filter { !it.str("url").isNullOrBlank() }
+            .maxByOrNull { (it.str("width")?.toIntOrNull() ?: 0).toLong() * (it.str("height")?.toIntOrNull() ?: 0) }
+        return InnerTubeArtwork.highQuality(largest?.str("url"))
     }
 
     private fun hasExplicitBadge(node: JsonObject): Boolean =
@@ -349,11 +500,32 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
 
     /** Returns a browseId only when the page type matches the requested one. */
     private fun findBrowseId(node: JsonObject, matchPageType: String): String? {
-        val browse = node["navigationEndpoint"].asObj()?.get("browseEndpoint").asObj()
-            ?: return null
-        val id = browse.str("browseId") ?: return null
-        val page = browse["browseEndpointContext"].asObj()?.str("pageType")
-        return if (page == null || page == matchPageType) id else null
+        fun find(element: JsonElement, depth: Int): String? {
+            if (depth > 15) return null
+            when (element) {
+                is JsonObject -> {
+                    val browse = element["browseEndpoint"].asObj()
+                    if (browse != null) {
+                        val id = browse.str("browseId")
+                        val page = browse["browseEndpointContextSupportedConfigs"].asObj()
+                            ?.get("browseEndpointContextMusicConfig").asObj()?.str("pageType")
+                            ?: browse["browseEndpointContext"].asObj()?.str("pageType")
+                            ?: when {
+                                id?.startsWith("VL") == true -> "MUSIC_PAGE_TYPE_PLAYLIST"
+                                id?.startsWith("MPRE") == true -> "MUSIC_PAGE_TYPE_ALBUM"
+                                id?.startsWith("UC") == true -> "MUSIC_PAGE_TYPE_ARTIST"
+                                else -> null
+                            }
+                        if (page == matchPageType) return id
+                    }
+                    for (child in element.values) find(child, depth + 1)?.let { return it }
+                }
+                is JsonArray -> for (child in element) find(child, depth + 1)?.let { return it }
+                else -> Unit
+            }
+            return null
+        }
+        return find(node, 0)
     }
 
     /**
@@ -368,20 +540,22 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
         this["navigationEndpoint"].asObj()?.get("browseEndpoint").asObj()?.str("browseId")
 
     private fun findContinuation(root: JsonObject): String? {
-        val containers = root["continuationContents"].asObj() ?: return null
-        for (container in containers.values) {
-            val renderers = container.asObj() ?: continue
-            for (renderer in renderers.values) {
-                val entries = renderer.asObj()?.get("continuations").asArr() ?: continue
-                for (entry in entries) {
-                    val obj = entry.asObj() ?: continue
-                    val token = obj["nextContinuationData"].asObj()?.str("continuation")
-                        ?: obj["reloadContinuationData"].asObj()?.str("continuation")
-                    if (!token.isNullOrBlank()) return token
+        fun find(node: JsonElement, depth: Int): String? {
+            if (depth > MAX_DEPTH) return null
+            when (node) {
+                is JsonObject -> {
+                    for (key in listOf("nextRadioContinuationData", "nextContinuationData", "reloadContinuationData", "continuationCommand")) {
+                        node[key].asObj()?.str("continuation")?.let { return it }
+                        node[key].asObj()?.str("token")?.let { return it }
+                    }
+                    for (child in node.values) find(child, depth + 1)?.let { return it }
                 }
+                is JsonArray -> for (child in node) find(child, depth + 1)?.let { return it }
+                else -> Unit
             }
+            return null
         }
-        return null
+        return find(root, 0)
     }
 
     // ── json helpers ───────────────────────────────────────────────────────
@@ -404,4 +578,198 @@ fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
 
     private fun JsonObject.runsText(): List<String> =
         this["runs"].asArr()?.mapNotNull { it.asObj()?.str("text") }.orEmpty()
+
+    // ── suggestions ───────────────────────────────────────────────────────
+
+    /**
+     * YouTube Music's live query suggestions, from the
+     * `music/get_search_suggestions` response.
+     *
+     * Ported from Meld's `GetSearchSuggestionsResponse` walk: section 0 holds
+     * plain text completions (`searchSuggestionRenderer`), section 1 holds
+     * recommended items (`musicResponsiveListItemRenderer`) that carry a
+     * playable videoId. The generic [parse] ignores both because suggestion
+     * rows carry no byline to map onto a [InnerTubeTrack].
+     */
+    fun parseSuggestions(root: JsonObject?): InnerTubeSuggestions {
+        if (root == null) return InnerTubeSuggestions(emptyList(), emptyList())
+
+        val sections = root["contents"].asArr()
+            ?.mapNotNull { it.asObj()?.get("searchSuggestionsSectionRenderer").asObj() }
+            .orEmpty()
+
+        val queries = sections.getOrNull(0)
+            ?.get("contents").asArr()
+            .orEmpty()
+            .mapNotNull { content ->
+                val renderer = content.asObj()
+                    ?.get("searchSuggestionRenderer").asObj()
+                    ?: return@mapNotNull null
+                renderer["suggestion"].asObj()?.runsText()
+                    ?.joinToString("")
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+            }
+
+        val items = sections.getOrNull(1)
+            ?.get("contents").asArr()
+            .orEmpty()
+            .mapNotNull { content ->
+                val renderer = content.asObj()
+                    ?.get("musicResponsiveListItemRenderer").asObj()
+                    ?: return@mapNotNull null
+                parseItem(renderer)?.takeIf { it.videoId.isNotBlank() }
+            }
+
+        return InnerTubeSuggestions(queries = queries, recommendedItems = items)
+    }
+
+    /**
+     * The "Lyrics" tab endpoint from a `next` response, Meld's `NextPage`
+     * `lyricsEndpoint` extraction.
+     *
+     * It is tab index 1 of the watch-next tabbed renderer and carries the
+     * `MPLYt…` browseId the lyrics browse needs. Null when the track has no
+     * lyrics page, which is the common case for user uploads.
+     */
+    fun findLyricsEndpoint(root: JsonObject?): Pair<String, String?>? {
+        val tab = root
+            ?.get("contents").asObj()
+            ?.get("singleColumnMusicWatchNextResultsRenderer").asObj()
+            ?.get("tabbedRenderer").asObj()
+            ?.get("watchNextTabbedResultsRenderer").asObj()
+            ?.get("tabs").asArr()
+            ?.getOrNull(1)
+            ?.asObj()
+            ?.get("tabRenderer").asObj()
+            ?: return null
+
+        val browse = tab["endpoint"].asObj()
+            ?.get("browseEndpoint").asObj()
+            ?: return null
+        val browseId = browse.str("browseId") ?: return null
+        return browseId to browse.str("params")
+    }
+
+    // ── lyrics ────────────────────────────────────────────────────────────
+
+    /**
+     * Line-timed lyrics from the ANDROID_MUSIC lyrics browse, Meld's
+     * `TimedLyricsResponse` walk.
+     *
+     * The component tree is deep but every level is optional; the lines sit in
+     * `contents.elementRenderer.newElement.type.componentType.model
+     * .timedLyricsModel.lyricsData.timedLyricsData`, each with its cue range.
+     * Returned as LRC text so [com.aro.music.utils.LyricsUtils.parseLyrics]
+     * can consume it unchanged.
+     */
+    fun parseTimedLyrics(root: JsonObject?): String? {
+        val lines = root
+            ?.get("contents").asObj()
+            ?.get("elementRenderer").asObj()
+            ?.get("newElement").asObj()
+            ?.get("type").asObj()
+            ?.get("componentType").asObj()
+            ?.get("model").asObj()
+            ?.get("timedLyricsModel").asObj()
+            ?.get("lyricsData").asObj()
+            ?.get("timedLyricsData").asArr()
+            ?: return null
+
+        val out = StringBuilder()
+        for (line in lines) {
+            val obj = line.asObj() ?: continue
+            val text = obj.str("lyricLine") ?: continue
+            val startMs = obj["cueRange"].asObj()?.str("startTimeMilliseconds")
+                ?.toLongOrNull()
+                ?: continue
+            val minutes = startMs / 60_000
+            val seconds = (startMs % 60_000) / 1_000
+            val hundredths = (startMs % 1_000) / 10
+            if (out.isNotEmpty()) out.append('\n')
+            out.append("[%02d:%02d.%02d]%s".format(minutes, seconds, hundredths, text))
+        }
+        return out.toString().takeIf { it.isNotBlank() }
+    }
+
+    /**
+     * Untimed plain lyrics from the WEB_REMIX lyrics browse, Meld's
+     * `musicDescriptionShelfRenderer` walk.
+     *
+     * Fallback for tracks whose mobile lyrics page answers empty: the same
+     * `MPLYt…` browseId asked as WEB_REMIX still carries the one-block text.
+     */
+    fun parsePlainLyrics(root: JsonObject?): String? {
+        val sections = root
+            ?.get("contents").asObj()
+            ?.get("sectionListRenderer").asObj()
+            ?.get("contents").asArr()
+            ?: return null
+        for (section in sections) {
+            val shelf = section.asObj()
+                ?.get("musicDescriptionShelfRenderer").asObj()
+                ?: continue
+            val description = shelf["description"].asObj() ?: continue
+            // `runsText()` answers an empty list when runs are absent, so the
+            // simpleText fallback has to be selected explicitly rather than
+            // chained with `?:` — an empty list is not null.
+            val runs = description.runsText().takeIf { it.isNotEmpty() }
+                ?: listOfNotNull((description["simpleText"] as? JsonPrimitive)?.content)
+            val text = runs.joinToString("").trim()
+            if (text.isNotEmpty()) return text
+        }
+        return null
+    }
+
+    /**
+     * Video captions as timed LRC text, from the `get_transcript` response.
+     *
+     * Meld's `GetTranscriptResponse` walk: each cue group holds one cue with a
+     * start offset and text. Musical-note decorations are trimmed exactly as
+     * Meld trims them so instrumental captions do not render as a wall of ♪.
+     */
+    fun parseTranscript(root: JsonObject?): String? {
+        val groups = root
+            ?.get("actions").asArr()
+            ?.firstNotNullOfOrNull { action ->
+                action.asObj()
+                    ?.get("updateEngagementPanelAction").asObj()
+                    ?.get("content").asObj()
+                    ?.get("transcriptRenderer").asObj()
+                    ?.get("body").asObj()
+                    ?.get("transcriptBodyRenderer").asObj()
+                    ?.get("cueGroups").asArr()
+            }
+            ?: return null
+
+        val out = StringBuilder()
+        for (group in groups) {
+            val cue = group.asObj()
+                ?.get("transcriptCueGroupRenderer").asObj()
+                ?.get("cues").asArr()
+                ?.firstOrNull()
+                ?.asObj()
+                ?.get("transcriptCueRenderer").asObj()
+                ?: continue
+            val startMs = (cue["startOffsetMs"] as? JsonPrimitive)?.content?.toLongOrNull()
+                ?: continue
+            val text = cue["cue"].asObj()
+                ?.str("simpleText")
+                ?.trim('♪')
+                ?.trim(' ')
+                .orEmpty()
+            val minutes = startMs / 60000
+            val seconds = (startMs / 1000) % 60
+            val millis = startMs % 1000
+            if (out.isNotEmpty()) out.append('\n')
+            out.append("[%02d:%02d.%03d]%s".format(minutes, seconds, millis, text))
+        }
+        return out.toString().takeIf { it.isNotBlank() }
+    }
 }
+
+/** Live query suggestions: text completions plus recommended playable items. */
+data class InnerTubeSuggestions(
+    val queries: List<String>,
+    val recommendedItems: List<InnerTubeTrack>,
+)
