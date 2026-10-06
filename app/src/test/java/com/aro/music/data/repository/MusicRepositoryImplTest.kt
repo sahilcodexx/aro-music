@@ -15,6 +15,7 @@ import dagger.Lazy
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
@@ -128,30 +129,21 @@ class MusicRepositoryImplTest {
 
     // --- Pruebas para getAudioFiles ---
     @Test
-    fun `getAudioFiles returns songs from DAO, filtered by allowed directories`() = runTest(testDispatcher) {
-        val songEntities = listOf(
-            createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path"),
-            createSongEntity(2L, "Song B", "Artist 1", "Pop", "/forbidden/path/songB.mp3", "/forbidden/path"),
-            createSongEntity(3L, "Song C", "Artist 2", "Rock", "/allowed/path/songC.mp3", "/allowed/path")
+    fun `getAudioFiles returns trending songs from streaming repository`() = runTest(testDispatcher) {
+        // Library is now streaming-backed: getAudioFiles() delegates to the
+        // trending InnerTube songs instead of scanning the local DAO.
+        val expectedSongs = listOf(
+            createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path").toSong(),
+            createSongEntity(3L, "Song C", "Artist 2", "Rock", "/allowed/path/songC.mp3", "/allowed/path").toSong()
         )
-        val allowedDirs = setOf("/allowed/path")
-
-        // Mock filter behavior:
-        val filteredSongs = songEntities.filter { it.filePath.startsWith("/allowed/path") }
-        every { mockMusicDao.getAllSongs(any(), eq(true)) } returns flowOf(filteredSongs)
-        every { mockMusicDao.getAllSongs(any(), eq(false)) } returns flowOf(songEntities)
-        
-        every { mockUserPreferencesRepository.allowedDirectoriesFlow } returns flowOf(allowedDirs) // No es suspend
-        every { mockUserPreferencesRepository.blockedDirectoriesFlow } returns flowOf(setOf("/dummy")) // Trigger filter
-        every { mockUserPreferencesRepository.initialSetupDoneFlow } returns flowOf(true) // No es suspend
-        every { mockUserPreferencesRepository.isFolderFilterActiveFlow } returns flowOf(true)
-        coEvery { mockMusicDao.getDistinctParentDirectories() } returns listOf("/allowed/path", "/forbidden/path")
+        coEvery {
+            // 50 == MusicRepositoryImpl.TRENDING_LIBRARY_LIMIT (private const)
+            mockStreamingRepository.getTrendingSongs(limit = 50)
+        } returns expectedSongs
 
         val result: List<Song> = musicRepository.getAudioFiles().first()
 
-        assertEquals(2, result.size)
-        assertEquals(listOf("1", "3"), result.map { it.id })
-        verify { mockMusicDao.getAllSongs(any<List<String>>(), any<Boolean>()) }
+        assertEquals(expectedSongs, result)
     }
 
     @Test
@@ -269,11 +261,12 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(false)
 
-        val result = musicRepository.getGenres().first()
+        // The flow first emits fallback genres, then the DB-backed list merged
+        // with the fallbacks (DB genres take priority).
+        val result = musicRepository.getGenres().drop(1).first()
 
-        assertEquals(1, result.size)
-        assertEquals("rock", result.first().id)
-        assertEquals("Rock", result.first().name)
+        assertEquals(1, result.count { it.id == "rock" })
+        assertTrue(result.any { it.id == "rock" && it.name == "Rock" })
     }
 
     @Test
@@ -291,11 +284,9 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(true)
 
-        val result = musicRepository.getGenres().first()
+        val result = musicRepository.getGenres().drop(1).first()
 
-        assertEquals(1, result.size)
         assertEquals(1, result.count { it.id == "unknown" })
-        assertEquals("Unknown", result.first().name)
     }
 
     @Test
@@ -313,9 +304,8 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(true)
 
-        val result = musicRepository.getGenres().first()
+        val result = musicRepository.getGenres().drop(1).first()
 
-        assertEquals(2, result.size)
         assertTrue(result.any { it.id == "rock" })
         assertEquals(1, result.count { it.id == "unknown" })
     }
@@ -348,6 +338,17 @@ class MusicRepositoryImplTest {
     // - invalidateCachesDependentOnAllowedDirectories (verificar que hace lo esperado, o nada si es obsoleta)
 
     // Helper method to create SongEntity with defaults to avoid positional argument hell
+    @Test
+    fun `cached home songs are emitted while catalog refresh is still loading`() = runTest {
+        val cached = createSongEntity(42L, "Cached song", "Artist", "Rap", "/music/cached.mp3", "/music")
+        every { mockMusicDao.getHomeMixPreviewSongs(any(), any(), any()) } returns flowOf(listOf(cached))
+        coEvery { mockStreamingRepository.getTrendingSongs(any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        val preview = kotlinx.coroutines.withContext(Dispatchers.Default) {
+            kotlinx.coroutines.withTimeout(5_000) { musicRepository.getHomeMixPreviewSongs(20).first() }
+        }
+        assertEquals(listOf("Cached song"), preview.map { it.title })
+    }
+
     private fun createSongEntity(
         id: Long,
         title: String,
@@ -373,4 +374,24 @@ class MusicRepositoryImplTest {
             trackNumber = 1
         )
     }
+
+    /** Minimal entity-to-domain mapping mirroring [MusicRepositoryImpl]. */
+    private fun SongEntity.toSong(): Song = Song(
+        id = id.toString(),
+        title = title,
+        artist = artistName,
+        artistId = artistId,
+        album = albumName,
+        albumId = albumId,
+        path = filePath,
+        contentUriString = contentUriString,
+        albumArtUriString = albumArtUriString,
+        duration = duration * 1000L,
+        genre = genre,
+        year = year,
+        trackNumber = trackNumber,
+        mimeType = "audio/mpeg",
+        bitrate = null,
+        sampleRate = null
+    )
 }

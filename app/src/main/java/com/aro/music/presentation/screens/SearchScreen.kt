@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.NorthWest
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
@@ -47,6 +48,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DockedSearchBar
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -132,6 +134,9 @@ private data class SearchUiSlice(
     val searchResults: ImmutableList<SearchResultItem> = persistentListOf()
 )
 
+/** Cap on the live suggestion rows shown under the filter chips. */
+private const val MAX_SEARCH_SUGGESTIONS = 8
+
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -184,6 +189,7 @@ fun SearchScreen(
         playerViewModel.performSearch(searchQuery)
     }
     val searchResults = searchUiState.searchResults
+    val searchSuggestions by playerViewModel.searchSuggestions.collectAsStateWithLifecycle()
     val handleSongMoreOptionsClick: (Song) -> Unit = { song ->
         playerViewModel.selectSongForInfo(song)
         showSongInfoBottomSheet = true
@@ -394,10 +400,26 @@ fun SearchScreen(
                             label = "search_results_fade"
                         ) { isEmpty ->
                             if (isEmpty) {
-                                EmptySearchResults(
-                                    searchQuery = searchQuery,
-                                    colorScheme = colorScheme
-                                )
+                                // While a query is still loading (or came back
+                                // empty) the space below the chips shows the live
+                                // YouTube Music suggestions for what is typed —
+                                // the same assist Meld's search box gives. Tapping
+                                // one runs that query.
+                                if (searchSuggestions.isNotEmpty() && searchQuery.isNotBlank()) {
+                                    SearchSuggestionsList(
+                                        suggestions = searchSuggestions,
+                                        onSuggestionClick = { suggestion ->
+                                            searchQuery = suggestion
+                                            playerViewModel.updateSearchQuery(suggestion)
+                                            playerViewModel.onSearchQuerySubmitted(suggestion)
+                                        }
+                                    )
+                                } else {
+                                    EmptySearchResults(
+                                        searchQuery = searchQuery,
+                                        colorScheme = colorScheme
+                                    )
+                                }
                             } else {
                                 SearchResultsList(
                                     results = searchResults,
@@ -537,6 +559,57 @@ fun SearchResultSectionHeader(title: String) {
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 4.dp)
     )
+}
+
+/**
+ * Live query suggestions while typing, replacing the empty state for the
+ * duration of the fetch.
+ *
+ * Row visuals deliberately mirror [SearchHistoryListItem] — same icon slot,
+ * same paddings — so the assist reads as part of the existing search screen
+ * rather than a bolted-on panel. Tapping runs the suggestion as a query.
+ */
+@Composable
+fun SearchSuggestionsList(
+    suggestions: List<String>,
+    onSuggestionClick: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        suggestions.take(MAX_SEARCH_SUGGESTIONS).forEachIndexed { index, suggestion ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(suggestion) {
+                        detectTapGestures(onTap = { onSuggestionClick(suggestion) })
+                    }
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.NorthWest,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = suggestion,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (index < suggestions.take(MAX_SEARCH_SUGGESTIONS).lastIndex) {
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -718,12 +791,9 @@ fun SearchResultsList(
     }
     val onSongResultClick = remember(playerViewModel, onItemSelected, songResultsQueue, searchQueueName) {
         { song: Song ->
-            val playbackQueue = if (songResultsQueue.any { it.id == song.id }) {
-                songResultsQueue
-            } else {
-                listOf(song)
-            }
-            playerViewModel.showAndPlaySong(song, playbackQueue, searchQueueName)
+            // A search tap starts a seed radio, as in Meld. Search matches are
+            // alternative results, not recommendations for the selected song.
+            playerViewModel.showAndPlaySong(song, listOf(song), searchQueueName)
             onItemSelected()
         }
     }

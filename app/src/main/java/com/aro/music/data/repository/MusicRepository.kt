@@ -241,6 +241,15 @@ interface MusicRepository {
     suspend fun searchPlaylists(query: String): List<Playlist>
 
     /**
+     * Live query suggestions for the search field — Meld's
+     * `YouTube.searchSuggestions`, mapped onto app models.
+     *
+     * @return text completions plus recommended playable songs; both empty when
+     *   YouTube does not answer, so the UI falls back to history alone.
+     */
+    suspend fun getSearchSuggestions(query: String): Pair<List<String>, List<Song>>
+
+    /**
      * A single playlist by id — the user's own, or a YouTube Music one.
      *
      * Remote ids are YouTube browse ids (`VLPL…`), which cannot collide with a

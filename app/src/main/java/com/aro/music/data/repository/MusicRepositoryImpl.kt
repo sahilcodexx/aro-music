@@ -116,6 +116,12 @@ class MusicRepositoryImpl @Inject constructor(
         private const val TRENDING_LIBRARY_LIMIT = 50
 
         /**
+         * How many songs to pull and persist for the home mix preview. Fetching
+         * exactly `limit` would leave the preview with no variety on rotation.
+         */
+        private const val HOME_PREVIEW_FETCH_LIMIT = 50
+
+        /**
          * How many remote playlists a search resolves to a real track list.
          *
          * Each one costs a browse request, so this is deliberately small: a
@@ -498,7 +504,7 @@ class MusicRepositoryImpl @Inject constructor(
                 return@flow
             }
             try {
-                val album = innerTubeRepository.getAlbum(browseId)
+                val album = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbum(browseId) else innerTubeRepository.getAlbum(browseId)
                 if (album != null) {
                     persistRemoteAlbum(album)
                 } else {
@@ -614,7 +620,7 @@ class MusicRepositoryImpl @Inject constructor(
             return emptyList()
         }
         return try {
-            val tracks = innerTubeRepository.getAlbumTracks(browseId)
+            val tracks = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbumSongs(browseId) else innerTubeRepository.getAlbumTracks(browseId)
             if (tracks.isNotEmpty()) {
                 persistRemoteTracks(tracks)
             }
@@ -739,7 +745,7 @@ class MusicRepositoryImpl @Inject constructor(
                 return@flow
             }
             try {
-                val tracks = innerTubeRepository.getArtistSongs(browseId)
+                val tracks = if (browseId.startsWith("spotify:")) streamingRepository.spotifyArtistSongs(browseId) else innerTubeRepository.getArtistSongs(browseId)
                 if (tracks.isNotEmpty()) {
                     persistRemoteTracks(tracks)
                 } else {
@@ -775,6 +781,11 @@ class MusicRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
+
+    override suspend fun getSearchSuggestions(query: String): Pair<List<String>, List<Song>> {
+        if (query.isBlank()) return emptyList<String>() to emptyList()
+        return streamingRepository.getSuggestions(query)
+    }
 
     override fun searchAlbums(query: String, minTracks: Int): Flow<List<Album>> {
         if (query.isBlank()) return flowOf(emptyList())
@@ -843,9 +854,11 @@ class MusicRepositoryImpl @Inject constructor(
             emptyList()
         }
 
-        if (remote.isEmpty()) return local
+        val spotifyPlaylists = streamingRepository.spotifySearchPlaylists(query).onEach { persistRemoteTracks(it.songs) }.map { it.playlist }
+        val allRemote = spotifyPlaylists + remote
+        if (allRemote.isEmpty()) return local
         val localNames = local.map { it.name.lowercase() }.toSet()
-        return local + remote.filterNot { it.name.lowercase() in localNames }
+        return local + allRemote.filterNot { it.name.lowercase() in localNames }
     }
 
     override fun searchAll(query: String, filterType: SearchFilterType): Flow<List<SearchResultItem>> {
@@ -948,7 +961,12 @@ class MusicRepositoryImpl @Inject constructor(
     // Implementación de las nuevas funciones suspend para carga única
     override suspend fun getAllSongsOnce(): List<Song> = withContext(Dispatchers.IO) {
         // Always pre-fetch trending so DB is never empty on first call
-        try { streamingRepository.getTrendingSongs(limit = 50) } catch (_: Exception) {}
+        try {
+            val fetched = streamingRepository.getTrendingSongs(limit = 50)
+            if (fetched.isNotEmpty()) persistRemoteTracks(fetched)
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+        }
         val allowedDirs = userPreferencesRepository.allowedDirectoriesFlow.first()
         val blockedDirs = userPreferencesRepository.blockedDirectoriesFlow.first()
         val (allowedParentDirs, applyDirectoryFilter) =
@@ -990,23 +1008,33 @@ class MusicRepositoryImpl @Inject constructor(
         ) { allowedDirs, blockedDirs ->
             allowedDirs to blockedDirs
         }.flatMapLatest { (allowedDirs, blockedDirs) ->
-            flow {
+            kotlinx.coroutines.flow.channelFlow {
                 val (allowedParentDirs, applyDirectoryFilter) =
                     computeAllowedDirs(allowedDirs, blockedDirs)
-                // Ensure streaming songs are in DB for the home mix preview
-                try {
-                    streamingRepository.getTrendingSongs(limit = 50)
-                } catch (_: Exception) { /* fallback: use whatever is cached */ }
-                emit(
+
+                launch {
                     musicDao.getHomeMixPreviewSongs(
-                        limit = limit,
-                        allowedParentDirs = allowedParentDirs,
-                        applyDirectoryFilter = applyDirectoryFilter
-                    )
-                )
-            }.flatMapLatest { it }
-        }.map { entities ->
-            entities.map { it.toSong() }
+                        limit = limit, allowedParentDirs = allowedParentDirs, applyDirectoryFilter = applyDirectoryFilter
+                    ).collect { entities -> send(entities.map { it.toSong() }) }
+                }
+                // The home mix is served from Room, so the fetched tracks have to
+                // be written there before it can show anything. This call used to
+                // discard its result and read the table straight away, which left
+                // the feed permanently blank even though the fetch succeeded.
+                // Room flows are reactive, so persisting here is enough — the
+                // query below re-emits on its own.
+                val fetched = try {
+                    streamingRepository.getTrendingSongs(limit = HOME_PREVIEW_FETCH_LIMIT)
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    Log.w("MusicRepository", "Home preview fetch failed: ${e.message}")
+                    emptyList()
+                }
+                if (fetched.isNotEmpty()) {
+                    persistRemoteTracks(fetched)
+                }
+
+            }
         }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
@@ -1130,6 +1158,11 @@ class MusicRepositoryImpl @Inject constructor(
             .find { it.id == playlistId }
             ?.let { return it }
 
+        if (playlistId.startsWith("spotify:")) {
+            val resolved = streamingRepository.spotifyPlaylist(playlistId) ?: return null
+            persistRemoteTracks(resolved.songs)
+            return resolved.playlist
+        }
         if (!isRemotePlaylistId(playlistId)) return null
 
         return try {

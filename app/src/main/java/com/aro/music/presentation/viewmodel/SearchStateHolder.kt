@@ -40,6 +40,12 @@ class SearchStateHolder @Inject constructor(
 ) {
     private companion object {
         const val SEARCH_DEBOUNCE_MS = 300L
+
+        /**
+         * Suggestions only need a short settle: one cheap endpoint, and the
+         * dropdown must feel attached to the keyboard.
+         */
+        const val SUGGESTIONS_DEBOUNCE_MS = 150L
     }
 
     // Search State
@@ -53,6 +59,18 @@ class SearchStateHolder @Inject constructor(
     val searchHistory = _searchHistory.asStateFlow()
 
     /**
+     * Live query suggestions, Meld's `OnlineSearchSuggestionViewModel` port.
+     *
+     * Fetched with its own shorter debounce than the full search because the
+     * suggestions request is one cheap endpoint while a search fans out over
+     * every filter tab. Cleared whenever the query empties.
+     */
+    private val _searchSuggestions = MutableStateFlow<ImmutableList<String>>(persistentListOf())
+    val searchSuggestions = _searchSuggestions.asStateFlow()
+
+    private val latestSuggestionsRequestId = AtomicLong(0L)
+
+    /**
      * Latest query text. Typed input lands here and is debounced by
      * [observeSearchRequests]; the filter is combined with it so switching tabs
      * re-runs the search that is already on screen.
@@ -63,6 +81,7 @@ class SearchStateHolder @Inject constructor(
 
     private var scope: CoroutineScope? = null
     private var searchJob: Job? = null
+    private var suggestionsJob: Job? = null
 
     /**
      * Initialize with ViewModel scope.
@@ -70,6 +89,47 @@ class SearchStateHolder @Inject constructor(
     fun initialize(scope: CoroutineScope) {
         this.scope = scope
         observeSearchRequests()
+        observeSuggestionRequests()
+    }
+
+    /**
+     * Live suggestions fetch, debounced independently of the full search.
+     *
+     * Mirrors Meld: the suggestion endpoint is a single cheap call, so it runs
+     * on a shorter delay than [SEARCH_DEBOUNCE_MS] and every keystroke cancels
+     * the previous fetch via [collectLatest].
+     */
+    @OptIn(FlowPreview::class)
+    private fun observeSuggestionRequests() {
+        suggestionsJob?.cancel()
+        suggestionsJob = scope?.launch {
+            _activeQuery
+                .debounce(SUGGESTIONS_DEBOUNCE_MS)
+                .collectLatest { query ->
+                    if (query.isBlank()) {
+                        if (_searchSuggestions.value.isNotEmpty()) {
+                            _searchSuggestions.value = persistentListOf()
+                        }
+                        return@collectLatest
+                    }
+
+                    val requestId = latestSuggestionsRequestId.incrementAndGet()
+                    try {
+                        val (queries, _) = withContext(Dispatchers.IO) {
+                            musicRepository.getSearchSuggestions(query)
+                        }
+                        if (requestId != latestSuggestionsRequestId.get()) return@collectLatest
+                        _searchSuggestions.value = queries.toImmutableList()
+                    } catch (_: CancellationException) {
+                        // Superseded by a newer keystroke; ignore.
+                    } catch (e: Exception) {
+                        if (requestId == latestSuggestionsRequestId.get()) {
+                            // Suggestions are decorative — never surface as an error.
+                            Timber.d(e, "Suggestions failed for query: $query")
+                        }
+                    }
+                }
+        }
     }
 
     @OptIn(FlowPreview::class)

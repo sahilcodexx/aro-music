@@ -1,130 +1,90 @@
 package com.aro.music.data.streaming
 
 import com.aro.music.data.innertube.InnerTubeRepository
-import com.aro.music.data.itunes.ItunesRepository
-import com.aro.music.data.jiosaavn.JioSaavnRepository
 import com.aro.music.data.model.Album
 import com.aro.music.data.model.Artist
 import com.aro.music.data.model.Song
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Fans a catalog request out to the streaming backends and returns the first
- * usable answer.
+ * Catalog access, backed solely by InnerTube (YouTube Music).
  *
- * InnerTube (YouTube Music) is primary for every entity type because it is the
- * only backend that returns real album, artist and playlist relationships —
- * JioSaavn flattens everything to a title/artist string, and iTunes only ever
- * returns 30-second previews. JioSaavn and iTunes are kept as fallbacks so that
- * a blocked, rate-limited or empty InnerTube response degrades to the previous
- * behaviour instead of to an empty screen.
+ * The JioSaavn and iTunes backends were removed deliberately. They were kept
+ * first as a fallback and that turned out to be actively harmful: when InnerTube
+ * failed, they silently answered instead, so the app looked healthy while
+ * serving a completely different catalogue. JioSaavn only has Indian film and
+ * karaoke recordings, so a query for, say, a rap track returned loosely-related
+ * film songs with the real track missing entirely — which reads as "search is
+ * broken" rather than "search is unavailable".
+ *
+ * Failing visibly is better than answering from the wrong catalogue. If InnerTube
+ * is unreachable the caller gets an empty list and the UI shows its empty state.
  */
 @Singleton
 class StreamingRepository @Inject constructor(
     private val innerTube: InnerTubeRepository,
-    private val jioSaavn: JioSaavnRepository,
-    private val iTunes: ItunesRepository,
+    private val spotify: com.aro.music.spotify.SpotifyRepository,
 ) {
+    suspend fun spotifyAlbum(browseId: String) = spotify.album(browseId)
+    suspend fun spotifyAlbumSongs(browseId: String) = spotify.albumSongs(browseId)
+    suspend fun spotifyArtistSongs(browseId: String) = spotify.artistSongs(browseId)
+    suspend fun spotifySearchPlaylists(query: String) = spotify.searchPlaylists(query)
+    suspend fun spotifyPlaylist(id: String) = spotify.resolvePlaylist(id)
+
     companion object {
         private const val TAG = "StreamingRepo"
     }
 
-    /**
-     * Search songs. InnerTube first — JioSaavn, then iTunes, only if InnerTube
-     * returns nothing.
-     */
     suspend fun searchSongs(query: String, limit: Int = 20): List<Song> {
-        val innerTubeResults = try {
-            innerTube.searchSongs(query = query, limit = limit)
-        } catch (e: Exception) {
-            Timber.w(e, "$TAG: InnerTube searchSongs failed")
-            emptyList()
-        }
-        if (innerTubeResults.isNotEmpty()) {
-            Timber.d("$TAG: InnerTube → ${innerTubeResults.size} songs for '$query'")
-            return innerTubeResults
-        }
-        Timber.d("$TAG: InnerTube 0 results — falling back for '$query'")
-
-        val jioResults = try {
-            jioSaavn.searchSongs(query = query, limit = limit)
-        } catch (e: Exception) {
-            Timber.w(e, "$TAG: JioSaavn searchSongs failed")
-            emptyList()
-        }
-        if (jioResults.isNotEmpty()) return jioResults
-
+        if (query.isBlank()) return emptyList()
         return try {
-            iTunes.searchSongs(query = query, limit = limit)
+            val songs = spotify.searchSongs(query, limit).ifEmpty { innerTube.searchSongs(query = query, limit = limit) }
+            Timber.d("$TAG: InnerTube → ${songs.size} songs for '$query'")
+            songs
         } catch (e: Exception) {
-            Timber.w(e, "$TAG: iTunes searchSongs also failed")
+            Timber.w(e, "$TAG: InnerTube searchSongs failed for '$query'")
             emptyList()
         }
     }
 
-    /** Search albums — InnerTube first, JioSaavn as fallback. */
     suspend fun searchAlbums(query: String): List<Album> {
-        val innerTubeResults = try {
-            innerTube.searchAlbums(query = query)
-        } catch (e: Exception) {
-            Timber.w(e, "$TAG: InnerTube searchAlbums failed")
-            emptyList()
-        }
-        if (innerTubeResults.isNotEmpty()) {
-            Timber.d("$TAG: InnerTube → ${innerTubeResults.size} albums for '$query'")
-            return innerTubeResults
-        }
+        if (query.isBlank()) return emptyList()
         return try {
-            jioSaavn.searchAlbums(query = query)
+            val albums = spotify.searchAlbums(query).ifEmpty { innerTube.searchAlbums(query = query) }
+            Timber.d("$TAG: InnerTube → ${albums.size} albums for '$query'")
+            albums
         } catch (e: Exception) {
-            Timber.w(e, "$TAG: searchAlbums failed")
+            Timber.w(e, "$TAG: InnerTube searchAlbums failed for '$query'")
             emptyList()
         }
     }
 
-    /** Search artists — InnerTube first, JioSaavn as fallback. */
     suspend fun searchArtists(query: String): List<Artist> {
-        val innerTubeResults = try {
-            innerTube.searchArtists(query = query)
-        } catch (e: Exception) {
-            Timber.w(e, "$TAG: InnerTube searchArtists failed")
-            emptyList()
-        }
-        if (innerTubeResults.isNotEmpty()) {
-            Timber.d("$TAG: InnerTube → ${innerTubeResults.size} artists for '$query'")
-            return innerTubeResults
-        }
+        if (query.isBlank()) return emptyList()
         return try {
-            jioSaavn.searchArtists(query = query)
+            val artists = spotify.searchArtists(query).ifEmpty { innerTube.searchArtists(query = query) }
+            Timber.d("$TAG: InnerTube → ${artists.size} artists for '$query'")
+            artists
         } catch (e: Exception) {
-            Timber.w(e, "$TAG: searchArtists failed")
+            Timber.w(e, "$TAG: InnerTube searchArtists failed for '$query'")
             emptyList()
         }
     }
 
     /**
-     * Fetch the songs for a genre tag.
+     * Songs for a genre tag.
      *
-     * Left on JioSaavn: InnerTube has no genre facet, so its search would be a
-     * keyword search dressed up as a genre browse and would return loosely
-     * related tracks instead.
+     * Empty by design: InnerTube has no genre facet, and approximating one with
+     * a keyword search returned loosely related tracks rather than the genre.
      */
-    suspend fun searchSongsForGenre(genreTag: String, limit: Int = 50): List<Song> = try {
-        jioSaavn.searchSongsForGenre(genreTag = genreTag, limit = limit)
-    } catch (e: Exception) {
-        Timber.w(e, "$TAG: searchSongsForGenre failed for '$genreTag'")
-        emptyList()
+    suspend fun searchSongsForGenre(genreTag: String, limit: Int = 50): List<Song> {
+        Timber.d("$TAG: genre browsing unavailable without the removed keyword backends")
+        return emptyList()
     }
 
-    /**
-     * Real "similar songs" / autoplay feed for a track, from YouTube Music's own
-     * radio. Returns an empty list when the seed has no radio so callers can
-     * fall back to their local heuristics.
-     */
+    /** YouTube Music's own related-tracks feed for a track. */
     suspend fun getRadioFor(videoId: String, limit: Int = 50): List<Song> = try {
         innerTube.getRadioFor(videoId = videoId, limit = limit)
     } catch (e: Exception) {
@@ -133,55 +93,39 @@ class StreamingRepository @Inject constructor(
     }
 
     /**
-     * Fetch a starter set of songs for the library.
+     * Live query suggestions for the search field.
      *
-     * InnerTube's charts browse is the closest thing to a real trending feed,
-     * which is what replaces the previous "rotate through 15 hard-coded keyword
-     * searches" behaviour. JioSaavn + iTunes remain as the fallback.
+     * Meld wires `music/get_search_suggestions` straight into its search box;
+     * this is the same feed, failing soft to empty so the dropdown just shows
+     * history when YouTube does not answer.
      */
-    suspend fun getTrendingSongs(limit: Int = 30): List<Song> = coroutineScope {
-        val innerTubeDeferred = async {
-            try {
-                innerTube.getTrendingSongs(limit = limit)
-            } catch (e: Exception) {
-                Timber.w(e, "$TAG: InnerTube trending failed")
-                emptyList()
-            }
-        }
-        val jioDeferred = async {
-            try {
-                jioSaavn.getTrendingSongs(limit = limit)
-            } catch (e: Exception) {
-                Timber.w(e, "$TAG: JioSaavn trending failed")
-                emptyList()
-            }
-        }
-        val itunesDeferred = async {
-            try {
-                iTunes.searchSongs(query = "top hits 2024", limit = limit / 2)
-            } catch (e: Exception) {
-                Timber.w(e, "$TAG: iTunes trending failed")
-                emptyList()
-            }
+    suspend fun getSuggestions(query: String): Pair<List<String>, List<Song>> =
+        try {
+            val result = innerTube.getSuggestions(query)
+            result.queries to result.songs
+        } catch (e: Exception) {
+            Timber.w(e, "$TAG: getSuggestions failed for '$query'")
+            emptyList<String>() to emptyList()
         }
 
-        val innerTubeSongs = innerTubeDeferred.await()
-        if (innerTubeSongs.isNotEmpty()) {
-            Timber.d("$TAG: getTrendingSongs → ${innerTubeSongs.size} songs via InnerTube charts")
-            return@coroutineScope innerTubeSongs
-        }
+    /**
+     * Lyrics straight from YouTube Music for an InnerTube track.
+     *
+     * Returns null when the track has no lyrics page and no captions, which is
+     * the caller's signal to keep using the LRCLIB pipeline.
+     */
+    suspend fun getYouTubeLyrics(videoId: String): String? = try {
+        innerTube.getYouTubeLyrics(videoId)
+    } catch (e: Exception) {
+        Timber.w(e, "$TAG: getYouTubeLyrics failed for $videoId")
+        null
+    }
 
-        val jioSongs = jioDeferred.await()
-        val itunesSongs = itunesDeferred.await()
-        val merged = if (jioSongs.isNotEmpty()) {
-            val jioIds = jioSongs.map { it.id }.toSet()
-            val extra = itunesSongs.filter { it.id !in jioIds }
-            (jioSongs + extra).take(limit)
-        } else {
-            Timber.w("$TAG: InnerTube and JioSaavn both empty — using iTunes fallback")
-            itunesSongs.take(limit)
-        }
-        Timber.d("$TAG: getTrendingSongs → ${merged.size} songs (fallback path)")
-        merged
+    /** Starter songs for the library, from the YouTube Music charts feed. */
+    suspend fun getTrendingSongs(limit: Int = 30): List<Song> = try {
+        kotlinx.coroutines.withTimeoutOrNull(3_500L) { spotify.homeSongs(limit) }.orEmpty().ifEmpty { innerTube.getTrendingSongs(limit = limit) }
+    } catch (e: Exception) {
+        Timber.w(e, "$TAG: InnerTube trending failed")
+        emptyList()
     }
 }
