@@ -454,6 +454,26 @@ private fun String.capitalizeFirstLetter(): String {
 
 object LyricsUtils {
 
+    /**
+     * Strips bracketed noise from a YouTube-style title before a lyrics lookup.
+     *
+     * Ported from Meld's `LyricsUtils.cleanTitleForSearch`: YouTube Music titles
+     * carry decorations the song has no lyrics under — "(Official Video)",
+     * "[Official Audio]", "(Lyric Video)" — and a lyrics provider searched with
+     * them included returns nothing for a track whose clean title is well known.
+     * Remove every parenthesised or bracketed group, then trim.
+     */
+    fun cleanTitleForSearch(title: String): String {
+        return title.replace(Regex("\\s*[(\\[].*?[)\\]]"), "").trim()
+    }
+
+    /**
+     * Strips the topic-channel suffix YouTube appends to auto-generated artist
+     * pages ("Artist - Topic"), which no lyrics provider knows under that name.
+     */
+    fun cleanArtistForSearch(artist: String): String =
+        artist.replace(Regex("\\s+-\\s+Topic$"), "").trim()
+
     private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{2}):(\\d{2})[.:](\\d{2,3})](.*)$")
     private val LRC_WORD_REGEX = Pattern.compile("<(\\d{2}):(\\d{2})[.:](\\d{2,3})>([^<]*)")
     private val LRC_WORD_TAG_REGEX = Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>")

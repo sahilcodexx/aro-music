@@ -12,6 +12,7 @@ import com.google.gson.Gson
 import com.kyant.taglib.TagLib
 import com.aro.music.R
 import com.aro.music.data.database.MusicDao
+import com.aro.music.data.innertube.InnerTubeIds
 import com.aro.music.data.model.Lyrics
 import com.aro.music.data.model.SyncedLine
 import com.aro.music.data.model.LyricsSourcePreference
@@ -94,7 +95,8 @@ class LyricsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val lrcLibApiService: LrcLibApiService,
     private val lyricsDao: com.aro.music.data.database.LyricsDao,
-    private val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient,
+    private val innerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository,
 ) : LyricsRepository {
 
 
@@ -455,6 +457,14 @@ class LyricsRepositoryImpl @Inject constructor(
                         lrcLibApiService.searchLyrics(query = "$cleanArtist $cleanTitle")
                     }
                 )
+                add(
+                    RemoteSearchStrategy("clean_track+artist") {
+                        lrcLibApiService.searchLyrics(
+                            trackName = LyricsUtils.cleanTitleForSearch(cleanTitle),
+                            artistName = LyricsUtils.cleanArtistForSearch(cleanArtist),
+                        )
+                    }
+                )
                 if (useSimplifiedStrategy) {
                     add(
                         RemoteSearchStrategy("simplified_track+artist") {
@@ -497,7 +507,11 @@ class LyricsRepositoryImpl @Inject constructor(
 
             if (results.isEmpty()) {
                 Log.d(TAG, "No results from LRCLIB API")
-                return@withContext null
+                // Meld's chain, next source: the track's own YouTube Music lyrics
+                // page, then captions. Streaming songs carry YouTube metadata
+                // that LRCLIB cannot match, and before this the whole fetch
+                // gave up here — which is what "lyrics stopped working" was.
+                return@withContext fetchLyricsFromYouTube(song)?.first
             }
 
             val bestMatch = rankRemoteLyricsMatches(
@@ -532,7 +546,10 @@ class LyricsRepositoryImpl @Inject constructor(
                 }
             }
 
-            return@withContext null
+            // LRCLIB answered with rows but none scored above the match floor —
+            // same rescue as the empty case: ask YouTube Music for the track's
+            // own lyrics before declaring the song lyric-less.
+            return@withContext fetchLyricsFromYouTube(song)?.first
         } catch (e: Exception) {
             Log.e(TAG, "LRCLIB lyrics fetch failed: ${e.message}", e)
             return@withContext null
@@ -544,6 +561,69 @@ class LyricsRepositoryImpl @Inject constructor(
 
     private fun hasSyncedLyrics(response: LrcLibResponse): Boolean =
         !response.syncedLyrics.isNullOrBlank()
+
+    /**
+     * Lyrics for an InnerTube song from YouTube Music itself — Meld's
+     * `YouTubeLyricsProvider` chain in the same order: the track's line-timed
+     * lyrics page, the plain description shelf, then video captions.
+     *
+     * Streaming songs are the reason this exists. Their metadata comes from
+     * YouTube, so LRCLIB (which indexes release metadata) frequently has no row
+     * for the messy title the query carries — while YouTube Music has the lyrics
+     * for its own catalogue behind the `MPLYt…` browse endpoint, line-timed when
+     * asked as ANDROID_MUSIC.
+     *
+     * Successful fetches persist through the same three caches the LRCLIB path
+     * uses — Room, the in-memory LRU and the JSON disk cache — so a YouTube hit
+     * is never fetched twice.
+     *
+     * @return parsed lyrics with the raw text, or null when the song is not an
+     *   InnerTube track or YouTube has no lyrics for it.
+     */
+    private suspend fun fetchLyricsFromYouTube(song: Song): Pair<Lyrics, String>? =
+        withContext(Dispatchers.IO) {
+            val videoId = com.aro.music.data.innertube.InnerTubeIds
+                .videoIdFromContentUri(song.contentUriString)
+            if (videoId == null) {
+                Log.d(TAG, "Not an InnerTube song, skipping YouTube lyrics: ${song.title}")
+                return@withContext null
+            }
+
+            val rawLyrics = try {
+                innerTubeRepository.getYouTubeLyrics(videoId)
+            } catch (e: Exception) {
+                Log.w(TAG, "YouTube lyrics fetch failed for $videoId: ${e.message}")
+                null
+            } ?: return@withContext null
+
+            val parsedLyrics = LyricsUtils.parseLyrics(rawLyrics).copy(areFromRemote = true)
+            if (!parsedLyrics.isValid()) {
+                Log.d(TAG, "YouTube lyrics for $videoId parsed empty, ignoring")
+                return@withContext null
+            }
+
+            try {
+                lyricsDao.insert(
+                    com.aro.music.data.database.LyricsEntity(
+                        songId = song.id.toLong(),
+                        content = rawLyrics,
+                        isSynced = !parsedLyrics.synced.isNullOrEmpty(),
+                        source = "youtube"
+                    )
+                )
+            } catch (e: NumberFormatException) {
+                Log.w(TAG, "Skipping DB save for non-numeric song ID: ${song.id}")
+            }
+
+            val cacheKey = generateCacheKey(song.id)
+            lyricsCache.put(cacheKey, parsedLyrics)
+            saveLocalLyricsJson(song, parsedLyrics)
+            Log.d(
+                TAG,
+                "YouTube Music lyrics found - Synced: ${!parsedLyrics.synced.isNullOrEmpty()}"
+            )
+            Pair(parsedLyrics, rawLyrics)
+        }
 
     private fun rankRemoteLyricsMatches(
         song: Song,
@@ -1064,8 +1144,15 @@ class LyricsRepositoryImpl @Inject constructor(
      * Load embedded lyrics from audio file metadata
      */
     private suspend fun loadEmbeddedLyricsFromMetadata(song: Song): Lyrics? = withContext(Dispatchers.IO) {
-        // Skip embedded lyrics for Telegram songs (not supported yet/streamed)
-        if (song.contentUriString.startsWith("telegram://") || song.contentUriString.isEmpty()) {
+        // Skip embedded lyrics for songs with no readable file behind the URI:
+        // Telegram streams and InnerTube tracks (content uri `innertube://<videoId>`)
+        // both have no local file, and opening them throws
+        // FileNotFoundException("No content provider: …") for every track.
+        if (
+            song.contentUriString.startsWith("telegram://") ||
+            InnerTubeIds.isInnerTubeUri(song.contentUriString) ||
+            song.contentUriString.isEmpty()
+        ) {
             return@withContext null
         }
 
@@ -1268,6 +1355,16 @@ class LyricsRepositoryImpl @Inject constructor(
 
                 Result.success(Pair(parsedLyrics, rawLyricsToSave))
             } else {
+                // Last remote source before giving up: the track's own YouTube
+                // Music lyrics page (Meld's chain). InnerTube songs are the ones
+                // that land here most often.
+                fetchLyricsFromYouTube(song)?.let { (ytLyrics, ytRaw) ->
+                    LogUtils.d(
+                        this@LyricsRepositoryImpl,
+                        "Fetched YouTube Music lyrics for: ${song.title}"
+                    )
+                    return@withContext Result.success(Pair(ytLyrics, ytRaw))
+                }
                 LogUtils.d(this@LyricsRepositoryImpl, "No lyrics found remotely for: ${song.title}")
                 Result.failure(NoLyricsFoundException())
             }
@@ -1301,7 +1398,17 @@ class LyricsRepositoryImpl @Inject constructor(
                 add(RemoteSearchStrategy("track+artist") {
                     lrcLibApiService.searchLyrics(trackName = cleanTitle, artistName = cleanArtist)
                 })
-                
+
+                // Meld's title cleanup: YouTube titles carry bracketed noise
+                // ("(Official Video)") the release has no lyrics under.
+                val meldTitle = LyricsUtils.cleanTitleForSearch(cleanTitle)
+                val meldArtist = LyricsUtils.cleanArtistForSearch(cleanArtist)
+                if (meldTitle != cleanTitle || meldArtist != cleanArtist) {
+                    add(RemoteSearchStrategy("clean_track+artist") {
+                        lrcLibApiService.searchLyrics(trackName = meldTitle, artistName = meldArtist)
+                    })
+                }
+
                 // Smart title cleanup strategy
                 val smartTitle = cleanTitleSmart(cleanTitle)
                 if (smartTitle != cleanTitle && smartTitle.isNotBlank()) {
