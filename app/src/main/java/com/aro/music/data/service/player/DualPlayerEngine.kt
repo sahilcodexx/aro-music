@@ -41,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,6 +86,7 @@ class DualPlayerEngine @Inject constructor(
     private val jellyfinStreamProxy: com.aro.music.data.jellyfin.JellyfinStreamProxy,
     private val gdriveStreamProxy: com.aro.music.data.gdrive.GDriveStreamProxy,
     private val innerTubeRepository: InnerTubeRepository,
+    private val innerTubeEngine: com.aro.music.data.innertube.InnerTubeEngine,
     private val telegramCacheManager: com.aro.music.data.telegram.TelegramCacheManager,
     private val connectivityStateHolder: com.aro.music.presentation.viewmodel.ConnectivityStateHolder
 ) {
@@ -636,16 +638,38 @@ class DualPlayerEngine @Inject constructor(
                     val originalUri = uri.toString()
                     val resolved = resolvedUriCache.get(originalUri)
                     if (resolved != null) {
-                        return dataSpec.buildUpon().setUri(resolved).build()
+                        return dataSpec.buildUpon().setUri(resolved).setHttpRequestHeaders(dataSpec.httpRequestHeaders + innerTubeRepository.headersFor(resolved.toString())).build()
                     }
-                    
-                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - attempting to use original URI", scheme)
+
+                    // Cache miss on a manual skip: the transition controller only
+                    // pre-resolves the item it prepares for an automatic overlap,
+                    // so tapping next can land on an item nobody resolved. Passing
+                    // the `scheme://` URI through is a guaranteed failure —
+                    // HttpDataSource throws MalformedURLException: unknown
+                    // protocol: innertube, the user hears silence, and the queue
+                    // looks broken. The loader thread is a background HandlerThread,
+                    // so blocking here delays that item's load by the round trip
+                    // (already in [resolvedUriCache] for every later open of it)
+                    // without touching the UI thread.
+                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - resolving inline", scheme)
+                    val inlineResolved = runBlocking { resolveCloudUri(uri) }
+                    if (inlineResolved != uri) {
+                        return dataSpec.buildUpon().setUri(inlineResolved).setHttpRequestHeaders(dataSpec.httpRequestHeaders + innerTubeRepository.headersFor(inlineResolved.toString())).build()
+                    }
+                    Timber.tag("DualPlayerEngine")
+                        .w("resolveDataSpec: inline resolution failed for %s, passing through", scheme)
                 }
-                return dataSpec
+                return dataSpec.buildUpon().setHttpRequestHeaders(dataSpec.httpRequestHeaders + innerTubeRepository.headersFor(uri.toString())).build()
             }
         }
         
-        val dataSourceFactory = DefaultDataSource.Factory(context)
+        val defaultFactory = DefaultDataSource.Factory(context)
+        val dataSourceFactory = androidx.media3.datasource.DataSource.Factory {
+            com.aro.music.data.innertube.InnerTubeTransportDataSource(
+                defaultFactory.createDataSource(),
+                com.aro.music.data.innertube.InnerTubeSabrDataSource(innerTubeEngine)
+            )
+        }
         val resolvingFactory = ResolvingDataSource.Factory(dataSourceFactory, resolver)
         val extractorsFactory = DefaultExtractorsFactory()
             .setMp4ExtractorFlags(Mp4Extractor.FLAG_WORKAROUND_IGNORE_EDIT_LISTS)
@@ -710,6 +734,18 @@ class DualPlayerEngine @Inject constructor(
         hiFiModeEnabled = enabled
         rebuildPlayersPreservingMasterState("Hi-Fi mode set to $enabled")
     }
+
+    /**
+     * True when [uri]'s scheme is one this engine knows how to turn into a
+     * playable URL.
+     *
+     * Callers that need to pre-resolve must ask here rather than re-listing the
+     * schemes. A duplicated list had drifted — it omitted `innertube` and
+     * `gdrive` — so the first song of a queue was handed to ExoPlayer with its
+     * unresolved `scheme://` URI and failed with a source error, while later
+     * tracks resolved fine because they went through [prepareNext].
+     */
+    fun needsCloudResolution(uri: Uri): Boolean = uri.scheme in REMOTE_MEDIA_SCHEMES
 
     suspend fun resolveCloudUri(uri: Uri): Uri = withContext(Dispatchers.IO) {
         val uriString = uri.toString()
@@ -805,7 +841,12 @@ class DualPlayerEngine @Inject constructor(
             return@withContext null
         }
 
-        val stream = innerTubeRepository.resolveStream(videoId)
+        val stream = runCatching { innerTubeRepository.resolveStream(videoId) }
+            .onFailure {
+                Timber.tag("DualPlayerEngine")
+                    .w("InnerTube stream resolution threw for %s: %s", videoId, it.message)
+            }
+            .getOrNull()
         if (stream == null) {
             Timber.tag("DualPlayerEngine")
                 .w("InnerTube refused playback for %s (region locked or removed)", videoId)

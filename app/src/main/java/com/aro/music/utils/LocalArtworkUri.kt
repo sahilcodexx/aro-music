@@ -109,6 +109,9 @@ object LocalArtworkUri {
         songId: Long,
         contentUriString: String
     ): String? {
+        if (com.aro.music.data.innertube.InnerTubeIds.isInnerTubeUri(contentUriString)) {
+            return com.aro.music.data.innertube.InnerTubeArtwork.forSong(storedUri, contentUriString)
+        }
         val normalizedStoredUri = storedUri?.takeIf { it.isNotBlank() } ?: return null
         if (!isLikelyLocalMedia(contentUriString)) {
             return normalizedStoredUri

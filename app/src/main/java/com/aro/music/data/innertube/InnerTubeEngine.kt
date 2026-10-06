@@ -17,7 +17,13 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,11 +59,49 @@ class InnerTubeEngine @Inject constructor(
         /** Browse/search bodies are a few hundred KB; this is a safety bound. */
         private const val SEARCH_BODY_MAX_BYTES = 8 * 1024 * 1024
 
-        /** Music clients, tried in order. ANDROID_MUSIC avoids most bot checks. */
+        /**
+         * Bodies above this are rejected before they are parsed.
+         *
+         * Parsing JSON into a kotlinx object tree costs roughly an order of
+         * magnitude more heap than the text, so a multi-megabyte body becomes
+         * tens of megabytes of live objects. Some clients answer 200 with a
+         * multi-megabyte catalogue shell that carries no playable rows anyway, and
+         * parsing those is what exhausted the 256MB heap and crashed the app.
+         */
+        private const val MAX_USEFUL_BODY_BYTES = 1_500_000
+
+        /**
+         * Cheap substring tests for "this response has playable rows".
+         *
+         * Runs on the raw text before any parsing so an unusable response costs a
+         * scan rather than a large object tree. Two markers because the catalogue
+         * speaks both shapes: list rows (`musicResponsiveListItemRenderer`) and
+         * the two-column tiles that make up every home-feed shelf
+         * (`musicTwoRowItemRenderer`) — a home browse whose A/B variant ships no
+         * quick-picks list would otherwise fail the guard on all clients and the
+         * feed would stay empty.
+         */
+        private val MUSIC_ROW_MARKERS = listOf(
+            "musicResponsiveListItemRenderer",
+            "musicTwoRowItemRenderer",
+        )
+
+        /**
+         * Music clients, tried in order.
+         *
+         * WEB_REMIX leads because it is what Meld uses for every catalogue
+         * endpoint (`next`, home browse, search) and is the only client this
+         * InnerTubeX build ships working defaults for. ANDROID_MUSIC used to
+         * lead, but the library's own `PlaybackClientCatalog` now marks it
+         * `ClientLifecycle.BROKEN` / `PROBE_ONLY` — every `next` and `browse`
+         * came back HTTP 400, which silently killed the radio queue and the
+         * home feed. It is kept last only as a data point for endpoints that
+         * might still accept it; playback itself never goes through these.
+         */
         private val MUSIC_CLIENTS = listOf(
-            YouTubeClient.ANDROID_MUSIC,
-            YouTubeClient.IOS_MUSIC,
             YouTubeClient.WEB_REMIX,
+            YouTubeClient.IOS_MUSIC,
+            YouTubeClient.ANDROID_MUSIC,
         )
 
         private val json = Json {
@@ -77,12 +121,14 @@ class InnerTubeEngine @Inject constructor(
                 connectTimeoutMillis = 15_000
                 socketTimeoutMillis = 20_000
             }
-            defaultRequest {
-                headers.append(
-                    HttpHeaders.UserAgent,
-                    YouTubeClient.USER_AGENT_WEB,
-                )
-            }
+            // NOTE: deliberately no `defaultRequest { User-Agent }` here.
+            // InnerTubeX's `ytClient` already sets a per-client User-Agent via
+            // `userAgent(...)`, and `headers.append` would *add* to it rather than
+            // replace it. The result was a comma-joined header such as
+            //   User-Agent: com.google.android.apps.youtube.music/5.34.51 (...),Mozilla/5.0 (...)
+            // which YouTube answers with HTTP 400 on every endpoint. That made
+            // all three clients fail and silently pushed every request onto the
+            // JioSaavn/iTunes fallback.
             engine {
                 config {
                     retryOnConnectionFailure(true)
@@ -92,6 +138,23 @@ class InnerTubeEngine @Inject constructor(
     }
 
     private val innerTube: InnerTube by lazy { InnerTube(httpClient = httpClient) }
+
+    private val streamCache = android.util.LruCache<String, ExtractedStream>(32)
+
+    @OptIn(com.metrolist.innertubex.sabr.ExperimentalSabrApi::class)
+    suspend fun sabrAudio(videoId: String): kotlinx.coroutines.flow.Flow<ByteArray> {
+        val cached = streamCache[videoId]?.takeIf {
+            it.expiresAt?.toEpochMilliseconds()?.let { expiry -> expiry > System.currentTimeMillis() + 60_000L } != false
+        }
+        val stream = cached ?: extractor.extract(videoId, hints = ContentHints(wantVideo = false))
+            ?: throw java.io.IOException("No audio stream for $videoId")
+        streamCache.put(videoId, stream)
+        val bootstrap = stream.sabrBootstrap ?: throw java.io.IOException("Missing SABR bootstrap for $videoId")
+        return com.metrolist.innertubex.sabr.SabrAudioStream(httpClient, bootstrap).bytes()
+    }
+
+    fun headersFor(audioUrl: String): Map<String, String> =
+        streamCache.snapshot().values.firstOrNull { it.audioUrl == audioUrl }?.headers.orEmpty()
 
     private val extractor: InnerTubeExtractor by lazy {
         val configStore = RemotePlayerConfigStore(
@@ -172,10 +235,26 @@ class InnerTubeEngine @Inject constructor(
                     continuation = continuation,
                 )
                 val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
-                val root = body.takeIf { it.isNotBlank() }
-                    ?.let { json.parseToJsonElement(it) as? JsonObject }
-                if (root == null) {
+                // Guard *before* parsing: a huge or row-less body is unusable, and
+                // parsing it is what ran the heap out.
+                if (body.isBlank()) {
                     Timber.d("$TAG: search '$query' empty body via $client, trying next")
+                    continue
+                }
+                if (body.length > MAX_USEFUL_BODY_BYTES) {
+                    Timber.d(
+                        "$TAG: search '$query' body ${body.length}B over cap via $client, " +
+                            "trying next"
+                    )
+                    continue
+                }
+                if (!MUSIC_ROW_MARKERS.any { body.contains(it) }) {
+                    Timber.d("$TAG: search '$query' no music rows via $client, trying next")
+                    continue
+                }
+                val root = json.parseToJsonElement(body) as? JsonObject
+                if (root == null) {
+                    Timber.d("$TAG: search '$query' unparseable via $client, trying next")
                     continue
                 }
                 if (!accept(root)) {
@@ -184,6 +263,7 @@ class InnerTubeEngine @Inject constructor(
                 }
                 return root
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 lastError = e
                 Timber.w(e, "$TAG: search failed via $client")
             }
@@ -205,7 +285,9 @@ class InnerTubeEngine @Inject constructor(
     ): InnerTubeSearchPage = withContext(Dispatchers.IO) {
         try {
             val response = innerTube.next(
-                client = YouTubeClient.ANDROID_MUSIC,
+                // Meld asks `next` as WEB_REMIX; ANDROID_MUSIC answers HTTP 400
+                // on this endpoint in the current InnerTubeX build.
+                client = YouTubeClient.WEB_REMIX,
                 videoId = videoId,
                 playlistId = playlistId,
                 continuation = continuation,
@@ -218,8 +300,68 @@ class InnerTubeEngine @Inject constructor(
             Timber.d("$TAG: next($videoId) → ${parsed.tracks.size} tracks")
             parsed
         } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.w(e, "$TAG: next failed for $videoId")
-            InnerTubeSearchPage(emptyList(), continuation)
+            throw e
+        }
+    }
+
+    /**
+     * Raw `next` response for a track.
+     *
+     * [next] collapses the response into tracks, which is right for a queue and
+     * wrong for everything else the page carries: the "Lyrics" and "Related"
+     * tabs arrive as tab endpoints inside the same response, and Meld reads them
+     * from exactly this JSON. Returns the untouched object tree so callers can
+     * pull those endpoints out, or null when the request failed.
+     */
+    suspend fun nextRaw(
+        videoId: String,
+        playlistId: String? = null,
+        continuation: String? = null,
+    ): JsonObject? = withContext(Dispatchers.IO) {
+        try {
+            val response = innerTube.next(
+                // Same client rule as [next]: Meld reads the watch-next page
+                // (queue rows, lyrics tab endpoint) from WEB_REMIX.
+                client = YouTubeClient.WEB_REMIX,
+                videoId = videoId,
+                playlistId = playlistId,
+                continuation = continuation,
+            )
+            val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
+            if (body.isBlank()) return@withContext null
+            json.parseToJsonElement(body) as? JsonObject
+        } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            Timber.w(e, "$TAG: nextRaw failed for $videoId")
+            null
+        }
+    }
+
+    /**
+     * YouTube Music's live query suggestions — the list that drops down under
+     * the search field while typing.
+     *
+     * Meld asks `music/get_search_suggestions` as WEB_REMIX; the response holds
+     * two sections, text completions and recommended items, which
+     * [InnerTubeSearchParser.parseSuggestions] walks. Returns null on failure —
+     * suggestions are decorative and must never surface as an error.
+     */
+    suspend fun searchSuggestions(query: String): JsonObject? = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext null
+        try {
+            val response = innerTube.getSearchSuggestions(
+                client = YouTubeClient.WEB_REMIX,
+                input = query,
+            )
+            val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
+            if (body.isBlank()) return@withContext null
+            json.parseToJsonElement(body) as? JsonObject
+        } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            Timber.w(e, "$TAG: suggestions failed for '$query'")
+            null
         }
     }
 
@@ -247,15 +389,131 @@ class InnerTubeEngine @Inject constructor(
                     continuation = continuation,
                 )
                 val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
-                if (body.isBlank()) continue
-                return@withContext json.parseToJsonElement(body) as? JsonObject
+                // Same pre-parse guards as search: reject oversized and row-less
+                // bodies before building an object tree from them.
+                if (body.isBlank() || body.length > MAX_USEFUL_BODY_BYTES) continue
+                val hasRows = MUSIC_ROW_MARKERS.any { body.contains(it) }
+                if (!hasRows && !continuation.isNullOrBlank()) {
+                    // A continuation page has no music rows by nature.
+                    return@withContext json.parseToJsonElement(body) as? JsonObject
+                }
+                if (!hasRows) continue
+                val root = json.parseToJsonElement(body) as? JsonObject
+                if (root == null) continue
+                // Accept a client only when it returned actual item renderers.
+                // This must not be "parses to tracks": the charts browse is a
+                // mixed page whose leading rows are artists, which carry no
+                // videoId, so a track-count check rejected a perfectly good
+                // response and the home feed stayed empty.
+                if (!continuation.isNullOrBlank()) {
+                    return@withContext root
+                }
+                if (!InnerTubeSearchParser.containsItemRenderer(root)) {
+                    Timber.d("$TAG: browse $browseId no rows via $client, trying next")
+                    continue
+                }
+                return@withContext root
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 lastError = e
                 Timber.w(e, "$TAG: browse $browseId failed via $client")
             }
         }
         Timber.w(lastError, "$TAG: browse exhausted all clients for $browseId")
         null
+    }
+
+    /**
+     * A browse response with none of the guards [browse] applies.
+     *
+     * The lyrics page is the reason it exists: its `MPLYt…` browseId answers
+     * with a component tree that contains no `musicResponsiveListItemRenderer`
+     * at all, so the row-marker check in [browse] would reject the only
+     * response that matters. [clients] pins the client per caller — timed
+     * lyrics need ANDROID_MUSIC, the plain description shelf needs WEB_REMIX.
+     */
+    suspend fun browseRaw(
+        browseId: String,
+        params: String? = null,
+        clients: List<YouTubeClient> = MUSIC_CLIENTS,
+    ): JsonObject? = withContext(Dispatchers.IO) {
+        for (client in clients) {
+            try {
+                val response = innerTube.browse(
+                    client = client,
+                    browseId = browseId,
+                    params = params,
+                )
+                // `expectSuccess` is off, so an HTTP 400 arrives as a normal
+                // response whose body is an error JSON object. Without this
+                // check the error body would "succeed" the loop and the next
+                // client would never be tried — exactly how ANDROID_MUSIC's
+                // 400s used to swallow the whole fallback chain.
+                if (!response.status.isSuccess()) {
+                    Timber.d(
+                        "$TAG: browseRaw $browseId HTTP ${response.status.value} via $client, " +
+                            "trying next"
+                    )
+                    continue
+                }
+                val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
+                if (body.isBlank()) continue
+                val root = json.parseToJsonElement(body) as? JsonObject
+                if (root != null) return@withContext root
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Timber.w(e, "$TAG: browseRaw $browseId failed via $client")
+            }
+        }
+        null
+    }
+
+    /**
+     * Line-timed lyrics in LRC form, exactly as Meld's `YouTube.timedLyrics`
+     * produces them.
+     *
+     * Meld asks the `MPLYt…` browse as ANDROID_MUSIC — the only client YouTube
+     * serves per-line cue ranges to; the same browseId as WEB_REMIX comes back
+     * as one untimed text block. On this InnerTubeX build ANDROID_MUSIC answers
+     * 400 (see [MUSIC_CLIENTS]), so IOS_MUSIC gets a turn too: it is a mobile
+     * client and may still carry cue ranges. An untimed answer parses to null,
+     * which is the same signal as "no lyrics page", so the plain-shelf fallback
+     * in the repository chain is never skipped.
+     */
+    suspend fun timedLyrics(browseId: String, params: String?): String? =
+        withContext(Dispatchers.IO) {
+            val root = browseRaw(
+                browseId = browseId,
+                params = params,
+                clients = listOf(YouTubeClient.ANDROID_MUSIC, YouTubeClient.IOS_MUSIC),
+            ) ?: return@withContext null
+            InnerTubeSearchParser.parseTimedLyrics(root)
+        }
+
+    /**
+     * Video captions as timed LRC text, Meld's `YouTube.transcript` port.
+     *
+     * Captions exist for a minority of music tracks, which is why they sit
+     * behind the timed lyrics rather than in front of them. The cue groups
+     * arrive with a start offset per line; the parser turns those into
+     * `[mm:ss.mmm]` LRC timestamps, so the lyrics view can scroll them like any
+     * other synced lyrics.
+     */
+    suspend fun transcript(videoId: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val response = innerTube.getTranscript(
+                client = YouTubeClient.WEB,
+                videoId = videoId,
+            )
+            val body = response.bodyAsTextLimited(SEARCH_BODY_MAX_BYTES)
+            if (body.isBlank()) return@withContext null
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return@withContext null
+            InnerTubeSearchParser.parseTranscript(root)
+        } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            Timber.w(e, "$TAG: transcript failed for $videoId")
+            null
+        }
     }
 
     /**
@@ -275,8 +533,9 @@ class InnerTubeEngine @Inject constructor(
                 hints = ContentHints(wantVideo = false),
                 audioQuality = audioQuality,
             )
-            stream?.let { toInnerTubeStream(videoId, it) }
+            stream?.let { streamCache.put(videoId, it); toInnerTubeStream(videoId, it) }
         } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.w(e, "$TAG: extractStream failed for $videoId")
             null
         }
@@ -291,6 +550,7 @@ class InnerTubeEngine @Inject constructor(
             extractor.prewarm()
             true
         } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.w(e, "$TAG: prewarm failed")
             false
         }

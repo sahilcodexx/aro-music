@@ -265,7 +265,7 @@ object MediaItemBuilder {
 
     private fun buildMediaMetadataForSong(
         song: Song,
-        exposedArtworkUri: Uri? = artworkUri(song.albumArtUriString)
+        exposedArtworkUri: Uri? = artworkUri(com.aro.music.data.innertube.InnerTubeArtwork.forSong(song.albumArtUriString, song.contentUriString))
     ): MediaMetadata {
         val metadataBuilder = MediaMetadata.Builder()
             .setTitle(song.title)
