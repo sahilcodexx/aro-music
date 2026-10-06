@@ -561,6 +561,7 @@ private fun EmptyAccountsCard(
                     ExternalServiceAccount.GOOGLE_DRIVE -> painterResource(R.drawable.rounded_drive_export_24)
                     ExternalServiceAccount.JELLYFIN -> painterResource(R.drawable.ic_jellyfin)
                     ExternalServiceAccount.NAVIDROME -> painterResource(R.drawable.ic_navidrome_md3)
+                    ExternalServiceAccount.SPOTIFY -> painterResource(R.drawable.ic_spotify)
                 }
                 FilledTonalButton(
                     onClick = { if (!isComingSoon) onConnect(service) },
@@ -603,6 +604,10 @@ private data class ServicePalette(
 @Composable
 private fun servicePalette(service: ExternalServiceAccount): ServicePalette {
     return when (service) {
+        ExternalServiceAccount.SPOTIFY -> ServicePalette(
+            Color(0xFF1DB954), Color.Black, Color(0xFFC9F8E6), Color(0xFF035C43),
+            MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer
+        )
         ExternalServiceAccount.TELEGRAM -> ServicePalette(
             iconContainer = MaterialTheme.colorScheme.primaryContainer,
             iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -656,6 +661,7 @@ private fun servicePalette(service: ExternalServiceAccount): ServicePalette {
 
 private fun accountIcon(service: ExternalServiceAccount): ImageVector {
     return when (service) {
+        ExternalServiceAccount.SPOTIFY -> Icons.Rounded.MusicNote
         ExternalServiceAccount.TELEGRAM -> Icons.AutoMirrored.Rounded.Send
         ExternalServiceAccount.GOOGLE_DRIVE -> Icons.Rounded.CloudQueue
         ExternalServiceAccount.NETEASE -> Icons.Rounded.MusicNote
@@ -711,6 +717,7 @@ private fun ServiceIcon(service: ExternalServiceAccount, tint: Color, modifier: 
 @Composable
 private fun serviceDisplayName(service: ExternalServiceAccount): String {
     return when (service) {
+        ExternalServiceAccount.SPOTIFY -> "Spotify"
         ExternalServiceAccount.TELEGRAM -> stringResource(R.string.presentation_batch_b_service_telegram)
         ExternalServiceAccount.GOOGLE_DRIVE -> stringResource(R.string.auth_gdrive_title)
         ExternalServiceAccount.NETEASE -> stringResource(R.string.presentation_batch_b_service_netease)
@@ -730,6 +737,9 @@ private fun openService(
     preferNeteaseDashboard: Boolean
 ) {
     when (service) {
+        ExternalServiceAccount.SPOTIFY -> {
+            context.startActivity(Intent(context, com.aro.music.spotify.SpotifyConnectActivity::class.java))
+        }
         ExternalServiceAccount.TELEGRAM -> {
             safeStartActivity(
                 context = context,

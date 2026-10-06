@@ -34,9 +34,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         JellyfinSongEntity::class,
         JellyfinPlaylistEntity::class,
         AiCacheEntity::class,
-        AiUsageEntity::class
+        AiUsageEntity::class,
+        SpotifyMatchEntity::class
     ],
-    version = 41,
+    version = 42,
     exportSchema = true
 )
 abstract class AroDatabase : RoomDatabase() {
@@ -56,6 +57,7 @@ abstract class AroDatabase : RoomDatabase() {
     abstract fun jellyfinDao(): JellyfinDao
     abstract fun aiCacheDao(): AiCacheDao
     abstract fun aiUsageDao(): AiUsageDao
+    abstract fun spotifyMatchDao(): SpotifyMatchDao
 
     companion object {
         // Gap-bridging no-op migrations for missing version ranges.
@@ -1428,6 +1430,24 @@ abstract class AroDatabase : RoomDatabase() {
                 createSongsSearchVirtualTable(db)
                 installSongsSearchSyncTriggers(db)
                 rebuildSongsSearchIndex(db)
+            }
+        }
+
+        val MIGRATION_41_42 = object : Migration(41, 42) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Create spotify_match table for Spotify-to-YouTube mapping cache
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS spotify_match (
+                        spotifyId TEXT NOT NULL PRIMARY KEY,
+                        youtubeId TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        artist TEXT NOT NULL,
+                        matchScore REAL NOT NULL,
+                        cachedAt INTEGER NOT NULL,
+                        isManualOverride INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_spotify_match_youtubeId ON spotify_match(youtubeId)")
             }
         }
 

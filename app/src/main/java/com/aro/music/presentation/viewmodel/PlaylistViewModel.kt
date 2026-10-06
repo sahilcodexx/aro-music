@@ -75,6 +75,7 @@ class PlaylistViewModel @Inject constructor(
     private val dailyMixManager: DailyMixManager,
     private val aiPlaylistGenerator: AiPlaylistGenerator,
     private val m3uManager: M3uManager,
+    private val spotifyRepository: com.aro.music.spotify.SpotifyRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -128,7 +129,10 @@ class PlaylistViewModel @Inject constructor(
             _uiState.update { it.copy(currentPlaylistSortOption = initialSortOption) }
 
             // Then, collect playlists and apply the sort option
-            playlistPreferencesRepository.userPlaylistsFlow.collect { playlists ->
+            kotlinx.coroutines.flow.combine(
+                playlistPreferencesRepository.userPlaylistsFlow,
+                spotifyRepository.libraryPlaylistsFlow
+            ) { local, spotify -> local + spotify }.collect { playlists ->
                 val currentSortOption =
                     _uiState.value.currentPlaylistSortOption // Use the most up-to-date sort option
                 val sortedPlaylists = sortPlaylistsList(playlists, currentSortOption)

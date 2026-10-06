@@ -28,7 +28,8 @@ enum class ExternalServiceAccount {
     NETEASE,
     QQ_MUSIC,
     NAVIDROME,
-    JELLYFIN
+    JELLYFIN,
+    SPOTIFY
 }
 
 data class ExternalAccountUiModel(
@@ -52,6 +53,7 @@ class AccountsViewModel @Inject constructor(
     private val neteaseRepository: NeteaseRepository,
     private val qqMusicRepository: QqMusicRepository,
     private val navidromeRepository: NavidromeRepository,
+    private val spotifySession: com.aro.music.spotify.SpotifySession,
     private val jellyfinRepository: JellyfinRepository
 ) : ViewModel() {
 
@@ -109,7 +111,8 @@ class AccountsViewModel @Inject constructor(
                 neteaseStateFlow,
                 qqMusicStateFlow,
                 navidromeStateFlow,
-                jellyfinStateFlow
+                jellyfinStateFlow,
+                spotifySession.isLoggedInFlow.map { it to 0 }
             )
         ) { it.toList() },
         loggingOutServices
@@ -121,7 +124,12 @@ class AccountsViewModel @Inject constructor(
         val (navidromeConnected, navidromePlaylistCount) = states[4] as Pair<Boolean, Int>
         val (jellyfinConnected, jellyfinPlaylistCount) = states[5] as Pair<Boolean, Int>
 
+        val spotifyConnected = states[6].first
         val connectedAccounts = buildList {
+            if (spotifyConnected) add(ExternalAccountUiModel(
+                ExternalServiceAccount.SPOTIFY, "Spotify", "Spotify account connected",
+                "Personalized recommendations and library", ExternalServiceAccount.SPOTIFY in activeLogouts
+            ))
             if (telegramConnected) {
                 add(
                     ExternalAccountUiModel(
@@ -227,6 +235,7 @@ class AccountsViewModel @Inject constructor(
         }
 
         val disconnectedServices = buildList {
+            if (!spotifyConnected) add(ExternalServiceAccount.SPOTIFY)
             if (!telegramConnected) add(ExternalServiceAccount.TELEGRAM)
             if (!gDriveConnected) add(ExternalServiceAccount.GOOGLE_DRIVE)
             if (!neteaseConnected) add(ExternalServiceAccount.NETEASE)
@@ -249,6 +258,7 @@ class AccountsViewModel @Inject constructor(
             try {
                 runCatching {
                     when (service) {
+                    ExternalServiceAccount.SPOTIFY -> spotifySession.logout()
                         ExternalServiceAccount.TELEGRAM -> {
                             telegramRepository.logout()
                             telegramRepository.clearMemoryCache()

@@ -164,7 +164,8 @@ object AppModule {
             AroDatabase.MIGRATION_37_38,
             AroDatabase.MIGRATION_38_39,
             AroDatabase.MIGRATION_39_40,
-            AroDatabase.MIGRATION_40_41
+            AroDatabase.MIGRATION_40_41,
+            AroDatabase.MIGRATION_41_42
         )
             .addCallback(AroDatabase.createRuntimeArtifactsCallback())
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
@@ -310,13 +311,15 @@ object AppModule {
         @ApplicationContext context: Context,
         lrcLibApiService: LrcLibApiService,
         lyricsDao: LyricsDao,
-        okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient,
+        innerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository
     ): LyricsRepository {
         return LyricsRepositoryImpl(
             context = context,
             lrcLibApiService = lrcLibApiService,
             lyricsDao = lyricsDao,
-            okHttpClient = okHttpClient
+            okHttpClient = okHttpClient,
+            innerTubeRepository = innerTubeRepository
         )
     }
 
