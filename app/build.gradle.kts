@@ -342,3 +342,32 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+/**
+ * Pin the Kotlin stdlib to the compiler's own version.
+ *
+ * `innertubex` pulls in `io.github.dokar3:quickjs-kt`, which was published
+ * against kotlin-stdlib 2.4.10. Gradle picks the highest requested version, so a
+ * 2.4 stdlib lands on the classpath even though the compiler here is 2.3.21.
+ *
+ * That combination breaks annotation processing: Hilt shades a
+ * kotlin-metadata reader that refuses metadata newer than 2.3, so the moment it
+ * looks at any stdlib class the build dies with
+ *
+ *   [Hilt] Provided Metadata instance has version 2.4.0, while maximum
+ *   supported version is 2.3.0
+ *
+ * ...with no file or line. Compiling 2.4-compiled bytecode with the 2.3.21
+ * compiler is fine; it is the metadata *reader* that is behind, not the
+ * language. Forcing the stdlib back down keeps the compiler and the runtime
+ * library on the same version, which is what the Kotlin Gradle plugin would do
+ * on its own if the fork had been published against 2.3.21.
+ */
+configurations.configureEach {
+    resolutionStrategy.force(
+        "org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}",
+        "org.jetbrains.kotlin:kotlin-stdlib-common:${libs.versions.kotlin.get()}",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${libs.versions.kotlin.get()}",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${libs.versions.kotlin.get()}",
+    )
+}
