@@ -78,6 +78,8 @@ class PlayerViewModelTest {
     private val mockTelegramRepository: com.aro.music.data.telegram.TelegramRepository = mockk(relaxed = true)
     private val mockListeningStatsTracker: ListeningStatsTracker = mockk(relaxed = true)
     private val mockDailyMixStateHolder: DailyMixStateHolder = mockk(relaxed = true)
+    private val mockStreamingRepository: com.aro.music.data.streaming.StreamingRepository =
+        mockk(relaxed = true)
     private val mockLyricsStateHolder: LyricsStateHolder = mockk(relaxed = true)
     private val mockCastStateHolder: CastStateHolder = mockk(relaxed = true)
     private val mockCastRouteStateHolder: CastRouteStateHolder = mockk(relaxed = true)
@@ -197,6 +199,10 @@ class PlayerViewModelTest {
         // Mock MusicRepository Basic Returns
         every { mockMusicRepository.getPaginatedSongs(any(), any()) } returns flowOf(androidx.paging.PagingData.empty())
         every { mockMusicRepository.getAudioFiles() } returns flowOf(emptyList())
+        // Eagerly evaluated by the constructor (stateIn init-time calls).
+        every { mockMusicRepository.getDistinctAlbumArtSongs() } returns flowOf(emptyList())
+        every { mockMusicRepository.getSongCountFlow() } returns flowOf(0)
+        every { mockMusicRepository.getCloudSongCountFlow() } returns flowOf(0)
         coEvery { mockMusicRepository.getFavoriteSongIdsOnce() } returns emptySet()
         every { mockMusicRepository.getFavoriteSongIdsFlow() } returns flowOf(emptySet())
         every { mockMusicRepository.telegramRepository } returns mockTelegramRepository
@@ -238,6 +244,7 @@ class PlayerViewModelTest {
             mockTelegramCacheManagerProvider,
             mockListeningStatsTracker,
             mockDailyMixStateHolder,
+            mockStreamingRepository,
             mockLyricsStateHolder,
             mockCastStateHolder,
             mockCastRouteStateHolder,
@@ -543,13 +550,16 @@ class PlayerViewModelTest {
 
         @Test
         fun `triggerShuffleAllFromTile uses startAtZero when library is already loaded`() = runTest {
+            // The tile samples random songs through the repository (with a
+            // sync-retry on empty) instead of reading the cached library flow.
             val songs = listOf(song1, song2, song3)
-            _allSongsFlow.value = songs.toImmutableList()
+            coEvery { mockMusicRepository.getRandomSongs(500) } returns songs
             stubShuffledPlayback(songs, "All Songs (Shuffled)", startSong = song1)
 
             playerViewModel.triggerShuffleAllFromTile()
             advanceUntilIdle()
 
+            coVerify { mockMusicRepository.getRandomSongs(500) }
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     songs,

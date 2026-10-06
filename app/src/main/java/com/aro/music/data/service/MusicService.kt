@@ -56,6 +56,10 @@ import com.aro.music.data.preferences.EqualizerPreferencesRepository
 import com.aro.music.data.preferences.ThemePreferencesRepository
 import com.aro.music.data.preferences.UserPreferencesRepository
 import com.aro.music.data.repository.MusicRepository
+import com.aro.music.data.innertube.InnerTubeIds
+import com.aro.music.data.innertube.InnerTubeRepository
+import com.aro.music.data.model.Song
+import com.aro.music.data.queue.InnerTubeRadioQueue
 import com.aro.music.data.service.player.DualPlayerEngine
 import com.aro.music.data.service.player.TransitionController
 import com.aro.music.ui.glancewidget.ControlWidget4x2
@@ -119,6 +123,10 @@ class MusicService : MediaLibraryService() {
     @Inject
     lateinit var engine: DualPlayerEngine
     @Inject
+    lateinit var innerTubeRepository: InnerTubeRepository
+    @Inject
+    lateinit var spotifyRepository: com.aro.music.spotify.SpotifyRepository
+    @Inject
     lateinit var controller: TransitionController
     @Inject
     lateinit var musicRepository: MusicRepository
@@ -166,6 +174,162 @@ class MusicService : MediaLibraryService() {
     private var mediaSession: MediaLibrarySession? = null
     private val controllerLastBrowsedParent = mutableMapOf<String, String>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    /**
+     * Radio queue backing the current session, when playback was started from a
+     * single InnerTube track. Null for a fixed list (album, local playlist), which
+     * is what tells [maybeExtendQueueWithRadio] there is nothing to extend.
+     */
+    private var activeRadioQueue: com.aro.music.data.queue.QueueProvider? = null
+    private var radioExtendJob: Job? = null
+
+    /**
+     * Replaces the queue with a radio seeded by [song].
+     *
+     * Ported from Meld's `YouTubeQueue`: asking YouTube for `RDAMVM<videoId>`
+     * returns a *mix* of related tracks, and every continuation returns more, so
+     * the session does not simply stop at the end of what the user searched for.
+     */
+    fun startRadioFrom(song: Song, videoId: String) {
+        val queue = InnerTubeRadioQueue.radio(
+            repository = innerTubeRepository,
+            song = song,
+            videoId = videoId,
+            title = song.title,
+        )
+        activeRadioQueue = queue
+        radioExtendJob?.cancel()
+        serviceScope.launch(Dispatchers.IO) {
+            val status = runCatching { queue.getInitialStatus() }.getOrElse { error ->
+                Timber.tag(TAG).w(error, "Radio queue failed to load")
+                return@launch
+            }
+            withContext(Dispatchers.Main) {
+                engine.masterPlayer.setMediaItems(
+                    status.items,
+                    status.mediaItemIndex.coerceAtLeast(0),
+                    status.position,
+                )
+                engine.masterPlayer.prepare()
+                engine.masterPlayer.play()
+            }
+        }
+    }
+
+    /**
+     * Attaches a radio to the *current* queue without disturbing playback.
+     *
+     * This is what stops a queue being "just the search results": the user's own
+     * ordered list plays first, and once it runs low the radio keeps appending
+     * related tracks. Replacing the queue instead would throw away the album or
+     * search order the user actually chose.
+     */
+    fun attachRadio(song: Song, videoId: String) {
+        serviceScope.launch(Dispatchers.Main) {
+            clearRadioSource()
+            val revision = radioRevision
+            radioExtendJob = serviceScope.launch(Dispatchers.IO) {
+                try {
+                    val queue = spotifyRepository.radioFor(song) ?: InnerTubeRadioQueue.radio(
+                        repository = innerTubeRepository, song = song, videoId = videoId, title = song.title,
+                    )
+                    val status = queue.getInitialStatus()
+                    withContext(Dispatchers.Main) {
+                        if (revision != radioRevision) return@withContext
+                        activeRadioQueue = queue
+                        val player = engine.masterPlayer
+                        val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toHashSet()
+                        val added = status.items.filter { existing.add(it.mediaId) }
+                        if (added.isNotEmpty()) player.addMediaItems(added)
+                    }
+                } catch (error: Exception) {
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    Timber.w(error, "Could not initialize radio source")
+                }
+            }
+            radioExtendJob?.invokeOnCompletion {
+                serviceScope.launch(Dispatchers.Main) {
+                    if (revision == radioRevision) maybeExtendQueueWithRadio()
+                }
+            }
+        }
+    }
+
+    private var radioRevision = 0L
+    private fun clearRadioSource() {
+        radioRevision++
+        activeRadioQueue = null
+        radioExtendJob?.cancel()
+        radioExtendJob = null
+    }
+
+    /**
+     * Rebuilds a minimal seed [Song] from the radio command's extras.
+     *
+     * Only what [InnerTubeRadioQueue] and [MediaItemBuilder] actually read is
+     * carried across — identity, title, artist, artwork, duration and the
+     * `innertube://` content URI that the stream resolver dispatches on. The
+     * library's richer row (artists list, album id, …) is used instead whenever
+     * the database lookup finds one.
+     */
+    private fun seedSongFromRadioArgs(args: Bundle, songId: String, videoId: String): Song? {
+        val title = args.getString(EXTRA_RADIO_TITLE)
+        if (title.isNullOrBlank()) {
+            Timber.tag(TAG).w("Radio seed $songId unresolvable and no title in extras")
+            return null
+        }
+        return Song(
+            id = songId,
+            title = title,
+            artist = args.getString(EXTRA_RADIO_ARTIST)
+                ?.takeIf { it.isNotBlank() }
+                ?: UNKNOWN_SEED_ARTIST,
+            artistId = 0L,
+            album = args.getString(EXTRA_RADIO_ALBUM).orEmpty(),
+            albumId = 0L,
+            path = "",
+            contentUriString = InnerTubeIds.contentUri(videoId),
+            albumArtUriString = args.getString(EXTRA_RADIO_ARTWORK),
+            duration = args.getLong(EXTRA_RADIO_DURATION_MS, 0L),
+            mimeType = "audio/mpeg",
+            bitrate = null,
+            sampleRate = null,
+        )
+    }
+
+    /**
+     * Appends more of the radio as playback approaches the end of the queue.
+     *
+     * Runs on every track change: when fewer than
+     * [QUEUE_PRELOAD_AHEAD_THRESHOLD] items remain ahead of the current one and
+     * the active queue can still produce more, fetch the next page and append it.
+     * Skipped while an extension is already in flight so rapid transitions cannot
+     * stack up requests.
+     */
+    private fun maybeExtendQueueWithRadio() {
+        val queue = activeRadioQueue ?: return
+        if (radioExtendJob?.isActive == true) return
+        val player = engine.masterPlayer
+        val index = player.currentMediaItemIndex
+        if (index == C.INDEX_UNSET) return
+        if (!queue.hasNextPage()) return
+        if (player.mediaItemCount - index > QUEUE_PRELOAD_AHEAD_THRESHOLD) return
+
+        radioExtendJob = serviceScope.launch(Dispatchers.IO) {
+            val more = runCatching { queue.nextPage() }.getOrElse { error ->
+                if (error is kotlinx.coroutines.CancellationException) throw error
+                Timber.tag(TAG).w(error, "Radio queue extension failed")
+                emptyList()
+            }
+            withContext(Dispatchers.Main) {
+                if (activeRadioQueue !== queue) return@withContext
+                val player = engine.masterPlayer
+                val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toHashSet()
+                val added = more.filter { existing.add(it.mediaId) }
+                if (added.isNotEmpty()) player.addMediaItems(added)
+            }
+        }
+    }
     private var keepPlayingInBackground = true
     private var isManualShuffleEnabled = false
     private var persistentShuffleEnabled = false
@@ -200,6 +364,35 @@ class MusicService : MediaLibraryService() {
 
     companion object {
         private const val TAG = "MusicService_Aro"
+
+        /** Session command that replaces the queue with an InnerTube radio. */
+        const val ACTION_CLEAR_RADIO = "com.aro.music.ACTION_CLEAR_RADIO"
+        const val ACTION_START_INNERTUBE_RADIO = "com.aro.music.ACTION_START_INNERTUBE_RADIO"
+        const val EXTRA_RADIO_VIDEO_ID = "radio_video_id"
+        const val EXTRA_RADIO_TITLE = "radio_title"
+        const val EXTRA_RADIO_SONG_ID = "radio_song_id"
+
+        /**
+         * Seed metadata the controller sends with the radio command.
+         *
+         * InnerTube songs are not in Room, so [MusicRepositoryImpl.getSong] —
+         * a DAO-only lookup — returns null for exactly the tracks this command
+         * exists for, and the radio never attached. With the metadata in hand
+         * the service builds the seed itself when the lookup misses.
+         */
+        const val EXTRA_RADIO_ARTIST = "radio_artist"
+        const val EXTRA_RADIO_ALBUM = "radio_album"
+        const val EXTRA_RADIO_ARTWORK = "radio_artwork"
+        const val EXTRA_RADIO_DURATION_MS = "radio_duration_ms"
+
+        /**
+         * Fetch more of the queue once this many or fewer items remain ahead of
+         * the current one. Same threshold Meld uses.
+         */
+        private const val QUEUE_PRELOAD_AHEAD_THRESHOLD = 20
+
+        /** Fallback artist for a seed whose extras carried no name. */
+        private const val UNKNOWN_SEED_ARTIST = "Unknown artist"
         const val NOTIFICATION_ID = 101
         const val ACTION_SLEEP_TIMER_EXPIRED = "com.aro.music.ACTION_SLEEP_TIMER_EXPIRED"
         const val EXTRA_FORCE_FOREGROUND_ON_START =
@@ -528,20 +721,30 @@ class MusicService : MediaLibraryService() {
                 }
 
                 val defaultResult = super.onConnect(session, controller)
-                val customCommands = listOf(
-                    MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER,
-                    MusicNotificationProvider.CUSTOM_COMMAND_LIKE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_FAVORITE_STATE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_TOGGLE_SHUFFLE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_ON,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_OFF,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SHUFFLE_STATE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_CYCLE_REPEAT_MODE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_COUNTED_PLAY,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_DURATION,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_END_OF_TRACK,
-                    MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_SLEEP_TIMER,
-                ).map { SessionCommand(it, Bundle.EMPTY) }
+                // Without the radio command the app's own controller is rejected
+                // with "Controller isn't allowed to call custom session command"
+                // before onCustomCommand ever runs, and the radio never attaches —
+                // the queue then stays "just the search results" and dead-ends.
+                val customCommands = (
+                    listOf(
+                        MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER,
+                        MusicNotificationProvider.CUSTOM_COMMAND_LIKE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_FAVORITE_STATE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_TOGGLE_SHUFFLE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_ON,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_OFF,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SHUFFLE_STATE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_CYCLE_REPEAT_MODE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_COUNTED_PLAY,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_DURATION,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_END_OF_TRACK,
+                        MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_SLEEP_TIMER,
+                    ).map { SessionCommand(it, Bundle.EMPTY) } +
+                        listOf(
+                            SessionCommand(ACTION_START_INNERTUBE_RADIO, Bundle.EMPTY),
+                            SessionCommand(ACTION_CLEAR_RADIO, Bundle.EMPTY)
+                        )
+                    )
 
                 val sessionCommandsBuilder = SessionCommands.Builder()
                     .addSessionCommands(defaultResult.availableSessionCommands.commands)
@@ -571,6 +774,28 @@ class MusicService : MediaLibraryService() {
                 Timber.tag("MusicService")
                     .d("onCustomCommand received: ${customCommand.customAction}")
                 when (customCommand.customAction) {
+                    ACTION_CLEAR_RADIO -> clearRadioSource()
+                    ACTION_START_INNERTUBE_RADIO -> {
+                        val videoId = args.getString(EXTRA_RADIO_VIDEO_ID)
+                        val songId = args.getString(EXTRA_RADIO_SONG_ID)
+                        if (videoId.isNullOrBlank() || songId.isNullOrBlank()) {
+                            Timber.tag(TAG).w("Radio command missing videoId/songId")
+                        } else {
+                            // Prefer the library's full row — a local song seeded a
+                            // radio once — but fall back to the metadata the
+                            // controller attached, because InnerTube seeds are
+                            // guaranteed to miss the database.
+                            serviceScope.launch(Dispatchers.IO) {
+                                val song = musicRepository.getSong(songId).first()
+                                    ?: seedSongFromRadioArgs(args, songId, videoId)
+                                if (song == null) {
+                                    Timber.tag(TAG).w("Radio seed song $songId not found")
+                                } else {
+                                    attachRadio(song, videoId)
+                                }
+                            }
+                        }
+                    }
                     MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER -> {
                         closeNotificationPlayer()
                     }
@@ -1306,6 +1531,7 @@ class MusicService : MediaLibraryService() {
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            maybeExtendQueueWithRadio()
             syncLocalListeningStatsFromPlayer(mediaSession?.player ?: engine.masterPlayer, forceNewSession = true)
             if (isNavidromeMediaItem(mediaItem)) {
                 reportNavidromePlayback("starting")

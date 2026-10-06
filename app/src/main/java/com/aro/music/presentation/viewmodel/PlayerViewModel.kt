@@ -42,6 +42,7 @@ import com.aro.music.R
 import com.aro.music.data.EotStateHolder
 import com.aro.music.data.ai.SongMetadata
 import com.aro.music.data.database.AlbumArtThemeDao
+import com.aro.music.data.innertube.InnerTubeIds
 import com.aro.music.data.media.CoverArtUpdate
 import com.aro.music.data.model.Album
 import com.aro.music.data.model.Artist
@@ -1223,6 +1224,17 @@ class PlayerViewModel @Inject constructor(
 
     var searchQuery by mutableStateOf("")
         private set
+
+    /**
+     * Live query suggestions from YouTube Music, Meld's search-box behavior.
+     *
+     * Exposed straight from [SearchStateHolder] rather than folded into
+     * [PlayerUiState]: suggestions update per keystroke and folding them into
+     * the combined UI-state pipeline would re-emit every state collector for
+     * text the user has not committed to.
+     */
+    val searchSuggestions: StateFlow<ImmutableList<String>> =
+        searchStateHolder.searchSuggestions
 
     fun updateSearchQuery(query: String) {
         searchQuery = query
@@ -2504,6 +2516,12 @@ class PlayerViewModel @Inject constructor(
                     ?.getString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM_ART)
                     ?.takeIf { it.isNotBlank() }
 
+        if (com.aro.music.data.innertube.InnerTubeIds.isInnerTubeUri(song.contentUriString)) {
+            val artwork = com.aro.music.data.innertube.InnerTubeArtwork.forSong(
+                metadataArtwork ?: song.albumArtUriString, song.contentUriString
+            )
+            return if (artwork != song.albumArtUriString) song.copy(albumArtUriString = artwork) else song
+        }
         return when {
             metadataArtwork == null && song.albumArtUriString != null -> song.copy(albumArtUriString = null)
             metadataArtwork != null && song.albumArtUriString != metadataArtwork ->
@@ -3096,10 +3114,15 @@ class PlayerViewModel @Inject constructor(
                 }
             }
 
+            // Detach the previous source before replacing the player's list.
+            // The new radio attaches after internalPlaySongs has started playback.
+            mediaController?.sendCustomCommand(
+                SessionCommand(com.aro.music.data.service.MusicService.ACTION_CLEAR_RADIO, Bundle.EMPTY), Bundle.EMPTY
+            )
+
             // Store the original order so we can "unshuffle" later if the user turns shuffle off
             queueStateHolder.setOriginalQueueOrder(validSongs)
             queueStateHolder.saveOriginalQueueState(validSongs, queueName)
-
             // Check if the user wants shuffle to be persistent across different albums
             val isPersistent = userPreferencesRepository.persistentShuffleEnabledFlow.first()
             // Check if shuffle is currently active in the player
@@ -3126,12 +3149,63 @@ class PlayerViewModel @Inject constructor(
 
             // Send the final list (shuffled or not) to the player engine
             internalPlaySongs(finalSongsToPlay, validStartSong, queueName, playlistId)
+            startInnerTubeRadioIfAppropriate(finalSongsToPlay, validStartSong)
         }
     }
 
     // Start playback with shuffle enabled in one coroutine to avoid racing queue updates
+    /**
+     * Attaches a YouTube Music radio to the current queue when playback starts
+     * from an InnerTube track.
+     *
+     * The chosen list still plays in its own order; the radio is only used to keep
+     * appending related tracks once that list runs low, so the session does not end
+     * at the last search result. No-op for local and other cloud sources.
+     */
+    private fun startInnerTubeRadioIfAppropriate(songs: List<Song>, startSong: Song) {
+        val videoId = InnerTubeIds.videoIdFromContentUri(startSong.contentUriString) ?: return
+        runCatching {
+                mediaController?.sendCustomCommand(
+                    SessionCommand(
+                        com.aro.music.data.service.MusicService.ACTION_START_INNERTUBE_RADIO,
+                        Bundle.EMPTY
+                    ),
+                    Bundle().apply {
+                        putString(com.aro.music.data.service.MusicService.EXTRA_RADIO_VIDEO_ID, videoId)
+                        putString(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_TITLE,
+                            startSong.title
+                        )
+                        putString(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_SONG_ID,
+                            startSong.id
+                        )
+                        // The seed is an InnerTube track, so the service's Room
+                        // lookup will miss and it must rebuild the song from these
+                        // extras to attach the radio (related-tracks queue).
+                        putString(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_ARTIST,
+                            startSong.displayArtist
+                        )
+                        putString(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_ALBUM,
+                            startSong.album
+                        )
+                        putString(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_ARTWORK,
+                            startSong.albumArtUriString
+                        )
+                        putLong(
+                            com.aro.music.data.service.MusicService.EXTRA_RADIO_DURATION_MS,
+                            startSong.duration
+                        )
+                    }
+                )
+            }.onFailure { Timber.w(it, "Could not attach InnerTube radio") }
+    }
+
     fun playSongsShuffled(
-        songsToPlay: List<Song>, 
+        songsToPlay: List<Song>,
         queueName: String = "None", 
         playlistId: String? = null,
         startAtZero: Boolean = false
@@ -3326,13 +3400,7 @@ class PlayerViewModel @Inject constructor(
             // Pre-resolve the starting song's cloud URI before ExoPlayer touches it.
             // This populates the resolvedUriCache so resolveDataSpec finds it instantly.
             val startingUri = MediaItemBuilder.playbackUri(effectiveStartSong)
-            if (
-                startingUri.scheme == "telegram" ||
-                startingUri.scheme == "netease" ||
-                startingUri.scheme == "qqmusic" ||
-                startingUri.scheme == "navidrome" ||
-                startingUri.scheme == "jellyfin"
-            ) {
+            if (dualPlayerEngine.needsCloudResolution(startingUri)) {
                 if (startingUri.scheme == "telegram") {
                     ensureTelegramPlaybackObserversStarted()
                 }
