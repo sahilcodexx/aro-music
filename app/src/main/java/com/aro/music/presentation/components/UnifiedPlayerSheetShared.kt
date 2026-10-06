@@ -86,7 +86,7 @@ internal fun MiniPlayerContentInternal(
             .padding(start = 10.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val albumArtModel = song.albumArtUriString?.takeIf { it.isNotBlank() }
+        val albumArtModel = com.aro.music.data.innertube.InnerTubeArtwork.forSong(song.albumArtUriString, song.contentUriString)
         Box(contentAlignment = Alignment.Center) {
             key(song.id) {
                 SmartImage(

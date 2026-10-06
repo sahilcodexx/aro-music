@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import coil.size.Size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,6 +100,7 @@ private fun YourMixSongGridCard(
     cardWidth: androidx.compose.ui.unit.Dp,
     onClick: () -> Unit
 ) {
+    val artworkPixels = with(LocalDensity.current) { cardWidth.roundToPx() }
     Column(
         modifier = Modifier
             .width(cardWidth)
@@ -108,7 +111,7 @@ private fun YourMixSongGridCard(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             shape = RoundedCornerShape(YourMixGridArtCorner),
-            targetSize = SmartImageListTargetSize,
+            targetSize = Size(artworkPixels, artworkPixels),
             modifier = Modifier.size(cardWidth)
         )
         Spacer(modifier = Modifier.height(YourMixGridTextGap))

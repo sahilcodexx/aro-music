@@ -174,7 +174,7 @@ fun AlbumCarouselSection(
                         )
                 ) { // Enforce 1:1 aspect ratio for the item itself
                     OptimizedAlbumArt(
-                        uri = song.albumArtUriString,
+                        uri = com.aro.music.data.innertube.InnerTubeArtwork.forSong(song.albumArtUriString, song.contentUriString),
                         title = song.title,
                         modifier = Modifier.fillMaxSize(),
                         targetSize = targetSize,

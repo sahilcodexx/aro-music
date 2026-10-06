@@ -83,6 +83,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aro.music.R
+import com.aro.music.data.innertube.HomeCatalogItem
+import com.aro.music.presentation.components.HomeCatalogShelf
+import com.aro.music.presentation.viewmodel.HomeFeedViewModel
 import com.aro.music.data.model.Song
 import com.aro.music.presentation.components.BetaInfoBottomSheet
 import com.aro.music.presentation.components.Beta05CleanInstallDisclaimerDialog
@@ -124,7 +127,7 @@ private const val HomeLoadingPlaceholderMinDurationMillis = 1200L
 
 // Modern HomeScreen with collapsible top bar and staggered grid layout
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -137,6 +140,8 @@ fun HomeScreen(
     jellyfinViewModel: JellyfinDashboardViewModel = hiltViewModel(),
     onOpenSidebar: () -> Unit
 ) {
+    val homeFeedViewModel: HomeFeedViewModel = hiltViewModel()
+    val homeFeed by homeFeedViewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     // DETECTAR MODO BENCHMARK
     val isBenchmarkMode = remember {
@@ -363,6 +368,7 @@ fun HomeScreen(
                                     settingsViewModel.refreshLibrary()
                                     playerViewModel.forceUpdateDailyMix()
                                     playerViewModel.reloadHomeMixFromApi()
+                                    homeFeedViewModel.refresh()
                                 }
                             )
                         }
@@ -440,6 +446,47 @@ fun HomeScreen(
                             },
                             playerViewModel = playerViewModel
                         )
+                    }
+                }
+
+                homeFeed.sections.forEach { section ->
+                    item(key = "catalog:${section.title}", contentType = "catalog_shelf") {
+                        HomeCatalogShelf(section) { catalogItem ->
+                            when (catalogItem) {
+                                is HomeCatalogItem.Track -> playerViewModel.showAndPlaySong(
+                                    catalogItem.song, listOf(catalogItem.song), section.title
+                                )
+                                is HomeCatalogItem.AlbumItem -> navController.navigateSafelyReplacing(
+                                    Screen.AlbumDetail.createRoute(catalogItem.album.id), Screen.AlbumDetail.route
+                                )
+                                is HomeCatalogItem.ArtistItem -> navController.navigateSafelyReplacing(
+                                    Screen.ArtistDetail.createRoute(catalogItem.artist.id), Screen.ArtistDetail.route
+                                )
+                                is HomeCatalogItem.PlaylistItem -> navController.navigateSafely(
+                                    Screen.PlaylistDetail.createRoute(catalogItem.playlist.browseId)
+                                )
+                            }
+                        }
+                    }
+                }
+                if (homeFeed.continuation != null || homeFeed.isLoading || homeFeed.canRetry) {
+                    item(key = "catalog_more", contentType = "catalog_more") {
+                        LaunchedEffect(homeFeed.continuation, homeFeed.isLoading, homeFeed.canRetry) {
+                            if (!homeFeed.isLoading && !homeFeed.canRetry) homeFeedViewModel.loadMore()
+                        }
+                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            if (homeFeed.isLoading) {
+                                LoadingIndicator(modifier = Modifier.size(40.dp))
+                            } else if (homeFeed.canRetry) {
+                                FilledTonalButton(onClick = {
+                                    if (homeFeed.continuation == null) homeFeedViewModel.refresh() else homeFeedViewModel.loadMore()
+                                }) {
+                                    Icon(Icons.Rounded.Refresh, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.home_empty_placeholder_refresh))
+                                }
+                            }
+                        }
                     }
                 }
 
