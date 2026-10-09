@@ -75,6 +75,9 @@ import com.aro.music.presentation.components.MiniPlayerHeight
 import com.aro.music.presentation.components.PlaylistBottomSheet
 import com.aro.music.presentation.components.SmartImageCompactListTargetSize
 import com.aro.music.presentation.components.SmartImage
+import com.aro.music.presentation.components.HomeCatalogShelf
+import com.aro.music.data.innertube.HomeCatalogItem
+import com.aro.music.data.innertube.InnerTubeIds
 import com.aro.music.presentation.components.SongInfoBottomSheet
 import com.aro.music.presentation.components.resolveNavBarOccupiedHeight
 import com.aro.music.presentation.navigation.Screen
@@ -305,7 +308,70 @@ fun ArtistDetailScreen(
                             bottom = MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp
                         )
                     ) {
-                        albumSections.forEachIndexed { index, section ->
+                        if (InnerTubeIds.isArtistId(artist.id)) {
+                            uiState.catalog?.let { page ->
+                                item(key = "artist_audience") {
+                                    Column(Modifier.padding(horizontal = 8.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        page.subscriberCount?.let { Text(if (it.contains("subscriber", true)) it else stringResource(R.string.artist_subscriber_count, it), style = MaterialTheme.typography.titleMedium) }
+                                        page.monthlyAudience?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                                        FilledTonalButton(onClick = {
+                                            songs.firstOrNull()?.let { playerViewModel.showAndPlaySong(it, listOf(it), artist.name + " Radio") }
+                                        }, enabled = songs.isNotEmpty()) { Text(stringResource(R.string.artist_radio)) }
+                                    }
+                                }
+                                page.sections.forEachIndexed { sectionIndex, section ->
+                                    item(key = "artist_catalog:$sectionIndex:${section.title}") {
+                                        val tracks = section.items.filterIsInstance<HomeCatalogItem.Track>().map { it.song }
+                                        if (section.items.all { it is HomeCatalogItem.Track } && section.title.equals("Top songs", true)) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Text(section.title + if (section.browseId != null) "  →" else "",
+                                                    style = MaterialTheme.typography.headlineSmall,
+                                                    modifier = Modifier.padding(8.dp).clickable(enabled = section.browseId != null) { viewModel.expandCatalogSection(section) })
+                                                tracks.forEach { song ->
+                                                    EnhancedSongListItem(
+                                                        song = song,
+                                                        isCurrentSong = stablePlayerState.currentSong?.id == song.id,
+                                                        isPlaying = stablePlayerState.isPlaying,
+                                                        showAlbumArt = true,
+                                                        onClick = { playerViewModel.showAndPlaySong(song, tracks, section.title) },
+                                                        onMoreOptionsClick = { playerViewModel.selectSongForInfo(song); showSongInfoBottomSheet = true },
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                        HomeCatalogShelf(section, onMoreClick = { viewModel.expandCatalogSection(section) }) { entry ->
+                                            when (entry) {
+                                                is HomeCatalogItem.Track -> playerViewModel.showAndPlaySong(entry.song,
+                                                    section.items.filterIsInstance<HomeCatalogItem.Track>().map { it.song }, section.title)
+                                                is HomeCatalogItem.AlbumItem -> navController.navigateSafelyReplacing(
+                                                    Screen.AlbumDetail.createRoute(entry.album.id), Screen.AlbumDetail.route)
+                                                is HomeCatalogItem.ArtistItem -> navController.navigateSafelyReplacing(
+                                                    Screen.ArtistDetail.createRoute(entry.artist.id), Screen.ArtistDetail.route)
+                                                is HomeCatalogItem.PlaylistItem -> navController.navigateSafely(Screen.PlaylistDetail.createRoute(entry.playlist.browseId))
+                                            }
+                                        }
+                                        }
+                                        Spacer(Modifier.height(24.dp))
+                                    }
+                                }
+                                page.description?.let { description ->
+                                    item(key = "artist_description") {
+                                        Text(description, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(16.dp))
+                                    }
+                                }
+                            }
+                            if (uiState.catalogLoading || uiState.catalogError) {
+                                item(key = "artist_catalog_status") {
+                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                        if (uiState.catalogLoading) CircularProgressIndicator()
+                                        else FilledTonalButton(onClick = viewModel::retryCatalog) { Text(stringResource(R.string.home_empty_placeholder_refresh)) }
+                                    }
+                                }
+                            }
+                        }
+                        val visibleAlbumSections = if (InnerTubeIds.isArtistId(artist.id) && uiState.catalog?.sections?.isNotEmpty() == true)
+                            emptyList() else albumSections
+                        visibleAlbumSections.forEachIndexed { index, section ->
                             if (section.songs.isEmpty()) return@forEachIndexed
 
                             val sectionKey = section.collapseKey()

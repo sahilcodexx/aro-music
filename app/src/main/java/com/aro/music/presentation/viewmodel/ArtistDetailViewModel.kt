@@ -38,7 +38,10 @@ data class ArtistDetailUiState(
     val albumSections: List<ArtistAlbumSection> = emptyList(),
     val effectiveImageUrl: String? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val catalog: com.aro.music.data.innertube.ArtistCatalogPage? = null,
+    val catalogLoading: Boolean = false,
+    val catalogError: Boolean = false,
 )
 
 @Immutable
@@ -55,6 +58,8 @@ class ArtistDetailViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val musicRepository: MusicRepository,
     private val artistImageRepository: ArtistImageRepository,
+    private val innerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository,
+    private val browseRegistry: com.aro.music.data.innertube.InnerTubeBrowseRegistry,
     val themeStateHolder: ThemeStateHolder,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -107,6 +112,7 @@ class ArtistDetailViewModel @Inject constructor(
                     artist to songs
                 }
                     .catch { e ->
+                        if (e is kotlinx.coroutines.CancellationException) throw e
                         _uiState.update {
                             it.copy(
                                 error = context.getString(R.string.error_loading_artist, e.localizedMessage ?: ""),
@@ -123,11 +129,13 @@ class ArtistDetailViewModel @Inject constructor(
                         }
 
                         val albumSections = buildAlbumSections(songs)
-                        val orderedSongs = albumSections.flatMap { it.songs }
+                        val orderedSongs = if (com.aro.music.data.innertube.InnerTubeIds.isArtistId(id)) songs
+                            else albumSections.flatMap { it.songs }
 
                         // 1) Resolve effective image URL (custom > Deezer, may fetch from API)
                         val effectiveUrl = try {
-                            artistImageRepository.getEffectiveArtistImageUrl(
+                            if (com.aro.music.data.innertube.InnerTubeIds.isArtistId(artist.id) && !artist.effectiveImageUrl.isNullOrBlank()) artist.effectiveImageUrl
+                            else artistImageRepository.getEffectiveArtistImageUrl(
                                 artistId = artist.id,
                                 artistName = artist.name
                             )
@@ -159,17 +167,64 @@ class ArtistDetailViewModel @Inject constructor(
                             songs = orderedSongs,
                             albumSections = albumSections,
                             effectiveImageUrl = effectiveUrl,
-                            isLoading = false
+                            isLoading = false,
+                            catalog = _uiState.value.catalog,
+                            catalogLoading = _uiState.value.catalogLoading,
+                            catalogError = _uiState.value.catalogError,
                         )
+                        if (com.aro.music.data.innertube.InnerTubeIds.isArtistId(id) && catalogArtistId != id) {
+                            catalogArtistId = id
+                            loadCatalog(artist)
+                        }
                     }
 
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.update {
                     it.copy(
                         error = context.getString(R.string.error_loading_artist, e.localizedMessage ?: ""),
                         isLoading = false
                     )
                 }
+            }
+        }
+    }
+
+    private var catalogArtistId: Long? = null
+    private var catalogJob: Job? = null
+
+    fun retryCatalog() { _uiState.value.artist?.let(::loadCatalog) }
+
+    private fun loadCatalog(artist: Artist) {
+        catalogJob?.cancel()
+        catalogJob = viewModelScope.launch {
+            _uiState.update { it.copy(catalogLoading = true, catalogError = false) }
+            try {
+                val known = browseRegistry.artistBrowseId(artist.id)
+                // YouTube's artist catalog supplies videos and featured playlists
+                // alongside releases, including when navigation started at Spotify.
+                val browseId = known?.takeUnless { it.startsWith("spotify:") }
+                    ?: innerTubeRepository.searchArtists(artist.name).firstOrNull { it.name.equals(artist.name, true) }
+                        ?.let { browseRegistry.artistBrowseId(it.id) }
+                val page = browseId?.let { innerTubeRepository.getArtistPage(it) }
+                _uiState.update { it.copy(catalog = page, catalogError = page == null || page.sections.isEmpty()) }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                _uiState.update { it.copy(catalogError = true) }
+            } finally { _uiState.update { it.copy(catalogLoading = false) } }
+        }
+    }
+
+    fun expandCatalogSection(section: com.aro.music.data.innertube.HomeCatalogSection) {
+        viewModelScope.launch {
+            try {
+                val expanded = innerTubeRepository.getCatalogSection(section)
+                _uiState.update { state -> state.copy(catalog = state.catalog?.let { page ->
+                    page.copy(sections = page.sections.map { if (it.title == section.title) expanded else it })
+                }) }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                _uiState.update { it.copy(catalogError = true) }
             }
         }
     }
