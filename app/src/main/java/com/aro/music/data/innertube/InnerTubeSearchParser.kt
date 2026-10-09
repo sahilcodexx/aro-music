@@ -40,9 +40,9 @@ internal object InnerTubeSearchParser {
     }
 
     fun parseHomeSections(root: JsonObject?): List<InnerTubeHomeSection> =
-        collectRenderers(root, setOf("musicCarouselShelfRenderer")).mapNotNull { shelf ->
+        collectRenderers(root, setOf("musicCarouselShelfRenderer", "musicShelfRenderer")).mapNotNull { shelf ->
             val header = shelf["header"].asObj()?.get("musicCarouselShelfBasicHeaderRenderer").asObj()
-                ?: return@mapNotNull null
+                ?: shelf
             val title = header["title"].asObj()?.runsText()?.joinToString("")?.takeIf { it.isNotBlank() }
                 ?: return@mapNotNull null
             val songs = mutableListOf<InnerTubeTrack>()
@@ -64,8 +64,31 @@ internal object InnerTubeSearchParser {
             if (songs.isEmpty() && albums.isEmpty() && artists.isEmpty() && playlists.isEmpty()) return@mapNotNull null
             InnerTubeHomeSection(title, header["strapline"].asObj()?.runsText()?.joinToString(""),
                 songs.distinctBy { it.videoId }, albums.distinctBy { it.browseId },
-                artists.distinctBy { it.browseId }, playlists.distinctBy { it.browseId })
+                artists.distinctBy { it.browseId }, playlists.distinctBy { it.browseId },
+                findSectionEndpoint(header)?.str("browseId"),
+                findSectionEndpoint(header)?.str("params"))
         }
+
+    private fun findSectionEndpoint(header: JsonObject): JsonObject? {
+        val button = header["moreContentButton"].asObj()?.get("buttonRenderer").asObj()
+        return button?.get("navigationEndpoint").asObj()?.get("browseEndpoint").asObj()
+            ?: header["title"].asObj()?.get("runs").asArr()?.firstOrNull().asObj()
+                ?.get("navigationEndpoint").asObj()?.get("browseEndpoint").asObj()
+    }
+
+    fun artistMetadata(root: JsonObject?): Triple<String?, String?, String?> {
+        val header = collectRenderers(root, setOf("musicImmersiveHeaderRenderer", "musicVisualHeaderRenderer")).firstOrNull()
+        val subscribe = header?.get("subscriptionButton2").asObj()?.get("subscribeButtonRenderer").asObj()
+            ?: header?.get("subscriptionButton").asObj()?.get("subscribeButtonRenderer").asObj()
+        fun text(node: JsonElement?): String? = node.asObj()?.runsText()?.joinToString("")?.takeIf { it.isNotBlank() }
+            ?: node.asObj()?.str("simpleText")
+        val subscribers = text(subscribe?.get("subscriberCountWithSubscribeText"))
+            ?: text(subscribe?.get("longSubscriberCountText")) ?: text(subscribe?.get("shortSubscriberCountText"))
+            ?: text(subscribe?.get("subscriberCountWithSubscribeText")) ?: text(subscribe?.get("subscriberCountText"))
+        val monthly = text(header?.get("monthlyListenerCount"))
+        val description = collectRenderers(root, setOf("musicDescriptionShelfRenderer")).firstOrNull()?.let { text(it["description"]) }
+        return Triple(subscribers, monthly, description)
+    }
 
     /**
      * Parses albums out of an album-filtered search.
@@ -128,11 +151,10 @@ private fun parsePlaylist(renderer: JsonObject): InnerTubePlaylist? {
  * when the header shape is unrecognised, so callers fall back to what they had.
  */
 fun parsePageHeader(root: JsonObject?): InnerTubeAlbum? {
-    val header = root?.get("header").asObj() ?: return null
-    val renderer = header.firstObj(
-        "musicResponsiveHeaderRenderer",
-        "musicDetailHeaderRenderer",
-    ) ?: return null
+    val renderer = collectRenderers(root, setOf(
+        "musicResponsiveHeaderRenderer", "musicDetailHeaderRenderer",
+        "musicImmersiveHeaderRenderer", "musicVisualHeaderRenderer",
+    )).firstOrNull() ?: return null
 
     val title = renderer.headerTitle() ?: return null
     val subtitle = cleanedSubtitleRuns(renderer)

@@ -149,8 +149,36 @@ class InnerTubeRepository @Inject constructor(
                     registry.putArtist(id, artist.browseId)
                     HomeCatalogItem.ArtistItem(artist.toArtist(id))
                 }
-            }.distinctBy { it.id })
+            }.distinctBy { it.id }, section.browseId, section.params)
         }
+
+    suspend fun getArtistPage(browseId: String): ArtistCatalogPage = share("artist-page:$browseId") {
+        val root = engine.browse(browseId)
+        val (subscribers, monthly, description) = InnerTubeSearchParser.artistMetadata(root)
+        ArtistCatalogPage(mapHomeSections(root), subscribers, monthly, description)
+    }
+
+    suspend fun getCatalogSection(section: HomeCatalogSection): HomeCatalogSection {
+        val id = section.browseId ?: return section
+        val root = engine.browse(id, params = section.params)
+        val items = mapHomeSections(root).flatMap { it.items }.ifEmpty {
+            buildList<HomeCatalogItem> {
+                InnerTubeSearchParser.parse(root).tracks.mapTo(this) { HomeCatalogItem.Track(it.toSong()) }
+                InnerTubeSearchParser.parseAlbums(root).mapTo(this) { album ->
+                    val appId = InnerTubeIds.albumId(album.browseId)
+                    registry.putAlbum(appId, album.browseId)
+                    HomeCatalogItem.AlbumItem(album.toAlbum(appId))
+                }
+                InnerTubeSearchParser.parsePlaylists(root).mapTo(this) { HomeCatalogItem.PlaylistItem(it) }
+                InnerTubeSearchParser.parseArtists(root).mapTo(this) { artist ->
+                    val appId = InnerTubeIds.artistId(artist.browseId)
+                    registry.putArtist(appId, artist.browseId)
+                    HomeCatalogItem.ArtistItem(artist.toArtist(appId))
+                }
+            }
+        }
+        return section.copy(items = (section.items + items).distinctBy { it.id }, browseId = null, params = null)
+    }
 
     /** Searches YouTube Music for songs matching [query]. */
     suspend fun searchSongs(query: String, limit: Int = 20): List<Song> =
@@ -225,6 +253,14 @@ class InnerTubeRepository @Inject constructor(
         val appId = InnerTubeIds.albumId(browseId)
         registry.putAlbum(appId, browseId)
         album?.toAlbum(appId)
+    }
+
+    suspend fun getArtist(browseId: String): Artist? = withContext(Dispatchers.IO) {
+        val root = engine.browse(browseId) ?: return@withContext null
+        val header = InnerTubeSearchParser.parsePageHeader(root) ?: return@withContext null
+        val id = InnerTubeIds.artistId(browseId)
+        registry.putArtist(id, browseId)
+        Artist(id, header.title, 0, header.artworkUrl)
     }
 
     /**
@@ -389,6 +425,8 @@ suspend fun radioPage(
     private fun InnerTubeTrack.toSong(): Song {
         val albumIdValue = albumId?.let { InnerTubeIds.albumId(it) } ?: 0L
         val artistIdValue = artistId?.let { InnerTubeIds.artistId(it) } ?: 0L
+        albumId?.let { registry.putAlbum(albumIdValue, it) }
+        artistId?.let { registry.putArtist(artistIdValue, it) }
         // Search rows can carry an empty byline; `displayArtist` reads the
         // `artists` list, so the fallback has to be applied to both fields or
         // the UI shows a blank artist.
