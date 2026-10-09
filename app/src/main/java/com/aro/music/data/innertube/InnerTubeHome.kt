@@ -36,7 +36,7 @@ sealed interface HomeCatalogItem {
     }
 }
 
-data class HomeCatalogSection(val title: String, val label: String?, val items: List<HomeCatalogItem>)
+data class HomeCatalogSection(val title: String, val label: String?, val items: List<HomeCatalogItem>, val browseId: String? = null, val params: String? = null)
 data class HomeCatalogPage(val sections: List<HomeCatalogSection>, val continuation: String?)
 
 internal data class InnerTubeHomeSection(
@@ -46,4 +46,13 @@ internal data class InnerTubeHomeSection(
     val albums: List<InnerTubeAlbum>,
     val artists: List<InnerTubeArtist>,
     val playlists: List<InnerTubePlaylist>,
+    val browseId: String? = null,
+    val params: String? = null,
+)
+
+data class ArtistCatalogPage(
+    val sections: List<HomeCatalogSection>,
+    val subscriberCount: String? = null,
+    val monthlyAudience: String? = null,
+    val description: String? = null,
 )

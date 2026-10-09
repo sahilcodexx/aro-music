@@ -138,6 +138,20 @@ class InnerTubeEngine @Inject constructor(
     }
 
     private val innerTube: InnerTube by lazy { InnerTube(httpClient = httpClient) }
+    private val browseSessionMutex = kotlinx.coroutines.sync.Mutex()
+
+    private suspend fun ensureBrowseSession() {
+        if (!innerTube.visitorData.isNullOrBlank()) return
+        browseSessionMutex.lock()
+        try {
+            if (innerTube.visitorData.isNullOrBlank()) {
+                // Home continuation tokens belong to the visitor that fetched
+                // the first page; initialize it before concurrent home/explore.
+                kotlinx.coroutines.withTimeoutOrNull(5_000L) { innerTube.fetchFreshVisitorData() }
+            }
+        } finally { browseSessionMutex.unlock() }
+    }
+
 
     private val streamCache = android.util.LruCache<String, ExtractedStream>(32)
 
@@ -379,12 +393,13 @@ class InnerTubeEngine @Inject constructor(
         params: String? = null,
         continuation: String? = null,
     ): JsonObject? = withContext(Dispatchers.IO) {
+        ensureBrowseSession()
         var lastError: Throwable? = null
         for (client in MUSIC_CLIENTS) {
             try {
                 val response = innerTube.browse(
                     client = client,
-                    browseId = browseId,
+                    browseId = browseId.takeIf { continuation.isNullOrBlank() },
                     params = params,
                     continuation = continuation,
                 )

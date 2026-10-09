@@ -12,33 +12,34 @@ import javax.inject.Singleton
  * `VL…` browseId. Since the id is a one-way hash the browseId cannot be
  * recovered from it, so it is captured here at the moment the entity is parsed.
  *
- * This is deliberately in-memory and not persisted. It is only consulted after
- * the user has just searched — the flow is "search, tap a result", so the entry
- * is always fresh — and a cold start with no entry simply falls back to the
- * Room copy, which is why search results are also written to the albums/artists
- * tables. Persisting this would need a schema column and a migration, which is
- * not worth it for a cache that only has to survive a tap.
+ * Mappings persist independently of the Room schema so saved library items
+ * can reopen their remote catalog after process death.
  */
 @Singleton
-class InnerTubeBrowseRegistry @Inject constructor() {
+class InnerTubeBrowseRegistry @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
+) {
+    private val preferences = context.getSharedPreferences("catalog_browse_ids", android.content.Context.MODE_PRIVATE)
 
     private val albumBrowseIds = ConcurrentHashMap<Long, String>()
     private val artistBrowseIds = ConcurrentHashMap<Long, String>()
 
     fun putAlbum(albumId: Long, browseId: String) {
         albumBrowseIds[albumId] = browseId
+        preferences.edit().putString("album:$albumId", browseId).apply()
     }
 
     fun putArtist(artistId: Long, browseId: String) {
         artistBrowseIds[artistId] = browseId
+        preferences.edit().putString("artist:$artistId", browseId).apply()
     }
 
-    fun albumBrowseId(albumId: Long): String? = albumBrowseIds[albumId]
+    fun albumBrowseId(albumId: Long): String? = albumBrowseIds[albumId] ?: preferences.getString("album:$albumId", null)
 
-    fun artistBrowseId(artistId: Long): String? = artistBrowseIds[artistId]
+    fun artistBrowseId(artistId: Long): String? = artistBrowseIds[artistId] ?: preferences.getString("artist:$artistId", null)
 
     /** True when this album id is known to have come from YouTube Music. */
-    fun isKnownAlbum(albumId: Long): Boolean = albumBrowseIds.containsKey(albumId)
+    fun isKnownAlbum(albumId: Long): Boolean = albumBrowseId(albumId) != null
 
-    fun isKnownArtist(artistId: Long): Boolean = artistBrowseIds.containsKey(artistId)
+    fun isKnownArtist(artistId: Long): Boolean = artistBrowseId(artistId) != null
 }
