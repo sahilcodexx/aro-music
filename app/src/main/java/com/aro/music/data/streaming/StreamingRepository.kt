@@ -30,6 +30,7 @@ class StreamingRepository @Inject constructor(
     suspend fun spotifyAlbum(browseId: String) = spotify.album(browseId)
     suspend fun spotifyAlbumSongs(browseId: String) = spotify.albumSongs(browseId)
     suspend fun spotifyArtistSongs(browseId: String) = spotify.artistSongs(browseId)
+    suspend fun spotifyArtist(browseId: String) = spotify.artist(browseId)
     suspend fun spotifySearchPlaylists(query: String) = spotify.searchPlaylists(query)
     suspend fun spotifyPlaylist(id: String) = spotify.resolvePlaylist(id)
 

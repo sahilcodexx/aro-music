@@ -188,27 +188,20 @@ class MusicRepositoryImpl @Inject constructor(
             .distinctBy { (_, name) -> name.trim().lowercase() }
             .toList()
 
-    /**
-     * Library songs.
-     *
-     * [StreamingRepository] already walks InnerTube → JioSaavn → iTunes and
-     * swallows per-backend failures, so this used to wrap it in a 5 × 5s retry
-     * loop "for Vercel cold start". That just meant a dead backend stalled the
-     * library for 25 seconds before rendering an empty list; a single pass over
-     * the fallback chain fails fast instead.
-     */
-    override fun getAudioFiles(): Flow<List<Song>> = flow {
-        val songs = streamingRepository.getTrendingSongs(limit = TRENDING_LIBRARY_LIMIT)
-        emit(songs.withFavoriteState())
-    }.flowOn(Dispatchers.IO)
+    /** Saved library membership comes from Room, independently of discovery caches. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getAudioFiles(): Flow<List<Song>> = combine(
+        userPreferencesRepository.allowedDirectoriesFlow,
+        userPreferencesRepository.blockedDirectoriesFlow
+    ) { allowed, blocked -> computeAllowedDirs(allowed, blocked) }
+        .flatMapLatest { (dirs, filter) -> musicDao.getLibrarySongs(dirs, filter) }
+        .map { songs -> songs.map { it.toSong() }.withFavoriteState() }
+        .flowOn(Dispatchers.IO)
 
     override fun getPaginatedSongs(
         sortOption: SortOption,
         storageFilter: com.aro.music.data.model.StorageFilter,
-    ): Flow<PagingData<Song>> = flow {
-        val songs = streamingRepository.getTrendingSongs(limit = TRENDING_LIBRARY_LIMIT)
-        emit(PagingData.from(songs.withFavoriteState()))
-    }.flowOn(Dispatchers.IO)
+    ): Flow<PagingData<Song>> = songRepository.getPaginatedSongs(sortOption, storageFilter)
 
     /**
      * Stamps the persisted favourite flag onto freshly fetched streaming rows.
@@ -329,7 +322,7 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override fun getSongCountFlow(): Flow<Int> {
-        return musicDao.getSongCount().distinctUntilChanged()
+        return musicDao.getLibrarySongCount().distinctUntilChanged()
     }
 
     override fun getCloudSongCountFlow(): Flow<Int> {
@@ -494,7 +487,7 @@ class MusicRepositoryImpl @Inject constructor(
         return flow {
             val cached = fromRoom.first()
             if (cached != null) {
-                emit(cached)
+                emitAll(fromRoom)
                 return@flow
             }
             val browseId = innerTubeRepository.browseIdForAlbum(id)
@@ -504,11 +497,15 @@ class MusicRepositoryImpl @Inject constructor(
                 return@flow
             }
             try {
-                val album = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbum(browseId) else innerTubeRepository.getAlbum(browseId)
+                val album = if (browseId.startsWith("spotify:")) {
+                    streamingRepository.spotifyAlbum(browseId)
+                } else {
+                    innerTubeRepository.getAlbum(browseId)
+                }
                 if (album != null) {
                     persistRemoteAlbum(album)
                 } else {
-                    Log.w("MusicRepository", "InnerTube album $id returned no header")
+                    Log.w("MusicRepository", "Album fetch returned null for $id")
                 }
             } catch (e: Exception) {
                 Log.w("MusicRepository", "Album header fetch failed for $id: ${e.message}")
@@ -542,6 +539,21 @@ class MusicRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.w("MusicRepository", "Could not persist album ${album.id}: ${e.message}")
         }
+    }
+
+    /**
+     * Stores a remote artist (Spotify or InnerTube) to Room.
+     */
+    private suspend fun persistRemoteArtist(artist: Artist) {
+        val cached = musicDao.getArtistById(artist.id).first()
+        musicDao.insertArtists(listOf(
+            com.aro.music.data.database.ArtistEntity(
+                id = artist.id, name = artist.name,
+                trackCount = maxOf(artist.songCount, cached?.trackCount ?: 0),
+                imageUrl = artist.imageUrl ?: cached?.imageUrl,
+                customImageUri = cached?.customImageUri,
+            )
+        ))
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -596,7 +608,7 @@ class MusicRepositoryImpl @Inject constructor(
         return flow {
             val cached = fromRoom.first()
             if (cached.isNotEmpty()) {
-                emit(cached)
+                emitAll(fromRoom)
                 return@flow
             }
             val fetched = fetchInnerTubeAlbumTracks(albumId)
@@ -620,7 +632,12 @@ class MusicRepositoryImpl @Inject constructor(
             return emptyList()
         }
         return try {
-            val tracks = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbumSongs(browseId) else innerTubeRepository.getAlbumTracks(browseId)
+            val header = musicDao.getAlbumById(albumId).first()?.toAlbum()
+            val fetched = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbumSongs(browseId) else innerTubeRepository.getAlbumTracks(browseId)
+            val tracks = fetched.mapIndexed { index, song ->
+                song.copy(albumId = albumId, album = header?.title ?: song.album,
+                    trackNumber = song.trackNumber.takeIf { it > 0 } ?: index + 1)
+            }
             if (tracks.isNotEmpty()) {
                 persistRemoteTracks(tracks)
             }
@@ -641,53 +658,76 @@ class MusicRepositoryImpl @Inject constructor(
      * browse response. `insertAlbums`/`insertArtists` merge on conflict, so this
      * is safe to re-run.
      */
+    override suspend fun cacheCatalogSongs(songs: List<Song>) = persistRemoteTracks(songs)
+
     private suspend fun persistRemoteTracks(tracks: List<Song>) {
         if (tracks.isEmpty()) return
         try {
-            val byArtist = tracks.groupBy { it.artistId }
-                .filterKeys { it != 0L }
-            if (byArtist.isNotEmpty()) {
-                musicDao.insertArtists(
-                    byArtist.map { (artistId, artistTracks) ->
-                        com.aro.music.data.database.ArtistEntity(
-                            id = artistId,
-                            name = artistTracks.first().displayArtist,
-                            trackCount = artistTracks.size,
-                            imageUrl = artistTracks.first().albumArtUriString,
-                            customImageUri = null,
-                        )
-                    }
+            val artistRefs = tracks.flatMap { song ->
+                song.artists + com.aro.music.data.model.ArtistRef(song.artistId, song.artist.ifBlank { "Unknown artist" }, true)
+            }.distinctBy { it.id }
+            // The database requires parents even for catalog rows without album
+            // or artist metadata (their IDs are 0). Keep existing artist headers:
+            // a track's combined byline must never rename the artist page.
+            musicDao.insertArtistsIgnoreConflicts(artistRefs.map { artist ->
+                com.aro.music.data.database.ArtistEntity(artist.id, artist.name, 0, null)
+            })
+            val byAlbum = tracks.groupBy { it.albumId }
+            musicDao.insertAlbumsIgnoreConflicts(byAlbum.map { (albumId, albumTracks) ->
+                val sample = albumTracks.first()
+                com.aro.music.data.database.AlbumEntity(
+                    id = albumId, title = sample.album.ifBlank { "Unknown album" },
+                    artistName = sample.displayArtist, artistId = sample.artistId,
+                    albumArtUriString = sample.albumArtUriString, songCount = albumTracks.size,
+                    dateAdded = sample.dateAdded, year = sample.year, albumArtist = sample.albumArtist,
                 )
-            }
-
-            val byAlbum = tracks.groupBy { it.albumId }.filterKeys { it != 0L }
-            if (byAlbum.isNotEmpty()) {
-                musicDao.insertAlbums(
-                    byAlbum.map { (albumId, albumTracks) ->
-                        val sample = albumTracks.first()
-                        com.aro.music.data.database.AlbumEntity(
-                            id = albumId,
-                            title = sample.album.ifBlank { "Unknown album" },
-                            artistName = sample.displayArtist,
-                            artistId = sample.artistId,
-                            albumArtUriString = sample.albumArtUriString,
-                            songCount = albumTracks.size,
-                            dateAdded = sample.dateAdded,
-                            year = sample.year,
-                            albumArtist = sample.albumArtist,
-                        )
-                    }
-                )
-            }
-
+            })
             musicDao.insertSongs(tracks.map { it.toEntityWithoutPaths() })
+            val refs = tracks.flatMap { song ->
+                val artists = (song.artists + com.aro.music.data.model.ArtistRef(song.artistId, song.artist, true)).distinctBy { it.id }
+                artists.map { artist -> com.aro.music.data.database.SongArtistCrossRef(song.id.toLong(), artist.id, artist.id == song.artistId) }
+            }
+            musicDao.insertSongArtistCrossRefs(refs)
+
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("MusicRepository", "Could not persist remote tracks: ${e.message}")
         }
     }
 
     override fun getArtistById(artistId: Long): Flow<Artist?> {
-        return musicDao.getArtistById(artistId).map { it?.toArtist() }
+        val fromRoom = musicDao.getArtistById(artistId).map { it?.toArtist() }
+        if (!InnerTubeIds.isArtistId(artistId)) {
+            return fromRoom.flowOn(Dispatchers.IO)
+        }
+        return flow {
+            val cached = fromRoom.first()
+            if (cached != null) {
+                emitAll(fromRoom)
+                return@flow
+            }
+            val browseId = innerTubeRepository.browseIdForArtist(artistId)
+            if (browseId == null) {
+                Log.w("MusicRepository", "No browseId registered for artist $artistId")
+                emitAll(fromRoom)
+                return@flow
+            }
+            try {
+                val artist = if (browseId.startsWith("spotify:")) {
+                    streamingRepository.spotifyArtist(browseId)
+                } else {
+                    innerTubeRepository.getArtist(browseId)
+                }
+                if (artist != null) {
+                    persistRemoteArtist(artist)
+                } else {
+                    Log.w("MusicRepository", "Artist fetch returned null for $artistId")
+                }
+            } catch (e: Exception) {
+                Log.w("MusicRepository", "Artist fetch failed for $artistId: ${e.message}")
+            }
+            emitAll(fromRoom)
+        }.flowOn(Dispatchers.IO)
     }
 
     override suspend fun getArtistIdByName(name: String): Long? = withContext(Dispatchers.IO) {
@@ -735,7 +775,7 @@ class MusicRepositoryImpl @Inject constructor(
         return flow {
             val cached = fromRoom.first()
             if (cached.isNotEmpty()) {
-                emit(cached)
+                emitAll(fromRoom)
                 return@flow
             }
             val browseId = innerTubeRepository.browseIdForArtist(artistId)
@@ -745,7 +785,12 @@ class MusicRepositoryImpl @Inject constructor(
                 return@flow
             }
             try {
-                val tracks = if (browseId.startsWith("spotify:")) streamingRepository.spotifyArtistSongs(browseId) else innerTubeRepository.getArtistSongs(browseId)
+                val header = musicDao.getArtistById(artistId).first()
+                val fetched = if (browseId.startsWith("spotify:")) streamingRepository.spotifyArtistSongs(browseId) else innerTubeRepository.getArtistSongs(browseId)
+                val tracks = fetched.map { song ->
+                    if (song.artists.any { it.id == artistId }) song else song.copy(artists = song.artists +
+                        com.aro.music.data.model.ArtistRef(artistId, header?.name ?: song.artist, song.artistId == artistId))
+                }
                 if (tracks.isNotEmpty()) {
                     persistRemoteTracks(tracks)
                 } else {
@@ -790,14 +835,18 @@ class MusicRepositoryImpl @Inject constructor(
     override fun searchAlbums(query: String, minTracks: Int): Flow<List<Album>> {
         if (query.isBlank()) return flowOf(emptyList())
         return flow {
-            emit(streamingRepository.searchAlbums(query = query))
+            val albums = streamingRepository.searchAlbums(query = query)
+            musicDao.insertAlbumsIgnoreConflicts(albums.map { it.toEntity(0L) })
+            emit(albums)
         }.flowOn(Dispatchers.IO)
     }
 
     override fun searchArtists(query: String): Flow<List<Artist>> {
         if (query.isBlank()) return flowOf(emptyList())
         return flow {
-            emit(streamingRepository.searchArtists(query = query))
+            val artists = streamingRepository.searchArtists(query = query)
+            artists.forEach { persistRemoteArtist(it) }
+            emit(artists)
         }.flowOn(Dispatchers.IO)
     }
 
@@ -960,21 +1009,14 @@ class MusicRepositoryImpl @Inject constructor(
 
     // Implementación de las nuevas funciones suspend para carga única
     override suspend fun getAllSongsOnce(): List<Song> = withContext(Dispatchers.IO) {
-        // Always pre-fetch trending so DB is never empty on first call
-        try {
-            val fetched = streamingRepository.getTrendingSongs(limit = 50)
-            if (fetched.isNotEmpty()) persistRemoteTracks(fetched)
-        } catch (error: Exception) {
-            if (error is kotlinx.coroutines.CancellationException) throw error
-        }
         val allowedDirs = userPreferencesRepository.allowedDirectoriesFlow.first()
         val blockedDirs = userPreferencesRepository.blockedDirectoriesFlow.first()
         val (allowedParentDirs, applyDirectoryFilter) =
             computeAllowedDirs(allowedDirs, blockedDirs)
-        musicDao.getAllSongs(
+        musicDao.getLibrarySongs(
             allowedParentDirs = allowedParentDirs,
             applyDirectoryFilter = applyDirectoryFilter
-        ).first().map { it.toSong() }
+        ).first().map { it.toSong() }.withFavoriteState()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -1077,21 +1119,8 @@ class MusicRepositoryImpl @Inject constructor(
     override suspend fun setFavoriteStatusWithSong(song: com.aro.music.data.model.Song, isFavorite: Boolean) = withContext(Dispatchers.IO) {
         val id = song.id.toLongOrNull() ?: return@withContext
         if (isFavorite) {
-            // Upsert the song into the songs table so the INNER JOIN in getFavoriteSongs* works.
-            // This is required for streaming songs that are not stored locally.
-            //
-            // `songs` has foreign keys onto `albums` (CASCADE) and `artists`
-            // (SET NULL) with FK enforcement on, so the parent rows have to exist
-            // first or the insert is rejected. Streaming songs arrive with a
-            // synthetic album/artist id and no corresponding rows, which is why
-            // this previously threw and left a favourite pointing at a missing
-            // song — invisible in the favourites list. Insert the parents first.
-            try {
-                upsertStreamingSongParents(song)
-                musicDao.insertSongsIgnoreConflicts(listOf(song.toEntityWithoutPaths()))
-            } catch (e: Exception) {
-                Log.w("MusicRepository", "Could not upsert song ${song.id} before favoriting: ${e.message}")
-            }
+            // Persist parents and artist relations before saving a search result.
+            persistRemoteTracks(listOf(song))
             favoritesDao.setFavorite(
                 com.aro.music.data.database.FavoritesEntity(
                     songId = id,
@@ -1100,48 +1129,6 @@ class MusicRepositoryImpl @Inject constructor(
             )
         } else {
             favoritesDao.removeFavorite(id)
-        }
-    }
-
-    /**
-     * Creates placeholder [ArtistEntity]/[AlbumEntity] rows for a remote song so
-     * the song insert satisfies its foreign keys.
-     *
-     * Only real ids are materialised — a song with no album or no artist keeps
-     * `0`, which matches no parent row and so needs none. `insertAlbums` and
-     * `insertArtists` merge on conflict, so this is safe to re-run and will not
-     * overwrite a richer local row.
-     */
-    private suspend fun upsertStreamingSongParents(song: com.aro.music.data.model.Song) {
-        if (song.artistId != 0L && song.artist.isNotBlank()) {
-            musicDao.insertArtists(
-                listOf(
-                    com.aro.music.data.database.ArtistEntity(
-                        id = song.artistId,
-                        name = song.artist,
-                        trackCount = 0,
-                        imageUrl = null,
-                        customImageUri = null,
-                    )
-                )
-            )
-        }
-        if (song.albumId != 0L && song.album.isNotBlank()) {
-            musicDao.insertAlbums(
-                listOf(
-                    com.aro.music.data.database.AlbumEntity(
-                        id = song.albumId,
-                        title = song.album,
-                        artistName = song.artist,
-                        artistId = song.artistId,
-                        albumArtUriString = song.albumArtUriString,
-                        songCount = 0,
-                        dateAdded = song.dateAdded,
-                        year = song.year,
-                        albumArtist = song.albumArtist,
-                    )
-                )
-            )
         }
     }
 

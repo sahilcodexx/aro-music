@@ -355,6 +355,8 @@ interface MusicRepository {
     ): Flow<List<com.aro.music.data.model.MusicFolder>>
 
     suspend fun deleteById(id: Long)
+    suspend fun cacheCatalogSongs(songs: List<Song>) {}
+
     suspend fun saveTelegramSongs(songs: List<Song>)
 
     suspend fun replaceTelegramSongsForChannel(chatId: Long, songs: List<Song>)
