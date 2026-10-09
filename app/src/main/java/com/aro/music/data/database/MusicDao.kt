@@ -93,6 +93,22 @@ data class DeviceCapabilitySongRow(
 @Dao
 interface MusicDao {
 
+    @Query("""
+        SELECT """ + SONG_LIST_PROJECTION + """ FROM songs
+        WHERE (:applyDirectoryFilter = 0 OR source_type >= 7 OR parent_directory_path IN (:allowedParentDirs))
+        AND (source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
+        ORDER BY title COLLATE NOCASE, id
+    """)
+    fun getLibrarySongs(allowedParentDirs: List<String>, applyDirectoryFilter: Boolean): Flow<List<SongEntity>>
+
+    @Query("""
+        SELECT COUNT(*) FROM songs
+        WHERE source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id)
+    """)
+    fun getLibrarySongCount(): Flow<Int>
+
     // --- Insert Operations ---
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSongsIgnoreConflicts(songs: List<SongEntity>): List<Long>
@@ -578,6 +594,8 @@ interface MusicDao {
     @Query("""
         SELECT id, parent_directory_path, title, album_art_uri_string FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR source_type >= 7 OR parent_directory_path IN (:allowedParentDirs))
+        AND (source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -600,6 +618,8 @@ interface MusicDao {
     @Query("""
         SELECT id FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR source_type >= 7 OR parent_directory_path IN (:allowedParentDirs))
+        AND (source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -675,6 +695,8 @@ interface MusicDao {
     @Query("""
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR source_type >= 7 OR parent_directory_path IN (:allowedParentDirs))
+        AND (source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -714,6 +736,8 @@ interface MusicDao {
         SELECT """ + SONG_LIST_PROJECTION + """
         FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR source_type >= 7 OR parent_directory_path IN (:allowedParentDirs))
+        AND (source_type != 9 OR id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1024,6 +1048,8 @@ interface MusicDao {
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1068,6 +1094,8 @@ interface MusicDao {
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1125,6 +1153,8 @@ interface MusicDao {
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1316,6 +1346,8 @@ interface MusicDao {
         SELECT DISTINCT artists.* FROM artists
         INNER JOIN songs ON artists.id = songs.artist_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         ORDER BY artists.name ASC
     """)
     fun getArtists(
@@ -1330,6 +1362,8 @@ interface MusicDao {
         INNER JOIN song_artist_cross_ref ON song_artist_cross_ref.song_id = songs.id
         INNER JOIN artists ON artists.id = song_artist_cross_ref.artist_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1364,6 +1398,8 @@ interface MusicDao {
         INNER JOIN song_artist_cross_ref ON song_artist_cross_ref.song_id = songs.id
         INNER JOIN artists ON artists.id = song_artist_cross_ref.artist_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (
@@ -1756,6 +1792,8 @@ interface MusicDao {
         INNER JOIN song_artist_cross_ref ON song_artist_cross_ref.song_id = songs.id
         INNER JOIN artists ON artists.id = song_artist_cross_ref.artist_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
+            OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
             :filterMode = 0
             OR (

@@ -34,7 +34,14 @@ interface LocalPlaylistDao {
     suspend fun updatePlaylist(entity: PlaylistEntity)
 
     @Query("DELETE FROM playlists WHERE id = :playlistId")
-    suspend fun deletePlaylist(playlistId: String)
+    suspend fun deletePlaylistEntity(playlistId: String)
+
+    @Transaction
+    suspend fun deletePlaylist(playlistId: String) {
+        // Playlist-song rows have no foreign key or automatic cascade.
+        clearPlaylistSongs(playlistId)
+        deletePlaylistEntity(playlistId)
+    }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPlaylistSongs(entities: List<PlaylistSongEntity>)
