@@ -53,11 +53,11 @@
     
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">No songs yet</string>
-    <string name="lib_empty_songs_all_subtitle">Add music to your device or sync a cloud source to start listening.</string>
+    <string name="lib_empty_songs_all_subtitle">Like songs or add them to your playlists to build your library.</string>
     <string name="lib_empty_songs_offline_title">No local songs found</string>
     <string name="lib_empty_songs_offline_subtitle">Try another source filter or rescan your device library.</string>
     <string name="lib_empty_songs_online_title">No cloud songs found</string>
-    <string name="lib_empty_songs_online_subtitle">Sync Telegram or NetEase songs, or switch to local source.</string>
+    <string name="lib_empty_songs_online_subtitle">Like songs or add them to your playlists to build your library.</string>
     <string name="lib_empty_albums_all_title">No albums available</string>
     <string name="lib_empty_albums_all_subtitle">Albums will appear here as soon as your library has grouped tracks.</string>
     <string name="lib_empty_albums_offline_title">No local albums found</string>

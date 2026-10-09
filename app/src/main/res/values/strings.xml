@@ -227,4 +227,11 @@
     <string name="ui_format_percent_d">%1$d%%</string>
     <string name="backup_manifest_schema_v">v%1$d</string>
     <string name="backup_manifest_device_line">%1$s %2$s</string>
+    <string name="catalog_artist_label">Artist</string>
+    <string name="artist_radio">Radio</string>
+    <string name="artist_subscriber_count">%1$s subscribers</string>
+    <string name="home_speed_dial">Speed dial</string>
+    <string name="home_speed_dial_hint">Long press a song to pin or unpin</string>
+    <string name="home_listening_recommendations">Recommended for you</string>
+    <string name="home_because_listened">Because you listened to %1$s</string>
 </resources>
