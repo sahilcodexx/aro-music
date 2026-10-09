@@ -8,6 +8,24 @@ import org.junit.jupiter.api.Test
 class InnerTubeFeedParserTest {
     private fun fixture(name: String) = Json.parseToJsonElement(requireNotNull(javaClass.getResource("/innertube/$name")).readText()).jsonObject
 
+    @Test fun `artist retains full catalog and real audience counts`() {
+        val root = fixture("raga-artist.json")
+        val sections = InnerTubeSearchParser.parseHomeSections(root)
+        val top = sections.first { it.title == "Top songs" }
+        assertEquals(5, top.songs.size)
+        assertTrue(top.songs.any { it.title == "Galat Karam" })
+        assertNotNull(top.browseId)
+        assertEquals("ggMCCAI%3D", top.params)
+        assertEquals(2, sections.first { it.title == "Albums" }.albums.size)
+        assertTrue(sections.first { it.title == "Singles & EPs" }.albums.isNotEmpty())
+        assertTrue(sections.first { it.title == "Videos" }.songs.isNotEmpty())
+        assertTrue(sections.first { it.title == "Featured on" }.playlists.isNotEmpty())
+        assertTrue(sections.first { it.title == "Fans might also like" }.artists.isNotEmpty())
+        val (subscribers, monthly) = InnerTubeSearchParser.artistMetadata(root)
+        assertEquals("393K", subscribers)
+        assertEquals("26M monthly audience", monthly)
+    }
+
     @Test fun `anonymous home shelves expose real playlist sources`() {
         val home = fixture("home-playlist-shelves.json")
         assertTrue(InnerTubeSearchParser.parse(home).tracks.isEmpty())
@@ -74,6 +92,12 @@ class InnerTubeFeedParserTest {
     @Test fun `largest thumbnail is selected by dimensions rather than response ordering`() {
         val root = Json.parseToJsonElement("""{"playlistPanelVideoRenderer":{"videoId":"seed","title":{"runs":[{"text":"Track"}]},"thumbnail":{"thumbnails":[{"url":"https://example.com/large.jpg","width":800,"height":800},{"url":"https://example.com/small.jpg","width":60,"height":60}]}}}""").jsonObject
         assertEquals("https://example.com/large.jpg", InnerTubeSearchParser.parse(root).tracks.single().artworkUrl)
+    }
+
+    @Test fun `album header is read from current nested browse layouts`() {
+        val root = Json.parseToJsonElement("""{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[{"musicResponsiveHeaderRenderer":{"title":{"runs":[{"text":"NO FORMULA"}]},"subtitle":{"runs":[{"text":"Album"},{"text":" • "},{"text":"Karma"}]}}}]}}}}]}}}""").jsonObject
+        assertEquals("NO FORMULA", InnerTubeSearchParser.parsePageHeader(root)?.title)
+        assertEquals("Karma", InnerTubeSearchParser.parsePageHeader(root)?.artist)
     }
 
 }

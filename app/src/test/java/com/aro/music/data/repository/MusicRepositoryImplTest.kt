@@ -6,6 +6,7 @@ import com.aro.music.data.database.SearchHistoryDao
 import com.aro.music.data.database.SongEntity // Necesario para datos de prueba
 import com.aro.music.data.database.AlbumEntity
 import com.aro.music.data.database.ArtistEntity
+import com.aro.music.data.database.toSong
 import com.aro.music.data.model.Song // Para verificar el mapeo
 import com.aro.music.data.preferences.PlaylistPreferencesRepository
 import com.aro.music.data.preferences.UserPreferencesRepository
@@ -71,6 +72,7 @@ class MusicRepositoryImplTest {
         every { mockTelegramRepositoryProvider.get() } returns mockTelegramRepository
 
         every { mockMusicDao.getAllSongArtistCrossRefs() } returns flowOf(emptyList())
+        every { mockMusicDao.getLibrarySongs(any(), any()) } returns flowOf(emptyList())
         every { mockMusicDao.getAllSongs(any(), any()) } answers {
             println("getAllSongs called with: ${args[0]}, ${args[1]}")
             flowOf(emptyList())
@@ -129,21 +131,18 @@ class MusicRepositoryImplTest {
 
     // --- Pruebas para getAudioFiles ---
     @Test
-    fun `getAudioFiles returns trending songs from streaming repository`() = runTest(testDispatcher) {
-        // Library is now streaming-backed: getAudioFiles() delegates to the
-        // trending InnerTube songs instead of scanning the local DAO.
-        val expectedSongs = listOf(
-            createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path").toSong(),
-            createSongEntity(3L, "Song C", "Artist 2", "Rock", "/allowed/path/songC.mp3", "/allowed/path").toSong()
+    fun `getAudioFiles observes saved library without fetching trending songs`() = runTest(testDispatcher) {
+        val rows = listOf(
+            createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path"),
+            createSongEntity(3L, "Song C", "Artist 2", "Rock", "/allowed/path/songC.mp3", "/allowed/path")
         )
-        coEvery {
-            // 50 == MusicRepositoryImpl.TRENDING_LIBRARY_LIMIT (private const)
-            mockStreamingRepository.getTrendingSongs(limit = 50)
-        } returns expectedSongs
+        val expectedSongs = rows.map { it.toSong() }
+        every { mockMusicDao.getLibrarySongs(any(), any()) } returns flowOf(rows)
 
         val result: List<Song> = musicRepository.getAudioFiles().first()
 
         assertEquals(expectedSongs, result)
+        coVerify(exactly = 0) { mockStreamingRepository.getTrendingSongs(any()) }
     }
 
     @Test
@@ -375,23 +374,4 @@ class MusicRepositoryImplTest {
         )
     }
 
-    /** Minimal entity-to-domain mapping mirroring [MusicRepositoryImpl]. */
-    private fun SongEntity.toSong(): Song = Song(
-        id = id.toString(),
-        title = title,
-        artist = artistName,
-        artistId = artistId,
-        album = albumName,
-        albumId = albumId,
-        path = filePath,
-        contentUriString = contentUriString,
-        albumArtUriString = albumArtUriString,
-        duration = duration * 1000L,
-        genre = genre,
-        year = year,
-        trackNumber = trackNumber,
-        mimeType = "audio/mpeg",
-        bitrate = null,
-        sampleRate = null
-    )
 }
