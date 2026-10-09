@@ -100,7 +100,6 @@ import com.aro.music.presentation.components.HomeOptionsBottomSheet
 import com.aro.music.presentation.components.MiniPlayerHeight
 import com.aro.music.presentation.components.NavBarContentHeight
 import com.aro.music.presentation.components.RecentlyPlayedSection
-import com.aro.music.presentation.components.RecentlyPlayedSectionMinSongsToShow
 import com.aro.music.presentation.components.SmartImage
 import com.aro.music.presentation.components.StatsOverviewCard
 import com.aro.music.presentation.components.YourMixSongGrid
@@ -155,14 +154,16 @@ fun HomeScreen(
     val playbackHistory by playerViewModel.playbackHistory.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val usesFallbackHomeMix = remember(curatedYourMixSongs, dailyMixSongs) {
-        curatedYourMixSongs.isEmpty() && dailyMixSongs.isEmpty()
+    val listeningMixSongs = remember(homeFeed.personalSections) {
+        homeFeed.personalSections.firstOrNull { it.title == context.getString(R.string.home_listening_recommendations) }
+            ?.items.orEmpty().filterIsInstance<HomeCatalogItem.Track>().map { it.song }.toImmutableList()
     }
-    val yourMixSongs = remember(curatedYourMixSongs, dailyMixSongs, homeMixPreviewSongs) {
+    val yourMixSongs = remember(listeningMixSongs, curatedYourMixSongs, dailyMixSongs, homeMixPreviewSongs) {
         when {
-            homeMixPreviewSongs.isNotEmpty() -> homeMixPreviewSongs
+            listeningMixSongs.isNotEmpty() -> listeningMixSongs
             curatedYourMixSongs.isNotEmpty() -> curatedYourMixSongs
             dailyMixSongs.isNotEmpty() -> dailyMixSongs
+            homeMixPreviewSongs.isNotEmpty() -> homeMixPreviewSongs
             else -> persistentListOf()
         }
     }
@@ -255,6 +256,13 @@ fun HomeScreen(
     }.collectAsStateWithLifecycle(initialValue = false)
 
     // Padding inferior si hay canción en reproducción
+    val isPlayingForHome by remember(playerViewModel.stablePlayerState) {
+        playerViewModel.stablePlayerState.map { it.isPlaying }.distinctUntilChanged()
+    }.collectAsStateWithLifecycle(initialValue = false)
+    LaunchedEffect(currentSong?.id, isPlayingForHome) {
+        if (isPlayingForHome) currentSong?.let(homeFeedViewModel::onSongPlayed)
+    }
+
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
 
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
@@ -382,15 +390,11 @@ fun HomeScreen(
                             song = yourMixSong,
                             isShuffleEnabled = isShuffleEnabled,
                             onPlayShuffled = {
-                                if (usesFallbackHomeMix) {
-                                    playerViewModel.shuffleAllSongs(queueName = "Your Mix")
-                                } else {
-                                    playerViewModel.playSongsShuffled(
-                                        songsToPlay = yourMixSongs,
-                                        queueName = "Your Mix",
-                                        startAtZero = true,
-                                    )
-                                }
+                                playerViewModel.playSongsShuffled(
+                                    songsToPlay = yourMixSongs,
+                                    queueName = "Your Mix",
+                                    startAtZero = true,
+                                )
                             }
                         )
                     }
@@ -406,11 +410,7 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             songs = yourMixSongs,
                             onSongClick = { song ->
-                                if (usesFallbackHomeMix) {
-                                    playerViewModel.showAndPlaySongFromLibrary(song, queueName = "Your Mix")
-                                } else {
-                                    playerViewModel.showAndPlaySong(song, yourMixSongs, "Your Mix")
-                                }
+                                playerViewModel.showAndPlaySong(song, yourMixSongs, "Your Mix")
                             }
                         )
                     }
@@ -449,9 +449,12 @@ fun HomeScreen(
                     }
                 }
 
-                homeFeed.sections.forEach { section ->
+                (homeFeed.personalSections + homeFeed.sections).distinctBy { it.title }
+                    .filterNot { listeningMixSongs.isNotEmpty() && it.title == context.getString(R.string.home_listening_recommendations) }.forEach { section ->
                     item(key = "catalog:${section.title}", contentType = "catalog_shelf") {
-                        HomeCatalogShelf(section) { catalogItem ->
+                        HomeCatalogShelf(section, onLongClick = { entry ->
+                            (entry as? HomeCatalogItem.Track)?.let { homeFeedViewModel.toggleSpeedDial(it.song) }
+                        }, pinnedIds = homeFeed.pinnedSongIds) { catalogItem ->
                             when (catalogItem) {
                                 is HomeCatalogItem.Track -> playerViewModel.showAndPlaySong(
                                     catalogItem.song, listOf(catalogItem.song), section.title
@@ -490,7 +493,7 @@ fun HomeScreen(
                     }
                 }
 
-                if (recentlyPlayedSongs.size >= RecentlyPlayedSectionMinSongsToShow) {
+                if (recentlyPlayedSongs.isNotEmpty() && homeFeed.personalSections.none { it.title == "Recently played" }) {
                     item(
                         key = "recently_played_section",
                         contentType = "recently_played_section"

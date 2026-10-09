@@ -1,6 +1,8 @@
 package com.aro.music.presentation.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,20 +27,23 @@ import coil.size.Size
 import com.aro.music.data.innertube.HomeCatalogItem
 import com.aro.music.data.innertube.HomeCatalogSection
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeCatalogShelf(section: HomeCatalogSection, onClick: (HomeCatalogItem) -> Unit) {
+fun HomeCatalogShelf(section: HomeCatalogSection, onMoreClick: (() -> Unit)? = null, onLongClick: ((HomeCatalogItem) -> Unit)? = null, pinnedIds: Set<String> = emptySet(), onClick: (HomeCatalogItem) -> Unit) {
     val width = 144.dp
     val pixels = with(LocalDensity.current) { width.roundToPx() }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            Text(section.title, style = MaterialTheme.typography.headlineSmall)
+            Text(section.title + if (section.browseId != null && onMoreClick != null) "  →" else "",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = if (section.browseId != null && onMoreClick != null) Modifier.clickable(onClick = onMoreClick) else Modifier)
             section.label?.takeIf { it.isNotBlank() && !it.equals(section.title, ignoreCase = true) }?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(section.items, key = { it.id }, contentType = { it::class.simpleName }) { item ->
-                Column(Modifier.width(width).clickable(role = Role.Button, onClickLabel = item.title) { onClick(item) }) {
+                Column(Modifier.width(width).combinedClickable(role = Role.Button, onClickLabel = item.title, onClick = { onClick(item) }, onLongClick = onLongClick?.let { { it(item) } })) {
                     SmartImage(
                         model = item.artworkUrl,
                         contentDescription = null,
@@ -47,7 +52,7 @@ fun HomeCatalogShelf(section: HomeCatalogSection, onClick: (HomeCatalogItem) -> 
                         targetSize = Size(pixels, pixels),
                     )
                     Spacer(Modifier.height(6.dp))
-                    Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text((if (item is HomeCatalogItem.Track && item.song.id in pinnedIds) "★ " else "") + item.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (item.subtitle.isNotBlank()) {
                         Text(item.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
