@@ -69,3 +69,27 @@ thumbnail renderers, choosing the largest dimensions. Google artwork requests
 1080px images; home cards decode at their displayed pixel size. Previously cached
 YouTube songs with missing artwork use a video-thumbnail fallback, and restored
 media items preserve known covers when artwork metadata is absent.
+
+Remote detail loading now saves search album/artist headers before navigation.
+Album browse tracks retain the selected album ID and source order. Remote track
+persistence creates every required parent (including missing-metadata IDs) and
+song/artist junction rows, so artist pages include featured tracks. Canonical
+artist headers and custom artwork survive track refreshes. Unknown remote artist
+counts display an artist label rather than claiming zero songs.
+
+Verification on 2026-10-09: 63 targeted unit tests passed. Three live Android
+checks passed after installing a fresh development build: NO FORMULA and Raga
+search-to-detail loading, home continuation plus 1080px radio artwork, and actual
+Bhagwaan audio decoding beyond 0:00. The installed development APK now uses the
+local Gradle debug signing key; future builds with that key can update it in place.
+
+## Artist catalog, listening feed, and saved library (2026-10-09)
+
+- Artist details now retain named catalog shelves from Meld's YouTube artist-page approach: top songs, albums, singles/EPs, videos, featured playlists, and related artists. Real subscriber/monthly-audience text comes from the artist header. Supported section endpoints open additional releases/tracks, and catalog failures can be retried.
+- Remote artist artwork keeps its catalog image rather than replacing it with an unrelated name-based artist lookup. Browse ID mappings persist across process restarts without changing the database schema.
+- Home observes recent listening and likes, includes recent plays and a pinnable song speed dial, and obtains related tracks from the latest song's radio. These tracks take priority in the existing Your Mix grid. Older requests cannot overwrite a newer seed. Discovery play/shuffle actions use their displayed songs.
+- Library songs now observe Room instead of fetching trending songs. Cached YouTube/Spotify audio mappings become library members when liked locally or included in a user playlist. Album/artist/folder lists, sorted queues, pagination, and counts use the same membership rule. Cached catalog entries remain available for browsing/playback/history.
+- Played remote song metadata is retained even when playback starts outside Home. Saving a search result also writes its required parent rows and artist relationships.
+- Final build and 50 targeted unit tests passed. Tests cover all six Raga artist shelves, real header counts, saved-library reads, playback regressions, current-song recommendations, pin/unpin persistence, and cancellation of older recommendation requests.
+- Playlist deletion now removes its song memberships in one Room transaction. Library queries join memberships to existing playlists, so rows left by older deletions cannot keep tracks in the library.
+- Final on-device verification passed: **5 live tests** in 19.988 seconds, covering full Raga catalog/extra releases, album navigation, saving and removing library tracks, playlist deletion, queue/count consistency, online/offline filters, persisted browse IDs, listening-based home recommendations, speed-dial pins, high-resolution artwork, and actual audio decoding. The final build also passed **50 unit tests**, with no failures/errors.

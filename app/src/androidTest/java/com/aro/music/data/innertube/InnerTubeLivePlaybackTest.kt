@@ -28,7 +28,7 @@ class InnerTubeLivePlaybackTest {
     @Test fun homeShelvesAndHighResolutionArtwork() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("live") == "true")
         val engine = InnerTubeEngine(InstrumentationRegistry.getInstrumentation().targetContext)
-        val repository = InnerTubeRepository(engine, InnerTubeBrowseRegistry())
+        val repository = InnerTubeRepository(engine, InnerTubeBrowseRegistry(InstrumentationRegistry.getInstrumentation().targetContext))
         try {
             runBlocking {
                 withTimeout(120_000) {
@@ -62,7 +62,7 @@ class InnerTubeLivePlaybackTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val engine = InnerTubeEngine(context)
-        val repository = InnerTubeRepository(engine, InnerTubeBrowseRegistry())
+        val repository = InnerTubeRepository(engine, InnerTubeBrowseRegistry(InstrumentationRegistry.getInstrumentation().targetContext))
         val seed = "DX15AR5-E4A"
         try {
             val stream = runBlocking {
