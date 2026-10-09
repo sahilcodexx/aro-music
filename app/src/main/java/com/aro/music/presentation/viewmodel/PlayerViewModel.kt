@@ -106,6 +106,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -930,6 +931,17 @@ class PlayerViewModel @Inject constructor(
     lateinit var imageCacheManager: com.aro.music.data.media.ImageCacheManager
 
     init {
+        // Keep metadata for every played remote track so history works even
+        // when playback starts in search and Home is never opened.
+        viewModelScope.launch(Dispatchers.IO) {
+            stablePlayerState.map { it.currentSong }
+                .distinctUntilChangedBy { it?.id }
+                .collect { song ->
+                    if (song != null && song.contentUriString.startsWith("innertube://")) {
+                        musicRepository.cacheCatalogSongs(listOf(song))
+                    }
+                }
+        }
         // Initialize helper classes with our coroutine scope
         listeningStatsTracker.initialize(viewModelScope)
         dailyMixStateHolder.initialize(viewModelScope)

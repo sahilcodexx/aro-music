@@ -1113,7 +1113,8 @@ fun SearchResultArtistItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = formatSongCount(artist.songCount),
+                    text = if (artist.songCount == 0 && com.aro.music.data.innertube.InnerTubeIds.isArtistId(artist.id))
+                        stringResource(R.string.catalog_artist_label) else formatSongCount(artist.songCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

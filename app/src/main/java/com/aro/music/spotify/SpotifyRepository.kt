@@ -93,6 +93,19 @@ class SpotifyRepository @Inject constructor(
         resolve(Spotify.artistTopTracks(browseId.removePrefix("spotify:")).getOrThrow().tracks)
     }
 
+    suspend fun artist(browseId: String): com.aro.music.data.model.Artist? = try {
+        if (!session.ensureAuthenticated()) null else {
+            val artist = Spotify.artist(browseId.removePrefix("spotify:")).getOrThrow()
+            val id = com.aro.music.data.innertube.InnerTubeIds.artistId("spotify:${artist.id}")
+            registry.putArtist(id, "spotify:${artist.id}")
+            com.aro.music.data.model.Artist(id, artist.name, 0, artist.images.firstOrNull()?.url)
+        }
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Timber.w(e, "Spotify artist unavailable")
+        null
+    }
+
     data class ResolvedPlaylist(val playlist: com.aro.music.data.model.Playlist, val songs: List<Song>)
 
     suspend fun searchPlaylists(query: String): List<ResolvedPlaylist> = catalog {
