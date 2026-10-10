@@ -949,7 +949,6 @@ class PlayerViewModel @Inject constructor(
             // Delay to ensure all @Inject lateinit fields and stateIn flows
             // are fully initialized before accessing them from background threads
             kotlinx.coroutines.delay(100)
-            loadHomeMixFromApi()
             updateDailyMix()
         }
         lyricsStateHolder.initialize(viewModelScope, lyricsLoadCallback, playbackStateHolder.stablePlayerState)
