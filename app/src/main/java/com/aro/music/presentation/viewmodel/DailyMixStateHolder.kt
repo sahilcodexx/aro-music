@@ -28,8 +28,26 @@ import javax.inject.Singleton
 class DailyMixStateHolder @Inject constructor(
     private val dailyMixManager: DailyMixManager,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val streamingRepository: StreamingRepository
+    private val streamingRepository: StreamingRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
 ) {
+    private val preferences = context.getSharedPreferences("daily_mix_snapshot", android.content.Context.MODE_PRIVATE)
+    private val gson = com.google.gson.Gson()
+    private var fetchedAt = 0L
+    @androidx.annotation.Keep
+    private data class Snapshot(val fetchedAt: Long, val daily: List<Song>, val your: List<Song>)
+
+    private fun restoreSnapshot() {
+        try {
+            preferences.getString("snapshot_v1", null)?.let { raw ->
+                val snapshot = gson.fromJson(raw, Snapshot::class.java)
+                fetchedAt = snapshot.fetchedAt
+                _dailyMixSongs.value = snapshot.daily.toImmutableList()
+                _yourMixSongs.value = snapshot.your.toImmutableList()
+            }
+        } catch (e: Exception) { timber.log.Timber.w(e, "Ignoring invalid daily mix snapshot") }
+    }
+
     private var scope: CoroutineScope? = null
     private var updateJob: Job? = null
 
@@ -50,9 +68,11 @@ class DailyMixStateHolder @Inject constructor(
     /**
      * Fetch trending songs from API and build daily/your mixes.
      */
-    fun updateDailyMix(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>) {
-        updateJob?.cancel()
+    fun updateDailyMix(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>, force: Boolean = false) {
+        if (updateJob?.isActive == true) return
         updateJob = scope?.launch(Dispatchers.IO) {
+            if (_dailyMixSongs.value.isEmpty()) restoreSnapshot()
+            if (!force && _dailyMixSongs.value.isNotEmpty() && System.currentTimeMillis() - fetchedAt in 0 until 24 * 60 * 60_000L) return@launch
             var attempt = 0
             val maxAttempts = 5
             val retryDelayMs = 5_000L
@@ -60,7 +80,8 @@ class DailyMixStateHolder @Inject constructor(
                 attempt++
                 val allSongs: List<Song> = try {
                     streamingRepository.getTrendingSongs(limit = 50)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     emptyList()
                 }
 
@@ -74,6 +95,9 @@ class DailyMixStateHolder @Inject constructor(
                     val yourMix = dailyMixManager.generateYourMix(allSongs, favoriteIds)
                     _yourMixSongs.value = yourMix.toImmutableList()
                     userPreferencesRepository.saveYourMixSongIds(yourMix.map { it.id })
+                    fetchedAt = System.currentTimeMillis()
+                    preferences.edit().putString("snapshot_v1", gson.toJson(Snapshot(fetchedAt, mix, yourMix))).apply()
+                    userPreferencesRepository.saveLastDailyMixUpdateTimestamp(fetchedAt)
                     return@launch
                 }
                 // API returned empty — retry after delay
@@ -83,27 +107,19 @@ class DailyMixStateHolder @Inject constructor(
     }
 
     /**
-     * Loads persisted mix — if mixes are already populated from API, this is a no-op.
-     * Kept for compatibility with PlayerViewModel callers.
+     * Compatibility hook. Restoration is owned by updateDailyMix to avoid
+     * concurrent restoration overwriting a newly fetched mix.
      */
     fun loadPersistedDailyMix() {
-        // No-op: mixes are populated via updateDailyMix() from the API.
-        // DB-backed restoration is removed to avoid stale/empty results.
+        // updateDailyMix restores the snapshot in the same job as its freshness check.
     }
 
     fun forceUpdate(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>) {
-        scope?.launch {
-            updateDailyMix(favoriteSongIdsFlow)
-            userPreferencesRepository.saveLastDailyMixUpdateTimestamp(System.currentTimeMillis())
-        }
+        updateDailyMix(favoriteSongIdsFlow, force = true)
     }
 
     fun checkAndUpdateIfNeeded(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>) {
-        // Always refresh from API on every app open
         updateDailyMix(favoriteSongIdsFlow)
-        scope?.launch {
-            userPreferencesRepository.saveLastDailyMixUpdateTimestamp(System.currentTimeMillis())
-        }
     }
 
     fun setDailyMixSongs(songs: List<Song>) {
