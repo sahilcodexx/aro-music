@@ -275,8 +275,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val artworkTheme by playerViewModel.activePlayerColorSchemePair.collectAsStateWithLifecycle()
             AroTheme(
-                darkTheme = useDarkTheme
+                darkTheme = useDarkTheme,
+                colorSchemePairOverride = artworkTheme,
+                subtleArtworkBackground = true
             ) {
                 var contentVisible by remember { mutableStateOf(false) }
                 val contentAlpha by animateFloatAsState(
@@ -870,7 +873,10 @@ class MainActivity : ComponentActivity() {
                                     }
                                     .height(navBarHeight)
                                     .padding(horizontal = horizontalPadding),
-                                color = NavigationBarDefaults.containerColor,
+                                color = if (com.aro.music.ui.theme.LocalArtworkThemeActive.current) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else NavigationBarDefaults.containerColor,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 shape = actualShape,
                                 shadowElevation = navBarElevation
                             ) {

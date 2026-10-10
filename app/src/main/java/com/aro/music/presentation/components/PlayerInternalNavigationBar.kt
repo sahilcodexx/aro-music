@@ -122,9 +122,10 @@ private fun PlayerInternalNavigationItemsRow(
         var lastSearchTapTimestamp by remember { mutableStateOf(0L) }
         navItems.forEach { item ->
             val isSelected = currentRoute != null && currentRoute == item.screen.route
-            val selectedColor = MaterialTheme.colorScheme.primary
-            val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val indicatorColorFromTheme = MaterialTheme.colorScheme.secondaryContainer
+            val artworkTheme = com.aro.music.ui.theme.LocalArtworkThemeActive.current
+            val selectedColor = if (artworkTheme) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+            val unselectedColor = if (artworkTheme) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            val indicatorColorFromTheme = if (artworkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer
 
             val iconPainterResId = if (isSelected && item.selectedIconResId != null && item.selectedIconResId != 0) {
                 item.selectedIconResId
@@ -209,7 +210,7 @@ private fun PlayerInternalNavigationItemsRow(
                 alwaysShowLabel = true,
                 selectedIconColor = selectedColor,
                 unselectedIconColor = unselectedColor,
-                selectedTextColor = selectedColor,
+                selectedTextColor = if (artworkTheme) MaterialTheme.colorScheme.onPrimaryContainer else selectedColor,
                 unselectedTextColor = unselectedColor,
                 indicatorColor = indicatorColorFromTheme
             )
