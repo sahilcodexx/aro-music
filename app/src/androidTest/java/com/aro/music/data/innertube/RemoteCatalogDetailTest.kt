@@ -74,7 +74,11 @@ class RemoteCatalogDetailTest {
         val files = java.io.File(context.cacheDir, "home-feed-test-history").apply { mkdirs() }
         val isolatedContext = object : android.content.ContextWrapper(context) {
             override fun getFilesDir(): java.io.File = files
+            override fun getSharedPreferences(name: String, mode: Int): android.content.SharedPreferences =
+                super.getSharedPreferences("home_feed_test_$name", mode)
         }
+        val preferenceNames = listOf("home_speed_dial", "home_feed_snapshot")
+        preferenceNames.forEach { isolatedContext.getSharedPreferences(it, 0).edit().clear().commit() }
         val stats = com.aro.music.data.stats.PlaybackStatsRepository(isolatedContext)
         val store = androidx.lifecycle.ViewModelStore()
         lateinit var model: com.aro.music.presentation.viewmodel.HomeFeedViewModel
@@ -86,14 +90,32 @@ class RemoteCatalogDetailTest {
                     entry.musicRepository().cacheCatalogSongs(listOf(seed))
                     stats.recordPlayback(seed.id, 30_000)
                     instrumentation.runOnMainSync {
-                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), stats, context)
+                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), stats, isolatedContext)
                         store.put("home", model)
                         model.onSongPlayed(seed)
                     }
-                    val state = model.state.first { feed -> feed.personalSections.any { it.title == "Recommended for you" } }
+                    val state = model.state.first { feed -> !feed.isLoading && feed.sections.isNotEmpty() && feed.personalSections.any { it.title == "Recommended for you" } }
                     assertTrue("History appears after even one song", state.personalSections.any { it.title == "Recently played" && it.items.any { row -> row.id == "song:${seed.id}" } })
                     assertTrue("Speed dial includes recent listening", state.personalSections.any { it.title == "Speed dial" && it.items.any { row -> row.id == "song:${seed.id}" } })
                     assertTrue("Home follows the rap seed", state.personalSections.first { it.title == "Recommended for you" }.items.any { it.title == "WDTBU" || it.title == "Karta Kya Hai" })
+                    assertEquals(listOf("Recently played", "Speed dial"), state.personalSections.take(2).map { it.title })
+                    val recommendation = state.personalSections.first { it.title == "Recommended for you" }
+                    val nextSong = (recommendation.items.first() as HomeCatalogItem.Track).song
+                    instrumentation.runOnMainSync { model.onSongPlayed(nextSong) }
+                    model.state.first { feed -> feed.personalSections.any { it.title == "Speed dial" && it.items.any { row -> row.id == "song:${nextSong.id}" } } }
+                    assertEquals("Changing songs keeps the recommendation snapshot", recommendation,
+                        model.state.value.personalSections.first { it.title == "Recommended for you" })
+                    instrumentation.runOnMainSync {
+                        store.clear()
+                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), stats, isolatedContext)
+                        store.put("home", model)
+                        model.onSongPlayed(nextSong)
+                    }
+                    val restored = model.state.first { feed -> feed.sections.isNotEmpty() &&
+                        feed.personalSections.any { it.title == "Recommended for you" } &&
+                        feed.personalSections.any { it.title == "Speed dial" && it.items.any { row -> row.id == "song:${nextSong.id}" } } }
+                    assertEquals("A fresh snapshot survives app recreation", recommendation,
+                        restored.personalSections.first { it.title == "Recommended for you" })
                     if (seed.id !in model.state.value.pinnedSongIds) {
                         pinned = seed
                         instrumentation.runOnMainSync { model.toggleSpeedDial(seed) }
@@ -106,6 +128,7 @@ class RemoteCatalogDetailTest {
             memory.close()
             engine.shutdown()
             files.deleteRecursively()
+            preferenceNames.forEach { isolatedContext.getSharedPreferences(it, 0).edit().clear().commit() }
         }
     }
 
