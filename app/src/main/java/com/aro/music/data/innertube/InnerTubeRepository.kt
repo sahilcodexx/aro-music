@@ -115,6 +115,11 @@ class InnerTubeRepository @Inject constructor(
     @Volatile private var homeRoot: kotlinx.serialization.json.JsonObject? = null
     @Volatile private var homeRootFetchedAt = 0L
 
+    fun invalidateHomeCache() {
+        homeRootFetchedAt = 0L
+        homeFetchedAt = 0L
+    }
+
     private suspend fun homeRoot(): kotlinx.serialization.json.JsonObject? {
         homeRoot?.takeIf { System.currentTimeMillis() - homeRootFetchedAt < 5 * 60_000L }?.let { return it }
         return share("home-root") {
