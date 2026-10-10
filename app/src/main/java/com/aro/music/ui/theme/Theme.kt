@@ -16,12 +16,20 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.ColorScheme
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.aro.music.presentation.viewmodel.ColorSchemePair
 import androidx.core.graphics.ColorUtils
+
+val LocalArtworkThemeActive = staticCompositionLocalOf { false }
 
 val LocalAroDarkTheme = staticCompositionLocalOf { false }
 
@@ -105,14 +113,41 @@ val LightColorScheme = lightColorScheme(
     onError = AroWhite
 )
 
+/** Keep the artwork hue while reserving bright containers for controls. */
+internal fun subtleArtworkScheme(scheme: ColorScheme, dark: Boolean): ColorScheme {
+    val background = scheme.primaryContainer.copy(alpha = if (dark) 0.35f else 0.12f)
+        .compositeOver(if (dark) Color(0xFF141414) else Color.White)
+    return scheme.copy(
+        background = background, surface = background, surfaceContainerLowest = background,
+        onBackground = readableArtworkText(scheme.onBackground, background),
+        onSurface = readableArtworkText(scheme.onSurface, background),
+        onSurfaceVariant = readableArtworkText(scheme.onSurfaceVariant, background),
+        onPrimary = readableArtworkText(scheme.onPrimary, scheme.primary),
+        onPrimaryContainer = readableArtworkText(scheme.onPrimaryContainer, scheme.primaryContainer),
+    )
+}
+
+// Desaturating a cover can reduce contrast in the generated palette. Keep its
+// text tones when readable, otherwise choose the contrasting neutral endpoint.
+private fun readableArtworkText(candidate: Color, background: Color): Color {
+    fun contrast(color: Color): Float {
+        val first = color.luminance()
+        val second = background.luminance()
+        return (maxOf(first, second) + 0.05f) / (minOf(first, second) + 0.05f)
+    }
+    if (contrast(candidate) >= 4.5f) return candidate
+    return if (contrast(Color.White) >= contrast(Color.Black)) Color.White else Color.Black
+}
+
 @Composable
 fun AroTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     colorSchemePairOverride: ColorSchemePair? = null,
+    subtleArtworkBackground: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val finalColorScheme = when {
+    val selectedColorScheme = when {
         colorSchemePairOverride == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             // Tema dinámico del sistema como prioridad si no hay override
             try {
@@ -131,12 +166,19 @@ fun AroTheme(
         else -> LightColorScheme
     }
 
+    val targetScheme = if (subtleArtworkBackground && colorSchemePairOverride != null) {
+        subtleArtworkScheme(selectedColorScheme, darkTheme)
+    } else selectedColorScheme
+    val background by animateColorAsState(targetScheme.background, tween(500), label = "ArtworkBackground")
+    val finalColorScheme = targetScheme.copy(background = background, surface = background)
+
     AroStatusBarStyle(
         color = finalColorScheme.background,
         navigationColor = finalColorScheme.background
     )
 
-    CompositionLocalProvider(LocalAroDarkTheme provides darkTheme) {
+    CompositionLocalProvider(LocalAroDarkTheme provides darkTheme,
+        LocalArtworkThemeActive provides (subtleArtworkBackground && colorSchemePairOverride != null)) {
         MaterialTheme(
             colorScheme = finalColorScheme,
             typography = Typography,
