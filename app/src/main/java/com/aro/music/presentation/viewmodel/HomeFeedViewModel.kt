@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.aro.music.data.database.MusicDao
 import com.aro.music.data.database.AlbumEntity
 import com.aro.music.data.database.toEntity
+import com.aro.music.data.innertube.HomeFeedCache
 import com.aro.music.data.innertube.HomeCatalogItem
 import com.aro.music.data.innertube.HomeCatalogSection
 import com.aro.music.data.innertube.InnerTubeRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,6 +31,7 @@ data class HomeFeedState(
     val personalSections: List<HomeCatalogSection> = emptyList(),
     val pinnedSongIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val continuation: String? = null,
     val canRetry: Boolean = false,
 )
@@ -51,10 +54,24 @@ class HomeFeedViewModel @Inject constructor(
     private val personalizationMutex = Mutex()
     @Volatile private var activeSong: com.aro.music.data.model.Song? = null
     private var lastSeed: String? = null
+    private val cache = HomeFeedCache(context)
+    private var fetchedAt = 0L
+    @Volatile private var cacheReady = false
 
     init {
         _state.update { it.copy(pinnedSongIds = preferences.getStringSet("pins", emptySet()).orEmpty().toSet()) }
-        refresh()
+        viewModelScope.launch(Dispatchers.IO) {
+            val snapshot = cache.read()
+            if (snapshot != null) {
+                fetchedAt = snapshot.fetchedAt
+                lastSeed = snapshot.seed
+                _state.update { it.copy(sections = snapshot.sections.map { row -> row.toCatalog() },
+                    personalSections = snapshot.recommendations.map { row -> row.toCatalog() }) }
+            }
+            cacheReady = true
+            updatePersonalFeed()
+            if (snapshot?.isFresh() != true) refresh() else updatePersonalFeed(bootstrapRecommendations = true)
+        }
         viewModelScope.launch(Dispatchers.IO) {
             kotlinx.coroutines.flow.combine(statsRepository.refreshFlow, musicRepository.getFavoriteSongIdsFlow()) { _, _ -> Unit }
                 .collect { updatePersonalFeed() }
@@ -66,7 +83,7 @@ class HomeFeedViewModel @Inject constructor(
         activeSong = song
         viewModelScope.launch(Dispatchers.IO) {
             musicRepository.cacheCatalogSongs(listOf(song))
-            updatePersonalFeed()
+            updatePersonalFeed(bootstrapRecommendations = true)
         }
     }
 
@@ -77,11 +94,11 @@ class HomeFeedViewModel @Inject constructor(
         _state.update { it.copy(pinnedSongIds = pins) }
         viewModelScope.launch(Dispatchers.IO) {
             musicRepository.cacheCatalogSongs(listOf(song))
-            updatePersonalFeed(force = true)
+            updatePersonalFeed()
         }
     }
 
-    private suspend fun updatePersonalFeed(force: Boolean = false) = personalizationMutex.withLock {
+    private suspend fun updatePersonalFeed(force: Boolean = false, bootstrapRecommendations: Boolean = false) = personalizationMutex.withLock {
         val history = statsRepository.loadPlaybackHistory(100).map { it.songId }.distinct().take(20)
         val favorites = musicRepository.getFavoriteSongsOnce(com.aro.music.data.model.StorageFilter.ALL)
         val ids = (_state.value.pinnedSongIds + listOfNotNull(activeSong?.id) + history + favorites.map { it.id }).distinct()
@@ -91,28 +108,30 @@ class HomeFeedViewModel @Inject constructor(
         val dial = (_state.value.pinnedSongIds.mapNotNull { lookup[it] } + listOfNotNull(activeSong) + recent + favorites)
             .distinctBy { it.id }.take(12)
         val base = buildList {
-            if (dial.isNotEmpty()) add(HomeCatalogSection(context.getString(com.aro.music.R.string.home_speed_dial), context.getString(com.aro.music.R.string.home_speed_dial_hint), dial.map { HomeCatalogItem.Track(it) }))
             if (recent.isNotEmpty()) add(HomeCatalogSection("Recently played", null, recent.map { HomeCatalogItem.Track(it) }))
+            if (dial.isNotEmpty()) add(HomeCatalogSection(context.getString(com.aro.music.R.string.home_speed_dial), context.getString(com.aro.music.R.string.home_speed_dial_hint), dial.map { HomeCatalogItem.Track(it) }))
         }
         _state.update { it.copy(personalSections = base + it.personalSections.filter { section -> section.title == context.getString(com.aro.music.R.string.home_listening_recommendations) }) }
+        // Song changes, likes and pins only rebuild local shelves. The first ever
+        // played song can seed an empty feed; subsequent songs wait for refresh.
+        if (!cacheReady || (!force && !(bootstrapRecommendations && lastSeed == null))) return@withLock
         val seed = activeSong ?: recent.firstOrNull() ?: return@withLock
-        if (lastSeed == seed.id && !force) return@withLock
+        val videoId = com.aro.music.data.innertube.InnerTubeIds.videoIdFromContentUri(seed.contentUriString)
+            ?: return@withLock
+        if (lastSeed == seed.id && personalJob?.isActive == true) return@withLock
         lastSeed = seed.id
-        _state.update { it.copy(personalSections = base) }
         personalJob?.cancel()
         personalJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val videoId = com.aro.music.data.innertube.InnerTubeIds.videoIdFromContentUri(seed.contentUriString)
-                    ?: return@launch
                 val related = repository.radioPage(videoId).songs.filter { it.id != seed.id }.distinctBy { it.id }.take(20)
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 if (lastSeed == seed.id && related.isNotEmpty()) {
                     val section = HomeCatalogSection(context.getString(com.aro.music.R.string.home_listening_recommendations), context.getString(com.aro.music.R.string.home_because_listened, seed.title), related.map { HomeCatalogItem.Track(it) })
                     _state.update { it.copy(personalSections = it.personalSections.filterNot { row -> row.title == context.getString(com.aro.music.R.string.home_listening_recommendations) } + section) }
+                    persistSnapshot()
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                lastSeed = null
                 Timber.w(e, "Listening recommendations failed")
             }
         }
@@ -120,33 +139,41 @@ class HomeFeedViewModel @Inject constructor(
 
 
     fun refresh() {
-        viewModelScope.launch(Dispatchers.IO) { updatePersonalFeed() }
-        if (job?.isActive == true) return
+        if (!cacheReady || job?.isActive == true) return
         seenTokens.clear()
         job = viewModelScope.launch(Dispatchers.IO) {
-            _state.update { it.copy(isLoading = true, canRetry = false) }
+            _state.update { it.copy(isLoading = true, isRefreshing = true, canRetry = false) }
             try {
+                repository.invalidateHomeCache()
+                updatePersonalFeed(force = true)
                 coroutineScope {
-                    launch {
-                        try {
-                            val page = repository.getHomePage()
-                            merge(page.sections)
-                            _state.update { it.copy(continuation = page.continuation, canRetry = page.sections.isEmpty()) }
-                        } catch (e: Exception) {
+                    val home = async {
+                        try { repository.getHomePage() }
+                        catch (e: Exception) {
                             if (e is CancellationException) throw e
                             Timber.w(e, "Home shelves failed")
-                            _state.update { it.copy(canRetry = true) }
+                            null
                         }
                     }
-                    launch {
-                        try { merge(repository.getExploreSections()) }
+                    val explore = async {
+                        try { repository.getExploreSections() }
                         catch (e: Exception) {
                             if (e is CancellationException) throw e
                             Timber.w(e, "Explore shelves failed")
+                            emptyList()
                         }
                     }
+                    val page = home.await()
+                    val sections = page?.sections.orEmpty() + explore.await()
+                    if (sections.isNotEmpty()) {
+                        merge(sections, replace = true)
+                    }
+                    _state.update { it.copy(continuation = page?.continuation, canRetry = sections.isEmpty()) }
                 }
-            } finally { _state.update { it.copy(isLoading = false) } }
+                personalJob?.join()
+                if (!_state.value.canRetry && _state.value.sections.isNotEmpty()) fetchedAt = System.currentTimeMillis()
+                persistSnapshot()
+            } finally { _state.update { it.copy(isLoading = false, isRefreshing = false) } }
         }
     }
 
@@ -159,6 +186,7 @@ class HomeFeedViewModel @Inject constructor(
             try {
                 val page = repository.getHomePage(token)
                 merge(page.sections)
+                persistSnapshot()
                 seenTokens.add(token)
                 _state.update { it.copy(continuation = page.continuation?.takeUnless(seenTokens::contains)) }
             } catch (e: Exception) {
@@ -169,7 +197,14 @@ class HomeFeedViewModel @Inject constructor(
         }
     }
 
-    private suspend fun merge(sections: List<HomeCatalogSection>) {
+    private fun persistSnapshot() {
+        val current = _state.value
+        if (current.sections.isEmpty() && current.personalSections.isEmpty()) return
+        cache.write(HomeFeedCache.Snapshot(fetchedAt, current.sections.map(HomeFeedCache::encode),
+            current.personalSections.filter { it.title == context.getString(com.aro.music.R.string.home_listening_recommendations) }.map(HomeFeedCache::encode), lastSeed))
+    }
+
+    private suspend fun merge(sections: List<HomeCatalogSection>, replace: Boolean = false) {
         val items = sections.flatMap { it.items }
         // Detail screens observe Room while their track fetch runs. Cache tile
         // headers first so navigation never starts with a missing album/artist.
@@ -181,7 +216,7 @@ class HomeFeedViewModel @Inject constructor(
         if (artists.isNotEmpty()) musicDao.insertArtistsIgnoreConflicts(artists.map { it.toEntity() })
 
         _state.update { current ->
-            val merged = current.sections.associateByTo(linkedMapOf()) { it.title }
+            val merged = (if (replace) emptyList() else current.sections).associateByTo(linkedMapOf()) { it.title }
             sections.forEach { incoming ->
                 val old = merged[incoming.title]
                 merged[incoming.title] = incoming.copy(items = (old?.items.orEmpty() + incoming.items).distinctBy { it.id })
