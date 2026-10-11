@@ -44,6 +44,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.aro.music.BuildConfig
 import com.aro.music.R
 import com.aro.music.presentation.components.subcomps.SineWaveLine
 import com.aro.music.ui.theme.ExpTitleTypography
@@ -64,8 +65,8 @@ data class ChangelogVersion(
 @Composable
 private fun changelogVersions(): List<ChangelogVersion> = listOf(
     ChangelogVersion(
-        version = "0.7.0-beta",
-        date = "2026-05-08",
+        version = BuildConfig.VERSION_NAME,
+        date = "2026-10-12",
         sections = listOf(
             ChangelogSection(R.string.presentation_batch_g_changelog_sec_highlights, R.array.presentation_batch_g_changelog_070_highlights),
             ChangelogSection(R.string.presentation_batch_g_changelog_sec_improvements, R.array.presentation_batch_g_changelog_070_improvements),
@@ -80,7 +81,7 @@ fun ChangelogBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val changelogUrl = "https://github.com/theovilardo/Aro/blob/master/CHANGELOG.md"
+    val changelogUrl = "https://github.com/sahilcodexx/aro-music/blob/main/CHANGELOG.md"
     val changelog = changelogVersions()
 
     val fabCornerRadius = 16.dp

@@ -169,7 +169,7 @@ object SpotifyProfileCache {
                     Timber.w("$TAG: GQL myArtists returned empty, falling back")
                 }
             } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Timber.w(e, "$TAG: GQL myArtists failed, falling back")
             }
 
@@ -255,7 +255,7 @@ object SpotifyProfileCache {
                                     }
                                 }
                             } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+                                if (e is kotlinx.coroutines.CancellationException) throw e
                                 Timber.w(e, "$TAG: Failed to get related artists for ${artist.name}")
                             }
                         }
@@ -269,7 +269,7 @@ object SpotifyProfileCache {
                     Timber.d("$TAG: Related artist names cached — ${allNames.size} names from ${followed.take(seedLimit).size} seeds")
                 }
             } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Timber.w(e, "$TAG: Failed to build related artist names cache")
             }
         }
@@ -393,7 +393,7 @@ object SpotifyProfileCache {
     ): Result<T>? = try {
         withTimeoutOrNull(REST_CALL_TIMEOUT_MS) { block() }
     } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+        if (e is kotlinx.coroutines.CancellationException) throw e
         Timber.w(e, "$TAG: $label failed")
         null
     }
@@ -517,7 +517,7 @@ object SpotifyProfileCache {
                 if (!restSucceeded) tracks.sortBy { ranked[it.id] ?: Int.MAX_VALUE }
 
             } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Timber.w(e, "$TAG: Local DB fallback failed")
             }
         }
@@ -561,7 +561,7 @@ object SpotifyProfileCache {
                         val detail = try {
                             Spotify.artist(artist.id).getOrNull()
                         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+                            if (e is kotlinx.coroutines.CancellationException) throw e
                             Timber.w(e, "$TAG: Failed to fetch images for artist ${artist.id}")
                             null
                         }

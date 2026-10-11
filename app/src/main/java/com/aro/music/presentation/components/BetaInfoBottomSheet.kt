@@ -60,6 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.aro.music.BuildConfig
 import com.aro.music.R
 import com.aro.music.presentation.components.subcomps.SineWaveLine
 import com.aro.music.ui.theme.ExpTitleTypography
@@ -70,8 +71,8 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 @Composable
 fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val issuesUrl = "https://github.com/theovilardo/Aro/issues"
-    val reportUrl = "https://github.com/theovilardo/Aro/issues/new/choose"
+    val issuesUrl = "https://github.com/sahilcodexx/aro-music/issues"
+    val reportUrl = "https://github.com/sahilcodexx/aro-music/issues/new/choose"
 
     val fabCornerRadius = 18.dp
 
@@ -89,7 +90,7 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
             item(key = "header") {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(R.string.presentation_batch_g_beta_sheet_version),
+                        text = stringResource(R.string.presentation_batch_g_beta_sheet_version, BuildConfig.VERSION_NAME),
                         fontFamily = GoogleSansRounded,
                         style = ExpTitleTypography.displaySmall,
                         color = MaterialTheme.colorScheme.onSurface
@@ -158,7 +159,7 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.presentation_batch_g_beta_sheet_welcome_title),
+                                text = stringResource(R.string.presentation_batch_g_beta_sheet_welcome_title, BuildConfig.VERSION_NAME),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

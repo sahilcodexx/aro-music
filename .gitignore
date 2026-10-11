@@ -45,3 +45,6 @@ local.properties
 
 # APK signature sidecar files — build artifacts, not source
 *.idsig
+
+# Private Aro release signing material
+.release-signing/

@@ -285,8 +285,8 @@
     <string name="presentation_batch_g_presets_cd_pin">Sematkan</string>
     <string name="presentation_batch_g_presets_cd_rename">Ubah nama</string>
     <string name="presentation_batch_g_presets_cd_delete">Hapus</string>
-    <string name="presentation_batch_g_beta_sheet_version">Beta 0.7.0</string>
-    <string name="presentation_batch_g_beta_sheet_welcome_title">Selamat datang di Aro 0.7.0-beta</string>
+    <string name="presentation_batch_g_beta_sheet_version">Beta %1$s</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_title">Selamat datang di Aro %1$s</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Anda menggunakan versi beta yang mungkin berisi bug, crash, atau fitur eksperimental. Bantu kami meningkatkannya dengan melaporkan masalah.</string>
     <string name="presentation_batch_g_beta_sheet_expect_title">Yang perlu diharapkan</string>
     <string name="presentation_batch_g_beta_sheet_expect_1">Bug, crash, atau fitur yang belum selesai dapat terjadi sewaktu-waktu.</string>

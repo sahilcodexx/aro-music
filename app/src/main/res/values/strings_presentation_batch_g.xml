@@ -287,8 +287,8 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_presets_cd_pin">Pin</string>
     <string name="presentation_batch_g_presets_cd_rename">Rename</string>
     <string name="presentation_batch_g_presets_cd_delete">Delete</string>
-    <string name="presentation_batch_g_beta_sheet_version">Beta 0.7.0</string>
-    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to Aro 0.7.0-beta</string>
+    <string name="presentation_batch_g_beta_sheet_version">Development %1$s</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to Aro %1$s</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">You\'re using a beta build that may contain bugs, crashes, or experimental features. Help us improve by reporting issues.</string>
     <string name="presentation_batch_g_beta_sheet_expect_title">What to expect</string>
     <string name="presentation_batch_g_beta_sheet_expect_1">Bugs, crashes, or incomplete features may occur unexpectedly.</string>
@@ -573,20 +573,18 @@ Backslash (\) can be used to escape character delimiters.</string>
         <item>Fixed several bugs that caused the app to crash.</item>
     </string-array>
     <string-array name="presentation_batch_g_changelog_070_highlights">
-        <item>AI integration improvements and smarter playlist generation.</item>
-        <item>Enhanced listening stats with deeper insights and new visualizations.</item>
-        <item>Improved library sync flow across all cloud providers.</item>
-        <item>Better metadata editing with cover art support.</item>
+        <item>YouTube Music discovery, radio queues, and playlist imports.</item>
+        <item>Spotify account playlists, artist collections, and YouTube playback matching.</item>
+        <item>Recently played, speed dial, and daily mixes with a cached home feed.</item>
     </string-array>
     <string-array name="presentation_batch_g_changelog_070_improvements">
-        <item>Performance improvements across startup, library, queue, and player interactions.</item>
-        <item>Refined Material 3 UI for a cleaner and more cohesive experience.</item>
-        <item>Smoother animations and transitions throughout the app.</item>
-        <item>Better search relevance and faster discovery.</item>
+        <item>Playlist snapshots reopen quickly and display tracks as they arrive.</item>
+        <item>Album artwork colors the player, navigation, and screen backgrounds.</item>
+        <item>Home loading placeholders preserve section positions.</item>
     </string-array>
     <string-array name="presentation_batch_g_changelog_070_fixes">
-        <item>Fixed queue and shuffle behavior for more stable playback.</item>
-        <item>Resolved background playback and notification issues.</item>
-        <item>General bug fixes and UI polish.</item>
+        <item>Spotify playlist counts reflect the source playlist.</item>
+        <item>Album and artist pages load their remote collections.</item>
+        <item>Release builds and issue links now belong to Aro.</item>
     </string-array>
 </resources>
