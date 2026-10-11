@@ -33,7 +33,7 @@ class SpotifyPlaylistQueue(
         return PageResult(
             tracks = result.items.mapNotNull { it.track?.takeIf { t -> !t.isLocal } },
             total = result.total,
-            rawCount = result.items.size,
+            rawCount = result.rawCount ?: result.items.size,
         )
     }
 }

@@ -659,6 +659,7 @@ object Spotify {
                 uri = ownerData?.str("uri"),
             ),
             uri = playlistUri,
+            tracks = data.obj("content")?.int("totalCount")?.let { SpotifyPlaylistTracksRef(total = it) },
         )
     }
 
@@ -838,6 +839,7 @@ object Spotify {
 
             SpotifyPaging(
                 items = tracks,
+                rawCount = content.arr("items")?.size ?: 0,
                 total = content.int("totalCount") ?: 0,
                 limit = limit,
                 offset = offset,

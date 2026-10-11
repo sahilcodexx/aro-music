@@ -11,4 +11,6 @@ data class SpotifyPaging<T>(
     val next: String? = null,
     val previous: String? = null,
     val href: String? = null,
+    /** GQL includes unavailable rows that cannot be decoded as tracks. */
+    val rawCount: Int? = null,
 )

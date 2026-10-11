@@ -49,6 +49,7 @@ class SpotifySession @Inject constructor(@ApplicationContext private val context
                 it[tokenKey] = token.accessToken; it[expiryKey] = token.accessTokenExpirationTimestampMs
                 it[connectedKey] = true
             }
+            context.getSharedPreferences(SpotifyPlaylistCache.PREFERENCES, Context.MODE_PRIVATE).edit().clear().apply()
             Spotify.accessToken = token.accessToken
             SpotifyRecommendationEngine.invalidateProfile()
             SpotifyProfileCache.clearAllPersisted(context)
@@ -79,6 +80,7 @@ class SpotifySession @Inject constructor(@ApplicationContext private val context
     suspend fun logout() = mutex.withLock { clearSession() }
     private suspend fun clearSession() {
         context.dataStore.edit { it.clear() }
+        context.getSharedPreferences(SpotifyPlaylistCache.PREFERENCES, Context.MODE_PRIVATE).edit().clear().apply()
         Spotify.accessToken = null
         SpotifyMetadataRegistry.clear()
         SpotifyRecommendationEngine.invalidateProfile()
