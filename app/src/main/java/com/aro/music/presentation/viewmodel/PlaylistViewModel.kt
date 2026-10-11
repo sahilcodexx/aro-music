@@ -68,6 +68,13 @@ sealed class PlaylistSongsOrderMode {
     data class Sorted(val option: SortOption) : PlaylistSongsOrderMode()
 }
 
+data class PlaylistImportState(
+    val isLoading: Boolean = false,
+    val progress: com.aro.music.data.playlist.PlaylistImportRepository.Progress? = null,
+    val error: com.aro.music.data.playlist.PlaylistImportRepository.Failure? = null,
+    val result: com.aro.music.data.playlist.PlaylistImportRepository.Imported? = null,
+)
+
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val playlistPreferencesRepository: PlaylistPreferencesRepository,
@@ -76,6 +83,7 @@ class PlaylistViewModel @Inject constructor(
     private val aiPlaylistGenerator: AiPlaylistGenerator,
     private val m3uManager: M3uManager,
     private val spotifyRepository: com.aro.music.spotify.SpotifyRepository,
+    private val playlistImporter: com.aro.music.data.playlist.PlaylistImportRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -87,6 +95,38 @@ class PlaylistViewModel @Inject constructor(
         onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
     )
     val playlistCreationEvent: SharedFlow<Boolean> = _playlistCreationEvent.asSharedFlow()
+
+    private val _importState = MutableStateFlow(PlaylistImportState())
+    val importState = _importState.asStateFlow()
+    private var importJob: kotlinx.coroutines.Job? = null
+    @Volatile private var importGeneration = 0
+
+    fun cancelPlaylistImport() {
+        importGeneration++
+        importJob?.cancel()
+        _importState.value = PlaylistImportState()
+    }
+
+    fun importPlaylistLink(link: String) {
+        if (importJob?.isActive == true) return
+        val generation = ++importGeneration
+        _importState.value = PlaylistImportState(isLoading = true)
+        importJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = playlistImporter.import(link) { progress ->
+                    if (generation == importGeneration) _importState.update { it.copy(progress = progress) }
+                }
+                if (generation == importGeneration) _importState.value = PlaylistImportState(result = result)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val failure = (e as? com.aro.music.data.playlist.PlaylistImportRepository.ImportException)?.failure
+                    ?: com.aro.music.data.playlist.PlaylistImportRepository.Failure.UNAVAILABLE
+                if (generation == importGeneration) _importState.value = PlaylistImportState(error = failure)
+                timber.log.Timber.w(e, "Playlist import failed")
+            }
+        }
+    }
 
     companion object {
         const val FOLDER_PLAYLIST_PREFIX = "folder_playlist:"
@@ -174,18 +214,37 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
+    private var playlistDetailsJob: kotlinx.coroutines.Job? = null
+
     fun loadPlaylistDetails(playlistId: String) {
-        viewModelScope.launch {
+        playlistDetailsJob?.cancel()
+        playlistDetailsJob = viewModelScope.launch {
             val shouldKeepExisting = _uiState.value.currentPlaylistDetails?.id == playlistId
             _uiState.update {
                 it.copy(
                     isLoading = true,
                     playlistNotFound = false,
-                    currentPlaylistDetails = if (shouldKeepExisting) it.currentPlaylistDetails else null,
+                    currentPlaylistDetails = if (shouldKeepExisting) it.currentPlaylistDetails else if (playlistId.startsWith("spotify:")) it.playlists.find { tile -> tile.id == playlistId } else null,
                     currentPlaylistSongs = if (shouldKeepExisting) it.currentPlaylistSongs else emptyList()
                 )
             } // Resetear detalles y canciones
             try {
+                if (playlistId.startsWith("spotify:")) {
+                    val orderMode = _uiState.value.playlistOrderModes[playlistId] ?: PlaylistSongsOrderMode.Manual
+                    val persisted = hashSetOf<String>()
+                    suspend fun show(result: com.aro.music.spotify.SpotifyRepository.ResolvedPlaylist, loading: Boolean) {
+                        musicRepository.cacheCatalogSongs(result.songs.filter { persisted.add(it.id) })
+                        _uiState.update {
+                            it.copy(currentPlaylistDetails = result.playlist,
+                                currentPlaylistSongs = if (orderMode is PlaylistSongsOrderMode.Sorted) applySortToSongs(result.songs, orderMode.option) else result.songs,
+                                playlistSongsOrderMode = orderMode, isLoading = loading, playlistNotFound = false)
+                        }
+                    }
+                    val result = spotifyRepository.resolvePlaylist(playlistId, onPartial = { show(it, true) })
+                    if (result != null) show(result, false)
+                    else _uiState.update { it.copy(isLoading = false, playlistNotFound = true) }
+                    return@launch
+                }
                 if (isFolderPlaylistId(playlistId)) {
                     val folderPath = Uri.decode(playlistId.removePrefix(FOLDER_PLAYLIST_PREFIX))
                     val folders = musicRepository.getMusicFolders().first()
@@ -284,6 +343,8 @@ class PlaylistViewModel @Inject constructor(
                         // Opcional: podrías establecer un error o un estado específico de "no encontrado"
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e("PlaylistVM", "Error loading playlist details for id $playlistId", e)
                 _uiState.update {

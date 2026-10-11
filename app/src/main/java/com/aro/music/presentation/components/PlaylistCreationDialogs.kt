@@ -111,7 +111,8 @@ fun PlaylistCreationTypeDialog(
     onManualSelected: () -> Unit,
     onAiSelected: () -> Unit,
     isAiEnabled: Boolean = true,
-    onSetupAiClick: (() -> Unit)? = null
+    onSetupAiClick: (() -> Unit)? = null,
+    onImportSelected: (() -> Unit)? = null
 ) {
     if (!visible) return
 
@@ -138,6 +139,7 @@ fun PlaylistCreationTypeDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -178,6 +180,17 @@ fun PlaylistCreationTypeDialog(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+
+                onImportSelected?.let { onImport ->
+                    CreationModeCard(
+                        title = stringResource(R.string.playlist_import_title),
+                        subtitle = stringResource(R.string.playlist_import_subtitle),
+                        icon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = null) },
+                        onClick = onImport, enabled = true,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
 
                 CreationModeCard(
                     title = stringResource(R.string.presentation_batch_e_creation_mode_ai),

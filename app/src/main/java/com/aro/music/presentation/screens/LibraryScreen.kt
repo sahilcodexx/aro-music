@@ -493,6 +493,8 @@ fun LibraryScreen(
     val hasActiveAiProviderApiKey by playerViewModel.hasActiveAiProviderApiKey.collectAsStateWithLifecycle()
     val isGeneratingAiPlaylist by playerViewModel.isGeneratingAiPlaylist.collectAsStateWithLifecycle()
     val aiError by playerViewModel.aiError.collectAsStateWithLifecycle()
+    var showPlaylistImportDialog by remember { mutableStateOf(false) }
+    val playlistImportState by playlistViewModel.importState.collectAsStateWithLifecycle()
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var showPlaylistCreationTypeDialog by remember { mutableStateOf(false) }
     var showCreateAiPlaylistDialog by remember { mutableStateOf(false) }
@@ -1725,9 +1727,28 @@ fun LibraryScreen(
             }
         },
         isAiEnabled = hasActiveAiProviderApiKey,
+        onImportSelected = {
+            showPlaylistCreationTypeDialog = false
+            playlistViewModel.cancelPlaylistImport()
+            showPlaylistImportDialog = true
+        },
         onSetupAiClick = {
             navController.navigateSafely(Screen.SettingsCategory.createRoute("ai"))
         }
+    )
+
+    com.aro.music.presentation.components.PlaylistImportDialog(
+        visible = showPlaylistImportDialog, state = playlistImportState,
+        onImport = playlistViewModel::importPlaylistLink,
+        onDismiss = { playlistViewModel.cancelPlaylistImport(); showPlaylistImportDialog = false },
+        onOpenPlaylist = { id ->
+            showPlaylistImportDialog = false
+            navController.navigateSafely(Screen.PlaylistDetail.createRoute(id))
+        },
+        onConnectSpotify = {
+            showPlaylistImportDialog = false
+            navController.navigateSafely(Screen.Accounts.route)
+        },
     )
 
     CreatePlaylistDialog(

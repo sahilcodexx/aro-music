@@ -1,0 +1,24 @@
+<resources>
+    <string name="home_speed_dial_quick_hint">Quick picks • Long press to pin or unpin</string>
+    <string name="home_recent_empty">Songs you listen to will appear here.</string>
+    <string name="home_speed_dial_empty">Pin a song for quick access. Quick picks appear as you listen.</string>
+    <string name="playlist_import_title">Import playlist</string>
+    <string name="playlist_import_subtitle">Paste a YouTube or Spotify playlist link</string>
+    <string name="playlist_import_hint">Playlist link</string>
+    <string name="playlist_import_copy_hint">Save an editable copy in Library. Import the same link again to update it. Spotify playlists use your connected Spotify account.</string>
+    <string name="playlist_import_action">Import</string>
+    <string name="playlist_import_cancel">Cancel</string>
+    <string name="playlist_import_loading">Reading playlist…</string>
+    <string name="playlist_import_progress">Loading songs: %1$d</string>
+    <string name="playlist_import_progress_total">Matching songs: %1$d / %2$d</string>
+    <string name="playlist_import_invalid">Paste a YouTube or Spotify playlist link.</string>
+    <string name="playlist_import_connect">Connect Spotify in Accounts, then try again.</string>
+    <string name="playlist_import_unavailable">Could not load this playlist. Check the link, playlist access, and your connection.</string>
+    <string name="playlist_import_empty">No playable songs were found in this playlist.</string>
+    <string name="playlist_import_save_failed">Could not save all the songs. Please try again.</string>
+    <string name="playlist_import_saved">Saved %1$d songs to %2$s.</string>
+    <string name="playlist_import_not_added">%1$d tracks could not be added.</string>
+    <string name="playlist_import_open">Open playlist</string>
+    <string name="playlist_import_accounts">Connect Spotify</string>
+    <string name="playlist_import_done">Done</string>
+</resources>
