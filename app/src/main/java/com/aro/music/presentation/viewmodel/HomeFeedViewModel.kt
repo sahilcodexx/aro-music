@@ -27,6 +27,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 data class HomeFeedState(
+    val personalReady: Boolean = false,
     val sections: List<HomeCatalogSection> = emptyList(),
     val personalSections: List<HomeCatalogSection> = emptyList(),
     val pinnedSongIds: Set<String> = emptySet(),
@@ -98,20 +99,28 @@ class HomeFeedViewModel @Inject constructor(
         }
     }
 
-    private suspend fun updatePersonalFeed(force: Boolean = false, bootstrapRecommendations: Boolean = false) = personalizationMutex.withLock {
-        val history = statsRepository.loadPlaybackHistory(100).map { it.songId }.distinct().take(20)
+    private suspend fun updatePersonalFeed(force: Boolean = false, bootstrapRecommendations: Boolean = false): Unit = personalizationMutex.withLock {
+        val events = statsRepository.loadPlaybackHistory(1000)
+        val history = events.map { it.songId }.distinct().take(8)
+        val frequentIds = events.groupBy { it.songId }.entries
+            .filter { it.value.size >= 2 && it.key !in history }
+            .sortedWith(compareByDescending<Map.Entry<String, List<com.aro.music.data.stats.PlaybackStatsRepository.PlaybackHistoryEntry>>> { it.value.size }
+                .thenByDescending { it.value.maxOf { event -> event.timestamp } })
+            .take(50).map { it.key }
         val favorites = musicRepository.getFavoriteSongsOnce(com.aro.music.data.model.StorageFilter.ALL)
-        val ids = (_state.value.pinnedSongIds + listOfNotNull(activeSong?.id) + history + favorites.map { it.id }).distinct()
+        val ids = (_state.value.pinnedSongIds + listOfNotNull(activeSong?.id) + history + frequentIds + favorites.take(100).map { it.id }).distinct()
         val rows = musicRepository.getSongsByIds(ids).first()
         val lookup = (rows + listOfNotNull(activeSong)).associateBy { it.id }
         val recent = history.mapNotNull { lookup[it] }
-        val dial = (_state.value.pinnedSongIds.mapNotNull { lookup[it] } + listOfNotNull(activeSong) + recent + favorites)
-            .distinctBy { it.id }.take(12)
+        val quickPicks = (_state.value.personalSections.filter { it.title == context.getString(com.aro.music.R.string.home_listening_recommendations) } + _state.value.sections)
+            .flatMap { it.items }.filterIsInstance<HomeCatalogItem.Track>().map { it.song }
+        val dial = homeSpeedDial(_state.value.pinnedSongIds.sorted().mapNotNull { lookup[it] }, history.toSet(),
+            favorites, frequentIds.mapNotNull { lookup[it] }, quickPicks)
         val base = buildList {
             if (recent.isNotEmpty()) add(HomeCatalogSection("Recently played", null, recent.map { HomeCatalogItem.Track(it) }))
-            if (dial.isNotEmpty()) add(HomeCatalogSection(context.getString(com.aro.music.R.string.home_speed_dial), context.getString(com.aro.music.R.string.home_speed_dial_hint), dial.map { HomeCatalogItem.Track(it) }))
+            if (dial.isNotEmpty()) add(HomeCatalogSection(context.getString(com.aro.music.R.string.home_speed_dial), context.getString(com.aro.music.R.string.home_speed_dial_quick_hint), dial.map { HomeCatalogItem.Track(it) }))
         }
-        _state.update { it.copy(personalSections = base + it.personalSections.filter { section -> section.title == context.getString(com.aro.music.R.string.home_listening_recommendations) }) }
+        _state.update { it.copy(personalReady = cacheReady, personalSections = base + it.personalSections.filter { section -> section.title == context.getString(com.aro.music.R.string.home_listening_recommendations) }) }
         // Song changes, likes and pins only rebuild local shelves. The first ever
         // played song can seed an empty feed; subsequent songs wait for refresh.
         if (!cacheReady || (!force && !(bootstrapRecommendations && lastSeed == null))) return@withLock
@@ -128,6 +137,7 @@ class HomeFeedViewModel @Inject constructor(
                 if (lastSeed == seed.id && related.isNotEmpty()) {
                     val section = HomeCatalogSection(context.getString(com.aro.music.R.string.home_listening_recommendations), context.getString(com.aro.music.R.string.home_because_listened, seed.title), related.map { HomeCatalogItem.Track(it) })
                     _state.update { it.copy(personalSections = it.personalSections.filterNot { row -> row.title == context.getString(com.aro.music.R.string.home_listening_recommendations) } + section) }
+                    updatePersonalFeed()
                     persistSnapshot()
                 }
             } catch (e: Exception) {
@@ -223,5 +233,6 @@ class HomeFeedViewModel @Inject constructor(
             }
             current.copy(sections = merged.values.toList())
         }
+        updatePersonalFeed()
     }
 }

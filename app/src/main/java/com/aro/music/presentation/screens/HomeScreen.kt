@@ -85,6 +85,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aro.music.R
 import com.aro.music.data.innertube.HomeCatalogItem
+import com.aro.music.presentation.components.HomeSongShelfPlaceholder
 import com.aro.music.presentation.components.HomeCatalogShelf
 import com.aro.music.presentation.viewmodel.HomeFeedViewModel
 import com.aro.music.data.model.Song
@@ -366,49 +367,21 @@ fun HomeScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    if (recentlyPlayedSongs.isNotEmpty() && homeFeed.personalSections.none { it.title == "Recently played" }) {
-                        item(
-                            key = "recently_played_section",
-                            contentType = "recently_played_section"
-                        ) {
-                            RecentlyPlayedSection(
-                                songs = recentlyPlayedSongs,
-                                onSongClick = { song ->
-                                    if (recentlyPlayedQueue.isNotEmpty()) {
-                                        playerViewModel.playSongs(
-                                            songsToPlay = recentlyPlayedQueue,
-                                            startSong = song,
-                                            queueName = "Recently Played"
-                                        )
+                    listOf("Recently played", context.getString(R.string.home_speed_dial)).forEachIndexed { index, title ->
+                        item(key = if (index == 0) "home_recent" else "home_speed_dial", contentType = "personal_shelf") {
+                            val section = homeFeed.personalSections.firstOrNull { it.title == title }
+                            if (!homeFeed.personalReady || section == null) {
+                                HomeSongShelfPlaceholder(title,
+                                    if (index == 1) context.getString(R.string.home_speed_dial_quick_hint) else null,
+                                    loading = !homeFeed.personalReady,
+                                    emptyMessage = context.getString(if (index == 0) R.string.home_recent_empty else R.string.home_speed_dial_empty))
+                            } else {
+                                HomeCatalogShelf(section, onLongClick = { entry ->
+                                    (entry as? HomeCatalogItem.Track)?.let { homeFeedViewModel.toggleSpeedDial(it.song) }
+                                }, pinnedIds = homeFeed.pinnedSongIds) { entry ->
+                                    (entry as? HomeCatalogItem.Track)?.let {
+                                        playerViewModel.showAndPlaySong(it.song, section.items.filterIsInstance<HomeCatalogItem.Track>().map { track -> track.song }, title)
                                     }
-                                },
-                                onOpenAllClick = {
-                                    navController.navigateSafely(Screen.RecentlyPlayed.route)
-                                },
-                                currentSongId = currentSong?.id,
-                                contentPadding = PaddingValues(start = 8.dp, end = 24.dp)
-                            )
-                        }
-                    }
-
-                    homeFeed.personalSections.filter { it.title != context.getString(R.string.home_listening_recommendations) }.forEach { section ->
-                        item(key = "catalog:${section.title}", contentType = "catalog_shelf") {
-                            HomeCatalogShelf(section, onLongClick = { entry ->
-                                (entry as? HomeCatalogItem.Track)?.let { homeFeedViewModel.toggleSpeedDial(it.song) }
-                            }, pinnedIds = homeFeed.pinnedSongIds) { catalogItem ->
-                                when (catalogItem) {
-                                    is HomeCatalogItem.Track -> playerViewModel.showAndPlaySong(
-                                        catalogItem.song, listOf(catalogItem.song), section.title
-                                    )
-                                    is HomeCatalogItem.AlbumItem -> navController.navigateSafelyReplacing(
-                                        Screen.AlbumDetail.createRoute(catalogItem.album.id), Screen.AlbumDetail.route
-                                    )
-                                    is HomeCatalogItem.ArtistItem -> navController.navigateSafelyReplacing(
-                                        Screen.ArtistDetail.createRoute(catalogItem.artist.id), Screen.ArtistDetail.route
-                                    )
-                                    is HomeCatalogItem.PlaylistItem -> navController.navigateSafely(
-                                        Screen.PlaylistDetail.createRoute(catalogItem.playlist.browseId)
-                                    )
                                 }
                             }
                         }
