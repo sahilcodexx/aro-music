@@ -336,6 +336,19 @@ class MusicRepositoryImplTest {
     // - getAllUniqueAudioDirectories (si se mantiene la lógica de MediaStore, necesitará mockear ContentResolver)
     // - invalidateCachesDependentOnAllowedDirectories (verificar que hace lo esperado, o nada si es obsoleta)
 
+    @Test fun `large playlist metadata queries stay bounded and preserve source order`() = runTest {
+        val ids = (1..1100).reversed().map { it.toString() }
+        val sizes = mutableListOf<Int>()
+        every { mockMusicDao.getSongsByIds(any(), any(), false) } answers {
+            val chunk = firstArg<List<Long>>()
+            sizes += chunk.size
+            flowOf(chunk.reversed().map { id -> createSongEntity(id, "Song $id", "Artist", "Pop", "/music/$id.mp3", "/music") })
+        }
+        val songs = musicRepository.getSongsByIds(ids).first()
+        assertEquals(ids, songs.map { it.id })
+        assertEquals(listOf(500, 500, 100), sizes)
+    }
+
     // Helper method to create SongEntity with defaults to avoid positional argument hell
     @Test
     fun `cached home songs are emitted while catalog refresh is still loading`() = runTest {

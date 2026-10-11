@@ -40,7 +40,7 @@ class HomeFeedViewModelTest {
         every { editor.putString(any(), any()) } answers { saved[firstArg()] = secondArg(); editor }
         every { editor.putStringSet(any(), any()) } returns editor
         every { context.getString(R.string.home_speed_dial) } returns "Speed dial"
-        every { context.getString(R.string.home_speed_dial_hint) } returns "Pin a song"
+        every { context.getString(R.string.home_speed_dial_quick_hint) } returns "Pin a song"
         every { context.getString(R.string.home_listening_recommendations) } returns "Recommended for you"
         every { context.getString(R.string.home_because_listened, any()) } answers { "Because you listened to ${secondArg<Array<out Any>>().first()}" }
         coEvery { catalog.getHomePage(any()) } returns HomeCatalogPage(listOf(HomeCatalogSection("Explore", null, listOf(HomeCatalogItem.Track(song("catalog"))))), null)
@@ -74,7 +74,7 @@ class HomeFeedViewModelTest {
         model.onSongPlayed(seed)
         val state = withTimeout(10_000) { model.state.first { it.personalSections.any { row -> row.title == "Recommended for you" } } }
         assertEquals(listOf("related"), state.personalSections.last().items.map { (it as HomeCatalogItem.Track).song.id })
-        assertEquals("seed", state.personalSections.first().items.first().let { (it as HomeCatalogItem.Track).song.id })
+        assertFalse(state.personalSections.first().items.any { it.id == "song:seed" })
         coVerify { music.cacheCatalogSongs(listOf(seed)) }
         coVerify(exactly = 0) { music.setFavoriteStatusWithSong(any(), any()) }
         model.toggleSpeedDial(seed)
@@ -116,7 +116,7 @@ class HomeFeedViewModelTest {
         val restored = model()
         ready(restored)
         restored.onSongPlayed(song("another"))
-        withTimeout(10_000) { restored.state.first { it.personalSections.firstOrNull()?.items?.firstOrNull()?.id == "song:another" } }
+        withTimeout(10_000) { restored.state.first { it.personalReady && it.personalSections.any { row -> row.label == "Because you listened to seed" } } }
         assertEquals("Because you listened to seed", restored.state.value.personalSections.last().label)
         coVerify(exactly = 1) { catalog.getHomePage(null) }
         coVerify(exactly = 1) { catalog.getExploreSections() }
@@ -151,4 +151,16 @@ class HomeFeedViewModelTest {
         withTimeout(10_000) { model.state.first { it.canRetry && !it.isRefreshing } }
         assertEquals(previous, model.state.value.sections)
     }
+    @Test fun `personal shelves stay loading until local history is available`() = runBlocking {
+        val blocked = CompletableDeferred<List<PlaybackStatsRepository.PlaybackHistoryEntry>>()
+        coEvery { stats.loadPlaybackHistory(any()) } coAnswers { blocked.await() }
+        val model = model()
+        assertFalse(model.state.value.personalReady)
+        assertTrue(model.state.value.personalSections.isEmpty())
+        blocked.complete(emptyList())
+        withTimeout(10_000) { model.state.first { it.personalReady } }
+        ready(model)
+        coVerify(exactly = 1) { catalog.getHomePage(null) }
+    }
+
 }
