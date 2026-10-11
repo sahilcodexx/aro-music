@@ -13,7 +13,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
@@ -29,23 +31,41 @@ class SpotifyRepository @Inject constructor(
     val mapper: SpotifyYouTubeMapper,
     private val registry: com.aro.music.data.innertube.InnerTubeBrowseRegistry,
 ) {
+    private val playlistCache by lazy { SpotifyPlaylistCache(context) }
+    private val playlistLocks = Array(32) { kotlinx.coroutines.sync.Mutex() }
     val libraryPlaylistsFlow = session.isLoggedInFlow.mapLatest { connected ->
         if (!connected) return@mapLatest emptyList<com.aro.music.data.model.Playlist>()
         catalog {
             val playlists = mutableListOf<com.aro.music.data.model.Playlist>()
-            playlists.add(com.aro.music.data.model.Playlist("spotify:liked", "Spotify Liked Songs", emptyList(), source = "SPOTIFY"))
+            playlists.add(com.aro.music.data.model.Playlist("spotify:liked", "Spotify Liked Songs", emptyList(), source = "SPOTIFY", remoteSongCount = playlistCount("spotify:liked")))
             var offset = 0
             do {
                 val page = Spotify.myPlaylists(limit = 50, offset = offset).getOrThrow()
                 playlists += page.items.map { playlist ->
                     com.aro.music.data.model.Playlist("spotify:${playlist.id}", playlist.name, emptyList(),
-                        coverImageUri = playlist.images.firstOrNull()?.url, source = "SPOTIFY")
+                        coverImageUri = playlist.images.firstOrNull()?.url, source = "SPOTIFY", remoteSongCount = playlist.tracks?.total)
                 }
                 offset += page.items.size
             } while (page.items.isNotEmpty() && offset < page.total)
-            playlists.distinctBy { it.id }
+            playlists.distinctBy { it.id }.chunked(4).flatMap { batch ->
+                coroutineScope {
+                    batch.map { playlist -> async {
+                        if (playlist.remoteSongCount != null) playlist
+                        else playlist.copy(remoteSongCount = playlistCount(playlist.id))
+                    } }.awaitAll()
+                }
+            }
         }
     }.flowOn(kotlinx.coroutines.Dispatchers.IO)
+
+    private suspend fun playlistCount(id: String): Int? = try {
+        if (id == "spotify:liked") Spotify.likedSongs(1, 0).getOrThrow().total
+        else Spotify.playlistTracks(id.removePrefix("spotify:"), 1, 0).getOrThrow().total
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Timber.w(e, "Spotify playlist count unavailable")
+        null
+    }
 
     suspend fun searchSongs(query: String, limit: Int): List<Song> = safely {
         if (!session.ensureAuthenticated()) return@safely emptyList()
@@ -106,35 +126,59 @@ class SpotifyRepository @Inject constructor(
         null
     }
 
-    data class ResolvedPlaylist(val playlist: com.aro.music.data.model.Playlist, val songs: List<Song>)
+    data class ResolvedPlaylist(val playlist: com.aro.music.data.model.Playlist, val songs: List<Song>, val totalTracks: Int = songs.size)
 
     suspend fun searchPlaylists(query: String): List<ResolvedPlaylist> = catalog {
         val results = Spotify.search(query, types = listOf("playlist"), limit = 3).getOrThrow().playlists?.items.orEmpty()
         results.mapNotNull { playlist -> resolvePlaylist("spotify:${playlist.id}", playlist.name, playlist.images.firstOrNull()?.url, 50) }
     }
 
-    suspend fun resolvePlaylist(id: String, name: String? = null, artwork: String? = null, maxTracks: Int = Int.MAX_VALUE): ResolvedPlaylist? {
-        if (!session.ensureAuthenticated()) return null
-        val liked = id == "spotify:liked"
-        val spotifyId = id.removePrefix("spotify:")
-        val metadata = if (!liked && name == null) Spotify.playlist(spotifyId).getOrThrow() else null
-        val tracks = mutableListOf<SpotifyTrack>()
-        var offset = 0
-        do {
-            val limit = minOf(50, maxTracks - offset)
-            val page = if (liked) {
-                val result = Spotify.likedSongs(limit, offset).getOrThrow()
-                Triple(result.items.map { it.track }, result.items.size, result.total)
-            } else {
-                val result = Spotify.playlistTracks(spotifyId, limit, offset).getOrThrow()
-                Triple(result.items.mapNotNull { it.track }, result.items.size, result.total)
+    suspend fun resolvePlaylist(id: String, name: String? = null, artwork: String? = null,
+        maxTracks: Int = Int.MAX_VALUE, onProgress: ((Int, Int) -> Unit)? = null,
+        onPartial: (suspend (ResolvedPlaylist) -> Unit)? = null, forceRefresh: Boolean = false,
+    ): ResolvedPlaylist? = withContext(kotlinx.coroutines.Dispatchers.IO) {
+        if (!session.ensureAuthenticated()) return@withContext null
+        playlistLocks[(id.hashCode() and Int.MAX_VALUE) % playlistLocks.size].withLock {
+            // Preview callers still fetch their requested source slice. Only complete
+            // playlist opens/imports read or write this snapshot.
+            if (maxTracks == Int.MAX_VALUE && !forceRefresh) playlistCache.read(id)?.let { cached ->
+                onPartial?.invoke(cached)
+                onProgress?.invoke(cached.totalTracks, cached.totalTracks)
+                return@withLock cached
             }
-            tracks.addAll(page.first.filter { !it.isLocal })
-            offset += page.second
-        } while (page.second > 0 && offset < page.third && offset < maxTracks)
-        val songs = resolve(tracks)
-        return ResolvedPlaylist(com.aro.music.data.model.Playlist(id, name ?: metadata?.name ?: "Spotify Liked Songs",
-            songs.map { it.id }, coverImageUri = artwork ?: metadata?.images?.firstOrNull()?.url, source = "SPOTIFY"), songs)
+            val liked = id == "spotify:liked"
+            val spotifyId = id.removePrefix("spotify:")
+            val metadata = if (!liked && name == null) Spotify.playlist(spotifyId).getOrThrow() else null
+            var header = com.aro.music.data.model.Playlist(id, name ?: metadata?.name ?: "Spotify Liked Songs", emptyList(),
+                coverImageUri = artwork ?: metadata?.images?.firstOrNull()?.url, source = "SPOTIFY", remoteSongCount = metadata?.tracks?.total)
+            onPartial?.invoke(ResolvedPlaylist(header, emptyList(), header.remoteSongCount ?: 0))
+            val songs = mutableListOf<Song>()
+            var offset = 0
+            do {
+                val limit = minOf(50, maxTracks - offset)
+                val page = if (liked) {
+                    val result = Spotify.likedSongs(limit, offset).getOrThrow()
+                    Triple(result.items.map { it.track }, result.items.size, result.total)
+                } else {
+                    val result = Spotify.playlistTracks(spotifyId, limit, offset).getOrThrow()
+                    Triple(result.items.mapNotNull { it.track }, result.rawCount ?: result.items.size, result.total)
+                }
+                header = header.copy(remoteSongCount = page.third)
+                check(page.second > 0 || offset >= page.third) { "Playlist page incomplete" }
+                val previous = songs.toList()
+                val resolvedPage = resolve(page.first.filter { !it.isLocal }, onBatch = { batch ->
+                    val available = (previous + batch).distinctBy { it.id }
+                    onPartial?.invoke(ResolvedPlaylist(header.copy(songIds = available.map { it.id }), available, page.third))
+                })
+                songs.addAll(resolvedPage)
+                offset += page.second
+                onProgress?.invoke(offset, page.third)
+            } while (page.second > 0 && offset < page.third && offset < maxTracks)
+            val unique = songs.distinctBy { it.id }
+            val result = ResolvedPlaylist(header.copy(songIds = unique.map { it.id }), unique, offset)
+            if (maxTracks == Int.MAX_VALUE) playlistCache.write(result)
+            result
+        }
     }
 
     private suspend fun <T> catalog(block: suspend () -> List<T>): List<T> = try {
@@ -162,10 +206,19 @@ class SpotifyRepository @Inject constructor(
     fun likedSongsQueue(startIndex: Int = 0): QueueProvider =
         AuthenticatedSpotifyQueue(session, SpotifyLikedSongsQueue(startIndex, mapper))
 
-    suspend fun resolve(tracks: List<SpotifyTrack>): List<Song> {
+    suspend fun resolve(tracks: List<SpotifyTrack>, onProgress: ((Int, Int) -> Unit)? = null, onBatch: (suspend (List<Song>) -> Unit)? = null): List<Song> {
         val resolved = mutableListOf<Song>()
+        var processed = 0
         for (batch in tracks.chunked(4)) {
-            resolved += coroutineScope { batch.map { track -> async { mapper.mapToYouTube(track) } }.awaitAll().filterNotNull() }
+            coroutineScope {
+                val jobs = batch.map { track -> async { mapper.mapToYouTube(track) } }
+                for (job in jobs) {
+                    job.await()?.let { resolved += it }
+                    onBatch?.invoke(resolved.distinctBy { it.id })
+                }
+            }
+            processed += batch.size
+            onProgress?.invoke(processed, tracks.size)
         }
         return resolved.distinctBy { it.id }
     }
