@@ -96,7 +96,7 @@ class RemoteCatalogDetailTest {
                     }
                     val state = model.state.first { feed -> !feed.isLoading && feed.sections.isNotEmpty() && feed.personalSections.any { it.title == "Recommended for you" } }
                     assertTrue("History appears after even one song", state.personalSections.any { it.title == "Recently played" && it.items.any { row -> row.id == "song:${seed.id}" } })
-                    assertTrue("Speed dial includes recent listening", state.personalSections.any { it.title == "Speed dial" && it.items.any { row -> row.id == "song:${seed.id}" } })
+                    assertTrue("Automatic speed dial excludes recent history", state.personalSections.first { it.title == "Speed dial" }.items.none { row -> row.id == "song:${seed.id}" })
                     assertTrue("Home follows the rap seed", state.personalSections.first { it.title == "Recommended for you" }.items.any { it.title == "WDTBU" || it.title == "Karta Kya Hai" })
                     assertEquals(listOf("Recently played", "Speed dial"), state.personalSections.take(2).map { it.title })
                     val recommendation = state.personalSections.first { it.title == "Recommended for you" }
