@@ -48,3 +48,6 @@ local.properties
 
 # Private Aro release signing material
 .release-signing/
+
+# Build outputs for every module, including vendored libraries
+**/build/
