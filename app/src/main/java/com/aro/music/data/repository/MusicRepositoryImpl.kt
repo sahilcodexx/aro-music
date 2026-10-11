@@ -990,9 +990,12 @@ class MusicRepositoryImpl @Inject constructor(
         if (songIds.isEmpty()) return flowOf(emptyList())
         val longIds = songIds.mapNotNull { it.toLongOrNull() }
         if (longIds.isEmpty()) return flowOf(emptyList())
-        return musicDao.getSongsByIds(longIds, emptyList(), false).map { entities ->
+        val ids = longIds.distinct()
+        val rows = if (ids.size <= 500) musicDao.getSongsByIds(ids, emptyList(), false)
+        else combine(ids.chunked(500).map { chunk -> musicDao.getSongsByIds(chunk, emptyList(), false) }) { batches -> batches.flatMap { it } }
+        return rows.map { entities ->
             val songMap = entities.associate { it.id.toString() to it.toSong() }
-            // Preserve the requested order
+            // Preserve source order, including across database query batches.
             songIds.mapNotNull { songMap[it] }
         }.flowOn(Dispatchers.IO)
     }

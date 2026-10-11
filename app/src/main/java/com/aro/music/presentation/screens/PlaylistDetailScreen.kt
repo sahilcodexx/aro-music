@@ -272,7 +272,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.padding(start = 8.dp),
                         text = stringResource(
                             R.string.presentation_batch_f_status_bullet_step,
-                            formatSongCount(songsInPlaylist.size),
+                            formatSongCount(currentPlaylist?.remoteSongCount ?: songsInPlaylist.size),
                             formatTotalDuration(songsInPlaylist)
                         ),
                         style = MaterialTheme.typography.labelMedium.copy(fontFamily = GoogleSansRounded),
@@ -341,6 +341,7 @@ fun PlaylistDetailScreen(
                     .fillMaxSize()
                     .padding(top = innerPadding.calculateTopPadding())
             ) {
+                if (uiState.isLoading) androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 val actionButtonsHeight = 42.dp
                 val playbackControlBottomPadding = if (isFolderPlaylist) 8.dp else 6.dp
                 Row(
@@ -544,7 +545,8 @@ fun PlaylistDetailScreen(
                     Box(Modifier
                         .fillMaxSize()
                         .weight(1f), Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (uiState.isLoading) CircularProgressIndicator()
+                        else Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.MusicOff, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(8.dp))
                             Text(playlistEmptyTitle, style = MaterialTheme.typography.titleMedium)

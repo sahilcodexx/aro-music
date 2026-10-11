@@ -1184,7 +1184,8 @@ fun SearchResultPlaylistItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = formatSongCount(playlist.songIds.size),
+                    text = (playlist.remoteSongCount ?: playlist.songIds.size.takeIf { playlist.source != "SPOTIFY" })
+                        ?.let { formatSongCount(it) } ?: stringResource(R.string.spotify_playlist_count_unknown),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

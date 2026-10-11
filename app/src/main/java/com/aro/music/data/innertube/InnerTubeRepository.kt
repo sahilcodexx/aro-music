@@ -569,11 +569,24 @@ suspend fun resolveRemotePlaylist(
  * This is what the playlist detail screen needs, where all that survives
  * navigation is the id. One browse covers both header and tracklist.
  */
-suspend fun getRemotePlaylist(browseId: String, limit: Int = 300): ResolvedRemotePlaylist? =
+suspend fun getRemotePlaylist(browseId: String, limit: Int = 300, onProgress: ((Int) -> Unit)? = null): ResolvedRemotePlaylist? =
     withContext(Dispatchers.IO) {
         val root = engine.browse(browseId = browseId) ?: return@withContext null
         val header = InnerTubeSearchParser.parsePageHeader(root)
-        val songs = InnerTubeSearchParser.parse(root).tracks.take(limit).map { it.toSong() }
+        var page = InnerTubeSearchParser.parse(root)
+        val tracks = linkedMapOf<String, InnerTubeTrack>()
+        val tokens = mutableSetOf<String>()
+        while (true) {
+            page.tracks.forEach { if (tracks.size < limit) tracks.putIfAbsent(it.videoId, it) }
+            onProgress?.invoke(tracks.size)
+            val token = page.continuation ?: break
+            if (tracks.size >= limit) break
+            check(tokens.add(token)) { "Playlist continuation repeated" }
+            val next = engine.browse(browseId = browseId, continuation = token)
+                ?: throw java.io.IOException("Playlist page unavailable")
+            page = InnerTubeSearchParser.parse(next)
+        }
+        val songs = tracks.values.map { it.toSong() }
         val playlist = InnerTubePlaylist(
             browseId = browseId,
             title = header?.title ?: "Playlist",
