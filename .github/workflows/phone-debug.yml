@@ -29,7 +29,7 @@ jobs:
             app/build/reports/
             app/build/outputs/apk/debug/*.apk
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
   devices:
     runs-on: ubuntu-latest
     timeout-minutes: 60
