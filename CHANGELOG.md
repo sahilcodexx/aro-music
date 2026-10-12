@@ -16,6 +16,7 @@ First Aro phone release candidate. Validation is ongoing; publication is blocked
 - Android 11 widget service exception handling corrected during release review.
 - Legacy Navidrome database migration preserves songs with missing disc numbers.
 - Native JavaScript and local audio decoding checks added for Android API 30 and 36.
+- Genre repository tests now handle conflated updates without intermittent failures.
 - Home refresh completion ordering corrected so an immediate refresh is accepted.
 - Contribution, development, security, privacy, and coding-agent guides added.
 

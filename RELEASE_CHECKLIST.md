@@ -73,3 +73,7 @@ Neither workflow relies on an unpublished local AAR or creates a disposable rele
 ## Dependency updates
 
 Passing release validation applies to the tested source and dependency versions. Dependabot PR #5 updates only `actions/checkout` and passed. PR #6 groups 74 Gradle dependency updates and fails Kotlin compilation in Material3 slider calls; it remains unmerged and does not affect the verified candidate. Resolve dependency API migrations in separate reviewed changes before adopting those updates.
+
+## Intermittent genre-test correction
+
+A later documentation-only run at `a5c3a96` exposed `MusicRepositoryImplTest` assuming the genre flow always delivers a fallback emission before the database result. The production flow intentionally conflates updates, so skipping one emission could discard the only delivered database result. All three genre tests now wait for a database-backed genre ID rather than an emission count. The false-unknown case also explicitly verifies that Unknown is absent. No application behavior or dependency versions changed. After this correction, all 237 debug and all 237 release unit tests passed locally; the next CI run must validate the pushed correction.

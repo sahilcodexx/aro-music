@@ -16,7 +16,6 @@ import dagger.Lazy
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
@@ -260,12 +259,13 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(false)
 
-        // The flow first emits fallback genres, then the DB-backed list merged
-        // with the fallbacks (DB genres take priority).
-        val result = musicRepository.getGenres().drop(1).first()
+        // Conflation may skip the fallback-only emission. Wait for the DB
+        // marker instead of assuming a fixed number of emissions.
+        val result = musicRepository.getGenres().first { genres -> genres.any { it.id == "rock" } }
 
         assertEquals(1, result.count { it.id == "rock" })
         assertTrue(result.any { it.id == "rock" && it.name == "Rock" })
+        assertTrue(result.none { it.id == "unknown" })
     }
 
     @Test
@@ -283,7 +283,7 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(true)
 
-        val result = musicRepository.getGenres().drop(1).first()
+        val result = musicRepository.getGenres().first { genres -> genres.any { it.id == "unknown" } }
 
         assertEquals(1, result.count { it.id == "unknown" })
     }
@@ -303,7 +303,7 @@ class MusicRepositoryImplTest {
             )
         } returns flowOf(true)
 
-        val result = musicRepository.getGenres().drop(1).first()
+        val result = musicRepository.getGenres().first { genres -> genres.any { it.id == "rock" } }
 
         assertTrue(result.any { it.id == "rock" })
         assertEquals(1, result.count { it.id == "unknown" })
