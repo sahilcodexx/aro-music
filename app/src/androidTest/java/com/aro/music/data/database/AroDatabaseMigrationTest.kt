@@ -6,6 +6,7 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -27,18 +28,50 @@ class AroDatabaseMigrationTest {
     @After
     fun tearDown() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        for (version in 25..39) {
+        for (version in 25 until AroDatabaseVersion.LATEST) {
             context.deleteDatabase(databaseNameFor(version))
         }
         context.deleteDatabase(DB_NAME_33_TO_34)
         context.deleteDatabase(DB_NAME_23_TO_24_DRIFTED)
         context.deleteDatabase(DB_NAME_35_TO_36)
         context.deleteDatabase(DB_NAME_39_TO_40)
+        context.deleteDatabase(DB_NAME_NAVIDROME_NULL_DISC)
+    }
+
+    @Test
+    fun migrationPreservesNavidromeSongsWithMissingDiscNumber() {
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        val schema = assets.open("${AroDatabase::class.java.name}/42.json").bufferedReader().use { it.readText() }
+        val entities = JSONObject(schema).getJSONObject("database").getJSONArray("entities")
+        val entity = (0 until entities.length()).map { entities.getJSONObject(it) }
+            .first { it.getString("tableName") == "navidrome_songs" }
+        val createSql = entity.getString("createSql")
+            .replace("\${TABLE_NAME}", "navidrome_songs")
+            .replace("`disc_number` INTEGER NOT NULL", "`disc_number` INTEGER")
+        helper.createDatabase(DB_NAME_NAVIDROME_NULL_DISC, 25).apply {
+            execSQL(createSql)
+            execSQL("""
+                INSERT INTO navidrome_songs
+                (id, navidrome_id, playlist_id, title, artist, album, duration,
+                 track_number, disc_number, year, path, date_added)
+                VALUES ('p_track', 'track', 'p', 'Preserved song', 'Artist', 'Album',
+                        180000, 1, NULL, 2026, '/song.mp3', 1)
+            """.trimIndent())
+        }.close()
+        helper.runMigrationsAndValidate(DB_NAME_NAVIDROME_NULL_DISC,
+            AroDatabaseVersion.LATEST, true, *ALL_MIGRATIONS).use { db ->
+            db.query("SELECT title, disc_number FROM navidrome_songs WHERE id = 'p_track'").use { row ->
+                assertTrue("Cached cloud song must survive upgrade", row.moveToFirst())
+                assertEquals("Preserved song", row.getString(0))
+                assertEquals(0, row.getInt(1))
+                assertTrue("Disc number must be non-null", !row.isNull(1))
+            }
+        }
     }
 
     @Test
     fun migrateEveryExportedSchemaToLatest() {
-        for (startVersion in 25..39) {
+        for (startVersion in 25 until AroDatabaseVersion.LATEST) {
             helper.createDatabase(databaseNameFor(startVersion), startVersion).close()
 
             helper.runMigrationsAndValidate(
@@ -304,10 +337,11 @@ class AroDatabaseMigrationTest {
     }
 
     private object AroDatabaseVersion {
-        const val LATEST = 40
+        const val LATEST = 42
     }
 
     companion object {
+        private const val DB_NAME_NAVIDROME_NULL_DISC = "migration-test-navidrome-null-disc"
         private const val DB_NAME_23_TO_24_DRIFTED = "migration-test-23-to-24-drifted"
         private const val DB_NAME_33_TO_34 = "migration-test-33-to-34"
         private const val DB_NAME_35_TO_36 = "migration-test-35-to-36"
@@ -328,7 +362,9 @@ class AroDatabaseMigrationTest {
             AroDatabase.MIGRATION_36_37,
             AroDatabase.MIGRATION_37_38,
             AroDatabase.MIGRATION_38_39,
-            AroDatabase.MIGRATION_39_40
+            AroDatabase.MIGRATION_39_40,
+            AroDatabase.MIGRATION_40_41,
+            AroDatabase.MIGRATION_41_42
         )
     }
 }

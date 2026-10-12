@@ -147,7 +147,7 @@ baselineProfile {
     // startup dex-layout input once they are checked into the app.
     automaticGenerationDuringBuild = false
     saveInSrc = true
-    dexLayoutOptimization = true
+    dexLayoutOptimization = false
 }
 
 ksp {

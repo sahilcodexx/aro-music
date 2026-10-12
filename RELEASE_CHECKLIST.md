@@ -4,16 +4,22 @@ Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version c
 
 ## Evidence so far
 
-- Full existing debug unit suite: 236 tests passed before the additional release-settings test.
+- Full debug unit suite: 237 tests passed, including the additional release-settings test.
 - Repository-owned InnerTubeX source: debug APK and instrumentation APK build successfully without Maven-local dependencies.
 - Connected ARM64 phone: live YouTube home/catalog/radio/artwork and muted audio playback passed after the source migration; playback advanced beyond 0:00.
 - Connected phone: Spotify account playlist counts and persisted/progressive playlist loading passed with an existing authenticated account.
 - Connected phone: theme contrast, sign-in email prefill, and home section loading-layout tests passed.
+- Connected phone: the broader connected-service/database/theme/sign-in/home run passed all 17 tests on 2026-10-12 before the final migration and branding changes; final rerun remains required.
 - Database test fixtures were found stale: parent artist/album records were missing, and one incremental-upsert test simultaneously expected removal and preservation. Fixtures and expectations were corrected; rerun results must be recorded before release.
 - Debug APK ARM64 ELF load-segment alignment: all five native libraries meet the 16 KiB minimum. Release packaging and actual 16 KiB-device behavior still need verification.
 - GitHub workflow syntax passes actionlint. External actions are pinned to commit SHAs.
 - A production environment and encrypted signing secrets are configured. The signing key and password files are excluded from Git.
 - Initial Android lint reported 556 errors. Runtime exception handling and indentation fixes reduced this to 548 errors. Existing debt is checked into `app/lint-baseline.xml`; subsequent lint checks detect new issues. This baseline is NOT evidence that these errors are fixed.
+
+- Emulator checks exposed a Navidrome migration nullability mismatch; the migration now keeps disc numbers non-null and normalizes legacy null values to zero. On the connected phone, all 11 migration/database tests passed, including cached songs with null disc numbers and upgrades from schemas 25–41 to schema 42.
+- CI SDK installation uses the exact `platforms;android-37.0` package. Android 11 emulator boot required freeing runner disk space; both fixes are in the build environment.
+- APK splits and the AAB build run in separate Gradle invocations because the Android Gradle Plugin rejects a split shrunk-resource directory when creating a bundle.
+- Inherited source filenames, compiler/shrinker package rules, and widget snapshot names now use Aro. Original credits and license notices remain; an unrelated inherited startup profile was removed.
 
 ## Provider coverage
 

@@ -21,7 +21,7 @@ See [release validation and limitations](RELEASE_CHECKLIST.md) before distributi
 
 ## Build
 
-Use JDK 21 and Android SDK platform 37. Install build tools 36.0.0 and let Gradle install other required SDK/NDK components. Use the checked-in Gradle wrapper; the YouTube library is built from source in `innertubex/`, with no dependency on a developer's Maven cache.
+Use JDK 21 and Android SDK platform 37 (SDK package `platforms;android-37.0`). Install build tools 36.0.0 and let Gradle install other required SDK/NDK components. Use the checked-in Gradle wrapper; the YouTube library is built from source in `innertubex/`, with no dependency on a developer's Maven cache.
 
 ```sh
 ./gradlew :app:assembleDebug --no-daemon
@@ -36,6 +36,8 @@ Some device tests access live services and require authenticated accounts. CI ru
 [Android validation](.github/workflows/phone-debug.yml) runs unit tests, lint, phone builds, and emulator checks on pushes and pull requests to `main`. Existing lint debt is recorded in `app/lint-baseline.xml`; a green lint job means no new errors beyond that baseline, not that all existing issues have been fixed.
 
 [Aro release candidate](.github/workflows/phone-release.yml) is manually dispatched from `main`. It validates release code, builds signed APKs and an AAB, verifies APK signatures, computes SHA-256 checksums, and creates a **draft prerelease**. It does not automatically publish a stable release.
+
+Build release APKs and the bundle separately: first `./gradlew :app:assembleRelease`, then `./gradlew :app:bundleRelease -Paro.enableAbiSplits=false`. Preserve the APKs before switching output modes; the CI workflow handles the Android Gradle Plugin's split-resource limitation.
 
 Release signing uses GitHub `production` environment secrets `ARO_KEYSTORE_BASE64`, `ARO_STORE_PASSWORD`, `ARO_KEY_PASSWORD`, and `ARO_KEY_ALIAS`. Locally, use `ARO_KEYSTORE_PATH` and the same password/alias environment variables, or an ignored `keystore.properties` containing `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`. Never commit a key, password, token, or account cookie. Back up the signing key securely before shipping.
 

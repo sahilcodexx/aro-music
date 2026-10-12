@@ -10,8 +10,9 @@ First Aro phone release candidate. Validation is ongoing; see RELEASE_CHECKLIST.
 - Cached home feeds, manual refresh, and loading placeholders that preserve layout.
 - Progressive playlist loading, persistent snapshots, and source playlist counts.
 - Artwork colors across the player, navigation, and main screen backgrounds.
+- Removed the inherited beta 0.5 clean-install prompt from home.
 - Aro version information, changelog, and issue links replace inherited release metadata.
 - Repository-owned InnerTubeX sources and GitHub validation/release workflows.
 - Android 11 widget service exception handling corrected during release review.
 
-Google Drive needs OAuth setup and remains disabled. Other cloud accounts, settings, release shrinking, and broader device coverage remain subject to the recorded validation gates. Earlier upstream PixelPlay releases are not Aro releases; original licensing and credits are preserved.
+Google Drive needs OAuth setup and remains disabled. Other cloud accounts, settings, release shrinking, and broader device coverage remain subject to the recorded validation gates. Earlier upstream project releases are not Aro releases; original licensing and credits are preserved.

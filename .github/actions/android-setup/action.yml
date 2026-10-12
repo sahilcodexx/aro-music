@@ -3,6 +3,12 @@ description: Install the SDK and use the repository Gradle wrapper
 runs:
   using: composite
   steps:
+    - name: Free runner disk for Android images and APKs
+      shell: bash
+      run: |
+        df -h /
+        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+        df -h /
     - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
       with:
         distribution: temurin

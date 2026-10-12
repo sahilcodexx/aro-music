@@ -238,7 +238,7 @@
         errorLine1="    return String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/aro/music/ui/glancewidget/PixelPlayGlanceWidget.kt"
+            file="src/main/java/com/aro/music/ui/glancewidget/AroGlanceWidget.kt"
             line="1399"
             column="12"/>
     </issue>
@@ -447,7 +447,7 @@
         errorLine1="    android:targetCellWidth=&quot;4&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/xml/playpix_glance_widget_info.xml"
+            file="src/main/res/xml/aro_glance_widget_info.xml"
             line="5"
             column="5"/>
     </issue>
@@ -458,7 +458,7 @@
         errorLine1="    android:targetCellHeight=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/xml/playpix_glance_widget_info.xml"
+            file="src/main/res/xml/aro_glance_widget_info.xml"
             line="6"
             column="5"/>
     </issue>
@@ -14263,22 +14263,22 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.drawable.playpix_base_monochrome` appears to be unused"
+        message="The resource `R.drawable.aro_base_monochrome` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
         <location
-            file="src/main/res/drawable/playpix_base_monochrome.xml"
+            file="src/main/res/drawable/aro_base_monochrome.xml"
             line="1"
             column="1"/>
     </issue>
 
     <issue
         id="UnusedResources"
-        message="The resource `R.xml.playpix_glance_widget_info` appears to be unused"
+        message="The resource `R.xml.aro_glance_widget_info` appears to be unused"
         errorLine1="&lt;appwidget-provider xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
         <location
-            file="src/main/res/xml/playpix_glance_widget_info.xml"
+            file="src/main/res/xml/aro_glance_widget_info.xml"
             line="2"
             column="1"/>
     </issue>

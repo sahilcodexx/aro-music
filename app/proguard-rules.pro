@@ -58,15 +58,15 @@
 -dontwarn com.softsynth.**
 
 # Mantener clases de datos y sus miembros para evitar que R8 Full elimine campos
--keepclassmembers class com.theveloper.playpix.data.model.** { *; }
--keepclassmembers class com.theveloper.playpix.domain.model.** { *; }
+-keepclassmembers class com.aro.music.data.model.** { *; }
+-keepclassmembers class com.aro.music.domain.model.** { *; }
 -keepclassmembers class com.aro.music.data.model.** { *; }
 -keepclassmembers class com.aro.music.domain.model.** { *; }
 
 -keepattributes Signature, InnerClasses, EnclosingMethod, AnnotationDefault, *Annotation*
 
 # Cast framework classes loaded via manifest/reflective entry points.
--keep class com.theveloper.playpix.data.service.cast.CastOptionsProvider { *; }
+-keep class com.aro.music.data.service.cast.CastOptionsProvider { *; }
 -keep class * implements com.google.android.gms.cast.framework.OptionsProvider
 
 # Gson generic type capture for backup/restore in release builds.
@@ -74,17 +74,17 @@
 -keep class * extends com.google.gson.reflect.TypeToken
 
 # JioSaavn + iTunes API response models — Gson needs field names intact
--keep class com.theveloper.playpix.data.jiosaavn.** { *; }
--keep class com.theveloper.playpix.data.itunes.** { *; }
--keep class com.theveloper.playpix.data.preferences.PreferenceBackupEntry { *; }
--keep class com.theveloper.playpix.data.backup.model.** { *; }
--keep class com.theveloper.playpix.data.backup.module.** { *; }
+-keep class com.aro.music.data.jiosaavn.** { *; }
+-keep class com.aro.music.data.itunes.** { *; }
+-keep class com.aro.music.data.preferences.PreferenceBackupEntry { *; }
+-keep class com.aro.music.data.backup.model.** { *; }
+-keep class com.aro.music.data.backup.module.** { *; }
 # Backup payload entities are part of the persisted .pxpl contract.
--keep class com.theveloper.playpix.data.database.FavoritesEntity { *; }
--keep class com.theveloper.playpix.data.database.SongEngagementEntity { *; }
--keep class com.theveloper.playpix.data.database.LyricsEntity { *; }
--keep class com.theveloper.playpix.data.database.SearchHistoryEntity { *; }
--keep class com.theveloper.playpix.data.database.TransitionRuleEntity { *; }
+-keep class com.aro.music.data.database.FavoritesEntity { *; }
+-keep class com.aro.music.data.database.SongEngagementEntity { *; }
+-keep class com.aro.music.data.database.LyricsEntity { *; }
+-keep class com.aro.music.data.database.SearchHistoryEntity { *; }
+-keep class com.aro.music.data.database.TransitionRuleEntity { *; }
 
 # Netty channel classes are instantiated reflectively and require public no-arg constructors.
 # Without these, release builds can fail with:
@@ -175,7 +175,7 @@
 -dontwarn io.netty.**
 
 # Ensure internal server can start
--keep class com.theveloper.playpix.data.telegram.TelegramStreamProxy { *; }
+-keep class com.aro.music.data.telegram.TelegramStreamProxy { *; }
 
 # Keep Kotlin reflection if needed by Ktor/Serialization in Release
 -keep class kotlin.reflect.** { *; }

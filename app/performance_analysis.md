@@ -7,3 +7,5 @@ Home loading placeholders reserve the recently played and speed-dial sections be
 The measured warm-match Spotify playlist loading results are documented in [SPOTIFY_INTEGRATION.md](../SPOTIFY_INTEGRATION.md). They are not cold-start benchmarks. No current evidence establishes startup time, memory use, battery consumption, or jank on every supported phone.
 
 Before stable release, measure a cold launch, cached launch, large local library, large remote playlist, slow/offline network, background playback, and rotation/resizing. Use Android Studio profiling or the benchmark module on an appropriate test device. Keep account tokens and personal library details out of shared performance traces.
+
+The inherited startup profile was removed because it records another app and dependency build. Generate an Aro baseline profile from an actual Aro benchmark before enabling startup dex-layout optimization.

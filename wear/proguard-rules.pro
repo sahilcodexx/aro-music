@@ -4,6 +4,6 @@
 -dontobfuscate
 
 # Keep serialization
--keepclassmembers class com.theveloper.playpix.shared.** {
+-keepclassmembers class com.aro.music.shared.** {
     *;
 }
