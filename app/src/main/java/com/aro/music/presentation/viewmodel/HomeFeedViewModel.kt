@@ -183,7 +183,12 @@ class HomeFeedViewModel @Inject constructor(
                 personalJob?.join()
                 if (!_state.value.canRetry && _state.value.sections.isNotEmpty()) fetchedAt = System.currentTimeMillis()
                 persistSnapshot()
-            } finally { _state.update { it.copy(isLoading = false, isRefreshing = false) } }
+            } finally {
+                // Publish completion only after allowing the next refresh. A caller
+                // observing the idle state must not be rejected by the old job.
+                job = null
+                _state.update { it.copy(isLoading = false, isRefreshing = false) }
+            }
         }
     }
 

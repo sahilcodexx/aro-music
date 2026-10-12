@@ -14,6 +14,12 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check publication licensing gate
+        run: |
+          if grep -q 'Publication blocker:' LICENSE_STATUS.md; then
+            echo 'Release preparation is blocked: resolve and document compatible component licensing in LICENSE_STATUS.md first.'
+            exit 1
+          fi
       - uses: ./.github/actions/android-setup
       - name: Restore release signing key
         env:

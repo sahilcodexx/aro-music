@@ -1,6 +1,6 @@
 # Aro 1.0.0 release validation
 
-Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version code 13. Stable 1.0.0 publication is not cleared yet. A successful compilation is not proof that every setting, account, or phone works.
+Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version code 13. Publication is blocked by unresolved component licensing; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Stable 1.0.0 validation is also incomplete. A successful compilation is not proof that every setting, account, or phone works.
 
 ## Evidence so far
 
@@ -60,6 +60,8 @@ This establishes persistence for those settings, not every setting's physical ef
 ## Device and release gates
 
 Android 11/API 30 is the minimum, not all Android phones. Automated account-independent emulator checks are configured for API 30 and 36. Their successful GitHub run must be recorded. Verify ARM64, ARMv7, a low-memory phone, a tablet/foldable layout, and battery-restricted background playback before broad compatibility claims. Wear OS is outside this milestone.
+
+Before any publication, resolve the root-license/GPL component conflict documented in `LICENSE_STATUS.md`.
 
 Before stable publication:
 

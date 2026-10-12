@@ -1,62 +1,69 @@
 # Aro Music
 
-Aro is an Android music player combining your local library, YouTube Music discovery, Spotify playlist discovery, and optional personal music servers. The first Aro release is being prepared as **1.0.0-rc.1**; it is a development release, not a promise of compatibility with every device or provider.
+Your library, your playlists, and a home feed shaped by what you listen to.
 
-## Features
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.0-rc.1** is our first phone release candidate. Release validation and licensing review are still in progress; no stable release is declared.
 
-- Local songs, albums, artists, favorites, playlists, lyrics, listening history, and an equalizer.
-- YouTube Music search, artist collections, radio queues, and playlist imports.
-- Spotify sign-in, account playlists, liked songs, catalog browsing, and playlist imports. Spotify tracks are matched to YouTube for playback; Aro does not play Spotify's licensed audio streams.
-- Recently played, speed dial, daily mixes, and cached recommendations. Pull to refresh the home feed; changing tracks does not rebuild it.
-- Playlist snapshots, progressive track loading, and artwork-based colors across the player and main screens.
-- Optional Telegram, Subsonic/Navidrome, Jellyfin, NetEase Music, and QQ Music integrations. These require your own accounts or servers and are not all verified for the release candidate. Google Drive is disabled pending OAuth configuration.
+## What you can do
 
-## Install and compatibility
+- Play local music and organize songs, artists, albums, favorites, and playlists.
+- Search YouTube Music, explore artist collections, and start related-song queues.
+- Connect Spotify to browse account playlists and liked songs. Spotify metadata is matched to YouTube for audio playback.
+- Import YouTube and Spotify playlists as local copies. Remote edits are not automatically synchronized back.
+- Open a home feed with recently played, speed dial, daily mix, and discovery shelves. Cached content and loading placeholders preserve the layout; pull to refresh recommendations.
+- Use lyrics, listening history, an equalizer, and artwork colors across the player, navigation, and backgrounds.
 
-Android **11 or newer** is required (`minSdk 30`). Phone packages target Android 16 (`targetSdk 36`). Use the ARM64 APK on most modern phones, ARMv7 for older supported ARM devices, or the universal APK when unsure. The Android App Bundle is for store distribution, not direct installation.
+Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Telegram, NetEase Music, and QQ Music. Their live release verification is incomplete. Google Drive remains disabled pending OAuth setup. See the [validation record](RELEASE_CHECKLIST.md) for tested features and remaining work.
 
-Development installs use `com.aro.music.debug`; signed release installs use `com.aro.music`. The release signing key must remain the same for future upgrades. Wear OS sources are included, but Wear OS is outside the first phone release's verified scope.
+## Installation
 
-See [release validation and limitations](RELEASE_CHECKLIST.md) before distributing a build. GitHub artifacts in this private repository require access to the repository.
+Aro requires **Android 11 or newer**. The phone build targets Android 16.
 
-## Build
+| Package | Use |
+| --- | --- |
+| ARM64 APK | Most modern Android phones |
+| ARMv7 APK | Supported 32-bit ARM devices |
+| Universal APK | When unsure; larger download |
+| AAB | Store distribution tooling; cannot be installed directly |
 
-Use JDK 21 and Android SDK platform 37 (SDK package `platforms;android-37.0`). Install build tools 36.0.0 and let Gradle install other required SDK/NDK components. Use the checked-in Gradle wrapper; the YouTube library is built from source in `innertubex/`, with no dependency on a developer's Maven cache.
+When a release is cleared, signed packages and checksums will be available under [GitHub Releases](https://github.com/sahilcodexx/aro-music/releases). This repository is private, so access is required. Only install packages from a trusted source.
+
+Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
+
+## Build from source
+
+Install JDK 21, Android SDK package `platforms;android-37.0`, and build tools 36.0.0. Set `sdk.dir` in ignored `local.properties` or configure your Android SDK environment. Use the checked-in wrapper:
 
 ```sh
 ./gradlew :app:assembleDebug --no-daemon
 ./gradlew :app:testDebugUnitTest :app:lintDebug --no-daemon
-./gradlew :app:connectedDebugAndroidTest --no-daemon
 ```
 
-Some device tests access live services and require authenticated accounts. CI runs a separate account-independent device suite on Android API 30 and 36. Configure `sdk.dir` in an ignored `local.properties` when the SDK is not available through your environment.
+InnerTubeX is built from repository sources; an unpublished Maven-local AAR is not required. For emulator tests, signing, bundle builds, and troubleshooting, read the [development guide](DEVELOPMENT.md).
 
-## CI and release builds
+## Project documentation
 
-[Android validation](.github/workflows/phone-debug.yml) runs unit tests, lint, phone builds, and emulator checks on pushes and pull requests to `main`. Existing lint debt is recorded in `app/lint-baseline.xml`; a green lint job means no new errors beyond that baseline, not that all existing issues have been fixed.
+| Document | Contents |
+| --- | --- |
+| [Contributing](CONTRIBUTING.md) | Issues, pull requests, and review expectations |
+| [Development](DEVELOPMENT.md) | Setup, project structure, tests, and release workflow |
+| [Changelog](CHANGELOG.md) | Aro changes by version |
+| [Release validation](RELEASE_CHECKLIST.md) | Evidence, compatibility limits, and release gates |
+| [Spotify integration](SPOTIFY_INTEGRATION.md) | Authentication, playlist caching, and playback matching |
+| [Privacy](PRIVACY.md) | On-device data, permissions, and connected services |
+| [Security](SECURITY.md) | Reporting vulnerabilities and handling credentials |
+| [License status](LICENSE_STATUS.md) | Existing restrictions and the publication blocker |
+| [Agent instructions](AGENTS.md) | Repository rules for coding agents |
 
-[Aro release candidate](.github/workflows/phone-release.yml) is manually dispatched from `main`. It validates release code, builds signed APKs and an AAB, verifies APK signatures, computes SHA-256 checksums, and creates a **draft prerelease**. It does not automatically publish a stable release.
+## Accounts and privacy
 
-Build release APKs and the bundle separately: first `./gradlew :app:assembleRelease`, then `./gradlew :app:bundleRelease -Paro.enableAbiSplits=false`. Preserve the APKs before switching output modes; the CI workflow handles the Android Gradle Plugin's split-resource limitation.
+Spotify currently uses web sign-in and a stored session cookie. Selecting a device email only fills the form; the provider still authenticates the account. Sessions may expire and require reconnecting. Aro does not stream Spotify's licensed audio.
 
-Release signing uses GitHub `production` environment secrets `ARO_KEYSTORE_BASE64`, `ARO_STORE_PASSWORD`, `ARO_KEY_PASSWORD`, and `ARO_KEY_ALIAS`. Locally, use `ARO_KEYSTORE_PATH` and the same password/alias environment variables, or an ignored `keystore.properties` containing `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`. Never commit a key, password, token, or account cookie. Back up the signing key securely before shipping.
+Library metadata, preferences, listening history, and playlist caches are stored on your device. Connecting a service sends requests to that service. Optional AI features use the provider you configure. Do not include passwords, cookies, signing material, or private account information in issue reports.
 
-```sh
-gh workflow run phone-debug.yml --ref main
-gh workflow run phone-release.yml --ref main
-gh run list
-gh release list
-```
+## License and release status
 
-## Accounts and data
-
-Spotify authentication currently uses an embedded web sign-in and a stored Spotify session cookie. Device-email selection prefills an email; the account provider still handles authentication. Session expiry can require reconnecting. Imported playlists are local copies; subsequent edits are not automatically written back to Spotify or YouTube.
-
-Aro stores library metadata, settings, history, and playlist caches on the device. Cloud services receive the requests necessary for their features. Optional AI functions require separately configured provider credentials. Review provider terms and permissions before connecting accounts. See [Spotify integration](SPOTIFY_INTEGRATION.md) and [the release checklist](RELEASE_CHECKLIST.md) for details.
-
-## Contributing and license
-
-Report reproducible problems through [Aro issues](https://github.com/sahilcodexx/aro-music/issues), including app version, Android version, device model, provider, and steps. Remove credentials and private playlist details from logs. This project is licensed under GNU GPL v3; see [LICENSE](LICENSE). Preserve upstream copyright and license notices when redistributing source or builds.
+The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved, and **publication is blocked pending compatible rights and licensing**; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
 
 ## Credits
 
