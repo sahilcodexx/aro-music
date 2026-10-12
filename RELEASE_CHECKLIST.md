@@ -2,29 +2,20 @@
 
 Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version code 13. Publication is blocked by unresolved component licensing; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Stable 1.0.0 validation is also incomplete. A successful compilation is not proof that every setting, account, or phone works.
 
-## Evidence so far
+## Recorded validation
 
-- Full debug unit suite: 237 tests passed, including the additional release-settings test.
-- Repository-owned InnerTubeX source: debug APK and instrumentation APK build successfully without Maven-local dependencies.
-- Connected ARM64 phone: live YouTube home/catalog/radio/artwork and muted audio playback passed after the source migration; playback advanced beyond 0:00.
-- Connected phone: Spotify account playlist counts and persisted/progressive playlist loading passed with an existing authenticated account.
-- Connected phone: theme contrast, sign-in email prefill, and home section loading-layout tests passed.
-- Connected phone: the broader connected-service/database/theme/sign-in/home run passed all 17 tests on 2026-10-12 before the final migration and branding changes; final rerun remains required.
-- Database test fixtures were found stale: parent artist/album records were missing, and one incremental-upsert test simultaneously expected removal and preservation. Fixtures and expectations were corrected; rerun results must be recorded before release.
-- Debug APK ARM64 ELF load-segment alignment: all five native libraries meet the 16 KiB minimum. Release packaging and actual 16 KiB-device behavior still need verification.
-- GitHub workflow syntax passes actionlint. External actions are pinned to commit SHAs.
-- A production environment and encrypted signing secrets are configured. The signing key and password files are excluded from Git.
-- Initial Android lint reported 556 errors. Runtime exception handling and indentation fixes reduced this to 548 errors. Existing debt is checked into `app/lint-baseline.xml`; subsequent lint checks detect new issues. This baseline is NOT evidence that these errors are fixed.
-
-- Emulator checks exposed a Navidrome migration nullability mismatch; the migration now keeps disc numbers non-null and normalizes legacy null values to zero. On the connected phone, all 11 migration/database tests passed, including cached songs with null disc numbers and upgrades from schemas 25–41 to schema 42.
-- CI SDK installation uses the exact `platforms;android-37.0` package. Android 11 emulator boot required freeing runner disk space; both fixes are in the build environment.
-- APK splits and the AAB build run in separate Gradle invocations because the Android Gradle Plugin rejects a split shrunk-resource directory when creating a bundle.
-- Inherited source filenames, compiler/shrinker package rules, and widget snapshot names now use Aro. Original credits and license notices remain; an unrelated inherited startup profile was removed.
-
-- GitHub validation run [38203784349](https://github.com/sahilcodexx/aro-music/actions/runs/38203784349) passed the build/lint/unit job and API 30/36 emulator jobs for commit `5f284f1`. The final host-test/native-compatibility additions require a new run.
-- Release configuration: all 237 unit tests passed locally. ARM64, ARMv7 and universal signed APKs build; the AAB builds successfully in a separate invocation with APK splits disabled.
-- The signed ARM64 APK installs and launches on the Samsung SM-M346B running API 36. Signatures verify, and all five ARM64 native libraries meet 16 KiB alignment. Full signed-build playback/setup checks are still being completed.
-- Added account-independent native JavaScript-runtime evaluation and real local audio decoding/clock-advance tests. Both passed on the connected phone; these checks are included in the final API 30/36 CI suite.
+- Local debug unit suite: 237 tests passed after the first refresh-completion fix. Release unit suite: 237 passed before the final refresh registration fix. The final source requires another validation run.
+- Repository-owned InnerTubeX sources build without unpublished Maven-local artifacts. Connected ARM64 phone tests verified live YouTube home/catalog/radio/artwork and real decoded playback advancing beyond 0:00.
+- An authenticated API 36 phone verified Spotify playlist counts and progressive/persisted playlist loading. The broader connected-service/theme/sign-in/home suite passed 17 tests before final release changes.
+- Database and migration checks passed all 11 tests on the connected phone, including schemas 25–41 upgrading to 42 and cached Navidrome songs with null disc numbers preserved as zero.
+- Account-independent native JavaScript evaluation and local audio decoding/clock advancement passed on the connected phone. API 30 and 36 emulator jobs passed these checks in run [38212925614](https://github.com/sahilcodexx/aro-music/actions/runs/38212925614).
+- The same CI run's unit job exposed a duplicate home-refresh race. Refresh/pagination registration and completion now use synchronized lazy jobs; a new run must verify the fix. A failed overall run is not recorded as green.
+- Earlier complete CI run [38203784349](https://github.com/sahilcodexx/aro-music/actions/runs/38203784349) passed build/lint/unit and API 30/36 emulator jobs at commit `5f284f1`.
+- Signed ARM64, ARMv7, and universal APKs and an AAB built locally. ARM64 APK signatures and 16 KiB ZIP alignment verify; all five ARM64 native libraries meet 16 KiB ELF load-segment alignment. The signed ARM64 build installs and launches on the Samsung SM-M346B/API 36. Full signed-build playback and actual 16 KiB-device behavior remain unverified.
+- APK splits and the AAB use separate Gradle invocations to avoid AGP's split-resource limitation. SDK installation uses the exact `platforms;android-37.0` package. Workflow syntax passes actionlint and third-party actions are pinned.
+- The `production` environment has encrypted signing secrets. Signing material is ignored by Git. The original key must be securely backed up and preserved for upgrades.
+- Initial lint reported 556 errors; targeted fixes reduced this to 548. Existing debt remains in `app/lint-baseline.xml`. A green lint check detects new issues; it does not establish that the baseline errors are fixed. Debug/release lint are validated in separate invocations because combined analysis hit a generated-Hilt-source tooling error.
+- Aro source branding, shrinker rules, widget snapshot names, and release information replace inherited app names. Original legal notices and credits remain. The inherited root license conflicts with included GPL components; publication is explicitly gated pending resolution.
 
 ## Provider coverage
 

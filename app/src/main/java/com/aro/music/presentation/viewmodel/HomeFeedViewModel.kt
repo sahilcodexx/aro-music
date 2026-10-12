@@ -11,6 +11,7 @@ import com.aro.music.data.innertube.HomeCatalogSection
 import com.aro.music.data.innertube.InnerTubeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -149,68 +150,85 @@ class HomeFeedViewModel @Inject constructor(
 
 
     fun refresh() {
-        if (!cacheReady || job?.isActive == true) return
-        seenTokens.clear()
-        job = viewModelScope.launch(Dispatchers.IO) {
-            _state.update { it.copy(isLoading = true, isRefreshing = true, canRetry = false) }
-            try {
-                repository.invalidateHomeCache()
-                updatePersonalFeed(force = true)
-                coroutineScope {
-                    val home = async {
-                        try { repository.getHomePage() }
-                        catch (e: Exception) {
-                            if (e is CancellationException) throw e
-                            Timber.w(e, "Home shelves failed")
-                            null
+        synchronized(this) {
+            if (!cacheReady || job?.isActive == true) return
+            seenTokens.clear()
+            job = viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+                _state.update { it.copy(isLoading = true, isRefreshing = true, canRetry = false) }
+                try {
+                    repository.invalidateHomeCache()
+                    updatePersonalFeed(force = true)
+                    coroutineScope {
+                        val home = async {
+                            try { repository.getHomePage() }
+                            catch (e: Exception) {
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "Home shelves failed")
+                                null
+                            }
                         }
-                    }
-                    val explore = async {
-                        try { repository.getExploreSections() }
-                        catch (e: Exception) {
-                            if (e is CancellationException) throw e
-                            Timber.w(e, "Explore shelves failed")
-                            emptyList()
+                        val explore = async {
+                            try { repository.getExploreSections() }
+                            catch (e: Exception) {
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "Explore shelves failed")
+                                emptyList()
+                            }
                         }
+                        val page = home.await()
+                        val sections = page?.sections.orEmpty() + explore.await()
+                        if (sections.isNotEmpty()) {
+                            merge(sections, replace = true)
+                        }
+                        _state.update { it.copy(continuation = page?.continuation, canRetry = sections.isEmpty()) }
                     }
-                    val page = home.await()
-                    val sections = page?.sections.orEmpty() + explore.await()
-                    if (sections.isNotEmpty()) {
-                        merge(sections, replace = true)
+                    personalJob?.join()
+                    if (!_state.value.canRetry && _state.value.sections.isNotEmpty()) fetchedAt = System.currentTimeMillis()
+                    persistSnapshot()
+                } finally {
+                    // Publish completion only after allowing the next refresh. A caller
+                    // observing the idle state must not be rejected by the old job.
+                    synchronized(this@HomeFeedViewModel) {
+                        job = null
+                        _state.update { it.copy(isLoading = false, isRefreshing = false) }
                     }
-                    _state.update { it.copy(continuation = page?.continuation, canRetry = sections.isEmpty()) }
                 }
-                personalJob?.join()
-                if (!_state.value.canRetry && _state.value.sections.isNotEmpty()) fetchedAt = System.currentTimeMillis()
-                persistSnapshot()
-            } finally {
-                // Publish completion only after allowing the next refresh. A caller
-                // observing the idle state must not be rejected by the old job.
-                job = null
-                _state.update { it.copy(isLoading = false, isRefreshing = false) }
             }
+            // Register the job before it can execute on another thread. Otherwise
+            // an immediate caller can start a duplicate refresh before assignment.
+            job?.start()
         }
     }
 
+
     fun loadMore() {
-        if (job?.isActive == true) return
-        val token = _state.value.continuation ?: return
-        if (token in seenTokens) return
-        job = viewModelScope.launch(Dispatchers.IO) {
-            _state.update { it.copy(isLoading = true, canRetry = false) }
-            try {
-                val page = repository.getHomePage(token)
-                merge(page.sections)
-                persistSnapshot()
-                seenTokens.add(token)
-                _state.update { it.copy(continuation = page.continuation?.takeUnless(seenTokens::contains)) }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Timber.w(e, "Home continuation failed")
-                _state.update { it.copy(canRetry = true) }
-            } finally { _state.update { it.copy(isLoading = false) } }
+        synchronized(this) {
+            if (job?.isActive == true) return
+            val token = _state.value.continuation ?: return
+            if (token in seenTokens) return
+            job = viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+                _state.update { it.copy(isLoading = true, canRetry = false) }
+                try {
+                    val page = repository.getHomePage(token)
+                    merge(page.sections)
+                    persistSnapshot()
+                    seenTokens.add(token)
+                    _state.update { it.copy(continuation = page.continuation?.takeUnless(seenTokens::contains)) }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Timber.w(e, "Home continuation failed")
+                    _state.update { it.copy(canRetry = true) }
+                } finally {
+                    synchronized(this@HomeFeedViewModel) {
+                        job = null
+                        _state.update { it.copy(isLoading = false) }
+                    }
+                }
+            }
+            job?.start()
         }
     }
+
 
     private fun persistSnapshot() {
         val current = _state.value
