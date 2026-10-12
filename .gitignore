@@ -39,9 +39,14 @@ misc.xml
 markdown.xml
 .vscode/
 .agents/
-vz-pixelplay.jks
 keystore.properties
 local.properties
 
 # APK signature sidecar files — build artifacts, not source
 *.idsig
+
+# Private Aro release signing material
+.release-signing/
+
+# Build outputs for every module, including vendored libraries
+**/build/

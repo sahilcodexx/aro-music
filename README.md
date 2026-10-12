@@ -1,42 +1,72 @@
-# Aro
+# Aro Music
 
-> An Android music player. Work in progress — this file is a placeholder and will be
-> rewritten properly once the current milestone settles.
+Your library, your playlists, and a home feed shaped by what you listen to.
 
-## Status
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.0-rc.1** is our first phone release candidate. Release validation and licensing review are still in progress; no stable release is declared.
 
-Early development. The app builds and installs, but the catalog layer is being
-reworked and several screens are known to be incomplete.
+## What you can do
 
-## What it does (so far)
+- Play local music and organize songs, artists, albums, favorites, and playlists.
+- Search YouTube Music, explore artist collections, and start related-song queues.
+- Connect Spotify to browse account playlists and liked songs. Spotify metadata is matched to YouTube for audio playback.
+- Import YouTube and Spotify playlists as local copies. Remote edits are not automatically synchronized back.
+- Open a home feed with recently played, speed dial, daily mix, and discovery shelves. Cached content and loading placeholders preserve the layout; pull to refresh recommendations.
+- Use lyrics, listening history, an equalizer, and artwork colors across the player, navigation, and backgrounds.
 
-- Local library browsing (albums, artists, genres, folders)
-- Playback via Media3, with a dual-player pre-roll for gapless transitions
-- Multiple cloud sources — Telegram, NetEase, Navidrome/Subsonic, Jellyfin, Google Drive, QQ Music
-- YouTube Music (InnerTube) as a streaming source
-- Playlists, favourites, listening history, lyrics (LRCLIB)
-- Android Auto, Wear OS, media notification, quick settings tiles
+Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Telegram, NetEase Music, and QQ Music. Their live release verification is incomplete. Google Drive remains disabled pending OAuth setup. See the [validation record](RELEASE_CHECKLIST.md) for tested features and remaining work.
 
-## Build
+## Installation
 
-```bash
-./gradlew :app:assembleDebug
+Aro requires **Android 11 or newer**. The phone build targets Android 16.
+
+| Package | Use |
+| --- | --- |
+| ARM64 APK | Most modern Android phones |
+| ARMv7 APK | Supported 32-bit ARM devices |
+| Universal APK | When unsure; larger download |
+| AAB | Store distribution tooling; cannot be installed directly |
+
+When a release is cleared, signed packages and checksums will be available under [GitHub Releases](https://github.com/sahilcodexx/aro-music/releases). This repository is private, so access is required. Only install packages from a trusted source.
+
+Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
+
+## Build from source
+
+Install JDK 21, Android SDK package `platforms;android-37.0`, and build tools 36.0.0. Set `sdk.dir` in ignored `local.properties` or configure your Android SDK environment. Use the checked-in wrapper:
+
+```sh
+./gradlew :app:assembleDebug --no-daemon
+./gradlew :app:testDebugUnitTest :app:lintDebug --no-daemon
 ```
 
-The APK lands in `app/build/outputs/apk/debug/`.
+InnerTubeX is built from repository sources; an unpublished Maven-local AAR is not required. For emulator tests, signing, bundle builds, and troubleshooting, read the [development guide](DEVELOPMENT.md).
 
-## Requirements
+## Project documentation
 
-- JDK 17 or newer
-- Android SDK with API 37 platform
-- `local.properties` pointing at your SDK
+| Document | Contents |
+| --- | --- |
+| [Contributing](CONTRIBUTING.md) | Issues, pull requests, and review expectations |
+| [Development](DEVELOPMENT.md) | Setup, project structure, tests, and release workflow |
+| [Changelog](CHANGELOG.md) | Aro changes by version |
+| [Release validation](RELEASE_CHECKLIST.md) | Evidence, compatibility limits, and release gates |
+| [Spotify integration](SPOTIFY_INTEGRATION.md) | Authentication, playlist caching, and playback matching |
+| [Privacy](PRIVACY.md) | On-device data, permissions, and connected services |
+| [Security](SECURITY.md) | Reporting vulnerabilities and handling credentials |
+| [License status](LICENSE_STATUS.md) | Existing restrictions and the publication blocker |
+| [Agent instructions](AGENTS.md) | Repository rules for coding agents |
 
-## Note
+## Accounts and privacy
 
-The YouTube Music backend depends on a local build of
-[InnerTubeX](https://github.com/MetrolistGroup/innertubex), published to `~/.m2`.
-See `settings.gradle.kts` and `gradle/libs.versions.toml`.
+Spotify currently uses web sign-in and a stored session cookie. Selecting a device email only fills the form; the provider still authenticates the account. Sessions may expire and require reconnecting. Aro does not stream Spotify's licensed audio.
 
-## License
+Library metadata, preferences, listening history, and playlist caches are stored on your device. Connecting a service sends requests to that service. Optional AI features use the provider you configure. Do not include passwords, cookies, signing material, or private account information in issue reports.
 
-GPL-3.0 — see `LICENSE`.
+## License and release status
+
+The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved, and **publication is blocked pending compatible rights and licensing**; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
+
+## Credits
+
+Aro's UI is inspired by and derived from [PixelPlay](https://github.com/theovilardo/PixelPlay); credit belongs to its authors and contributors. Music discovery and queue integration draw on [Meld](https://github.com/FrancescoGrazioso/Meld) and the Meld project supplied locally during development. [InnerTubeX](https://github.com/MetrolistGroup/innertubex) supplies YouTube Music protocol and playback tools; its GPL license and adapted sources are included in `innertubex/`.
+
+Aro uses YouTube/YouTube Music and Spotify as external services, with additional integrations for Telegram/TDLib, Subsonic/Navidrome, Jellyfin, NetEase Music, and QQ Music. Service names and artwork belong to their respective owners; this app is not affiliated with those services. Thanks also to AndroidX, Jetpack Compose, Media3, Kotlin, Ktor, Coil, Room, Hilt, QuickJS, and the other open-source dependencies whose notices and licenses remain applicable.

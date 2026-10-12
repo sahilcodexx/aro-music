@@ -90,7 +90,6 @@ import com.aro.music.presentation.components.HomeCatalogShelf
 import com.aro.music.presentation.viewmodel.HomeFeedViewModel
 import com.aro.music.data.model.Song
 import com.aro.music.presentation.components.BetaInfoBottomSheet
-import com.aro.music.presentation.components.Beta05CleanInstallDisclaimerDialog
 import com.aro.music.presentation.components.ChangelogBottomSheet
 import com.aro.music.presentation.netease.dashboard.NeteaseDashboardViewModel
 import com.aro.music.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
@@ -269,7 +268,6 @@ fun HomeScreen(
     var showChangelogBottomSheet by remember { mutableStateOf(false) }
     var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
-    var cleanInstallDisclaimerDismissedThisSession by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val betaSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -320,9 +318,6 @@ fun HomeScreen(
 
     // Drawer state for sidebar
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val shouldShowCleanInstallDisclaimer =
-        settingsUiState.beta05CleanInstallDisclaimerDismissed == false &&
-            !cleanInstallDisclaimerDismissedThisSession
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -612,16 +607,7 @@ fun HomeScreen(
             }
         )
     }
-    if (shouldShowCleanInstallDisclaimer) {
-        Beta05CleanInstallDisclaimerDialog(
-            onDismiss = { dontShowAgain ->
-                cleanInstallDisclaimerDismissedThisSession = true
-                if (dontShowAgain) {
-                    settingsViewModel.setBeta05CleanInstallDisclaimerDismissed(true)
-                }
-            }
-        )
-    }
+
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

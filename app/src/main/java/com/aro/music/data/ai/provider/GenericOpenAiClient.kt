@@ -82,7 +82,7 @@ class GenericOpenAiClient(
                 .addHeader("Content-Type", "application/json")
             
             if (providerName.equals("OpenRouter", ignoreCase = true)) {
-                requestBuilder.addHeader("HTTP-Referer", "https://github.com/theovilardo/Aro")
+                requestBuilder.addHeader("HTTP-Referer", "https://github.com/sahilcodexx/aro-music")
                 requestBuilder.addHeader("X-Title", "Aro")
             }
 

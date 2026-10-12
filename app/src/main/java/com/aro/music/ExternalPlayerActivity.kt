@@ -123,7 +123,7 @@ class ExternalPlayerActivity : ComponentActivity() {
             if (hasPersistablePermission) {
                 val takeFlags = intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 if (takeFlags != 0) {
-                    runCatching { contentResolver.takePersistableUriPermission(uri, takeFlags) }
+                    runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                 }
             }
         }

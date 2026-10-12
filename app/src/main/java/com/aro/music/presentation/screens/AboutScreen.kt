@@ -123,21 +123,28 @@ private data class Contributor(
 )
 
 private val CoreMaintainer = Contributor(
-    id = "theovilardo",
-    displayName = "Theo Vilardo",
-    role = "Creator and maintainer",
-    detail = "Building Aro with direct community feedback.",
-    avatarUrl = "https://avatars.githubusercontent.com/u/26845343?v=4",
+    id = "sahilcodexx",
+    displayName = "Sahil Singh",
+    role = "Aro maintainer",
+    detail = "Developing Aro Music and its first Android release.",
+    avatarUrl = "https://avatars.githubusercontent.com/u/206347995?v=4",
     iconRes = R.drawable.round_developer_board_24,
-    githubUrl = "https://github.com/theovilardo",
-    telegramUrl = "https://t.me/arosupport",
+    githubUrl = "https://github.com/sahilcodexx/aro-music",
 )
 
 private val PinnedCommunityMembers = listOf(
     Contributor(
+        id = "theovilardo",
+        displayName = "Theo Vilardo",
+        role = "Upstream UI creator",
+        detail = "The original UI project is credited in Aro's README.",
+        iconRes = R.drawable.round_developer_board_24,
+        githubUrl = "https://github.com/sahilcodexx/aro-music/blob/main/README.md#credits",
+    ),
+    Contributor(
         id = "lostf1sh",
         displayName = "@lostf1sh",
-        role = "Most active contributor",
+        role = "Upstream contributor",
         detail = "Has contributed enormously across core features, architecture and reliability.",
         badge = "Top Impact",
         iconRes = R.drawable.rounded_celebration_24,
@@ -156,7 +163,7 @@ private val PinnedCommunityMembers = listOf(
         id = "colbycabrera",
         displayName = "@ColbyCabrera",
         role = "Early contributor",
-        detail = "Helped shape Aro in the first stages of the app.",
+        detail = "Contributed to the original upstream project.",
         badge = "Early Support",
         iconRes = R.drawable.round_newspaper_24,
         githubUrl = "https://github.com/ColbyCabrera",

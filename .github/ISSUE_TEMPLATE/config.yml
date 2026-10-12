@@ -1,4 +1,5 @@
-# Issue Templates
-
-- [Bug Report](/.github/ISSUE_TEMPLATE/bug_report.yml): For reporting bugs and unexpected behavior.
-- [Feature Request](/.github/ISSUE_TEMPLATE/feature_request.yml): For suggesting new features or enhancements.
+blank_issues_enabled: false
+contact_links:
+  - name: Aro release and testing notes
+    url: https://github.com/sahilcodexx/aro-music/blob/main/RELEASE_CHECKLIST.md
+    about: Check known limitations before reporting an issue.

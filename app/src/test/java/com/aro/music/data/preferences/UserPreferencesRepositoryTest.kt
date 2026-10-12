@@ -12,6 +12,41 @@ import java.nio.file.Files
 class UserPreferencesRepositoryTest {
 
     @Test
+    fun `appearance playback and library settings survive repository recreation`() = runTest {
+        val tempDir = Files.createTempDirectory("aro-release-settings")
+        try {
+            val store = PreferenceDataStoreFactory.create(
+                scope = backgroundScope,
+                produceFile = { tempDir.resolve("settings.preferences_pb").toFile() }
+            )
+            val writer = UserPreferencesRepository(store, Json)
+            writer.setCrossfadeEnabled(true)
+            writer.setCrossfadeDuration(7000)
+            writer.setShuffleOn(true)
+            writer.setGroupByAlbumArtist(true)
+            writer.setHideLocalMedia(true)
+            writer.setShowTelegramCloudPlaylists(false)
+            writer.setHapticsEnabled(false)
+            writer.setTapBackgroundClosesPlayer(true)
+            writer.setNavBarStyle("compact")
+            writer.setAlbumArtCacheLimitMb(500)
+            val reader = UserPreferencesRepository(store, Json)
+            assertTrue(reader.isCrossfadeEnabledFlow.first())
+            assertEquals(7000, reader.crossfadeDurationFlow.first())
+            assertTrue(reader.isShuffleOnFlow.first())
+            assertTrue(reader.groupByAlbumArtistFlow.first())
+            assertTrue(reader.hideLocalMediaFlow.first())
+            assertEquals(false, reader.showTelegramCloudPlaylistsFlow.first())
+            assertEquals(false, reader.hapticsEnabledFlow.first())
+            assertTrue(reader.tapBackgroundClosesPlayerFlow.first())
+            assertEquals("compact", reader.navBarStyleFlow.first())
+            assertEquals(500, reader.albumArtCacheLimitMbFlow.first())
+        } finally {
+            tempDir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `clearPreferencesExceptKeys preserves initial setup completion`() = runTest {
         val tempDir = Files.createTempDirectory("user-preferences-repository-test")
         try {

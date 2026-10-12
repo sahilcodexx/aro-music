@@ -70,10 +70,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("$rootDir/vz-playpix.jks")
-            storePassword = keystoreProperties.getProperty("storePassword") ?: "dummyPassword"
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "dummyAlias"
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "dummyPassword"
+            storeFile = rootProject.file(System.getenv("ARO_KEYSTORE_PATH") ?: keystoreProperties.getProperty("storeFile", "aro-release.jks"))
+            storePassword = System.getenv("ARO_STORE_PASSWORD") ?: keystoreProperties.getProperty("storePassword")
+            keyAlias = System.getenv("ARO_KEY_ALIAS") ?: keystoreProperties.getProperty("keyAlias")
+            keyPassword = System.getenv("ARO_KEY_PASSWORD") ?: keystoreProperties.getProperty("keyPassword")
         }
     }
 
@@ -116,7 +116,8 @@ android {
     }
 
     lint {
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
+        baseline = file("lint-baseline.xml")
     }
 
     splits {
@@ -125,7 +126,7 @@ android {
             reset()
             if (enableAbiSplits) {
                 include("arm64-v8a", "armeabi-v7a")
-                isUniversalApk = false
+                isUniversalApk = true
             }
         }
     }
@@ -146,7 +147,7 @@ baselineProfile {
     // startup dex-layout input once they are checked into the app.
     automaticGenerationDuringBuild = false
     saveInSrc = true
-    dexLayoutOptimization = true
+    dexLayoutOptimization = false
 }
 
 ksp {
@@ -251,7 +252,7 @@ dependencies {
     // InnerTubeX (local Kotlin 2.3.21 fork) - YouTube Music search, stream
     // extraction, queue and suggestions. Needs a Ktor client engine because the
     // caller owns the HttpClient handed to InnerTube.
-    implementation(libs.innertubex)
+    implementation(project(":innertubex"))
     implementation(libs.innertubex.ktor.client.okhttp)
     implementation(libs.innertubex.ktor.client.content.negotiation)
     implementation(libs.innertubex.ktor.serialization.json)
