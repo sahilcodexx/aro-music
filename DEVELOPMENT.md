@@ -63,7 +63,7 @@ gh run list
 gh workflow run phone-debug.yml --ref main
 ```
 
-Read the [licensing status](LICENSE_STATUS.md) and [release checklist](RELEASE_CHECKLIST.md) before dispatching a release. The maintainer authorized a private development candidate; public/store distribution still requires compatible rights. Review the exact signed artifacts on a real device before publication. Do not replace the signing key or publish a stable version just to bypass a failed gate.
+Read the [licensing status](LICENSE_STATUS.md) and [release checklist](RELEASE_CHECKLIST.md) before dispatching a release. The maintainer authorized a development candidate; public/store distribution still requires compatible rights. Review the exact signed artifacts on a real device before publication. Do not replace the signing key or publish a stable version just to bypass a failed gate.
 
 ## Common failures
 

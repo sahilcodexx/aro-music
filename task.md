@@ -2,7 +2,7 @@
 
 The current milestone is the first phone release candidate, 1.0.0-rc.1. The release code increases to 13 to preserve Android upgrade ordering from development builds.
 
-The maintainer authorized a private development prerelease despite [unresolved licensing](LICENSE_STATUS.md).
+The maintainer authorized a development prerelease despite [unresolved licensing](LICENSE_STATUS.md).
 
 The authoritative checklist is [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Do not mark a stable release ready merely because the APK builds or the unit suite passes. Real provider accounts, signed release behavior, minimum-SDK coverage, device variations, and inherited lint debt require separate evidence.
 

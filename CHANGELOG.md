@@ -2,7 +2,7 @@
 
 ## 1.0.0-rc.1 — 2026-10-12
 
-First Aro phone release candidate. A private development prerelease was authorized by the maintainer; compatible component distribution rights remain unresolved. See [release validation](RELEASE_CHECKLIST.md) and [license status](LICENSE_STATUS.md).
+First Aro phone release candidate. A development prerelease was authorized by the maintainer; compatible component distribution rights remain unresolved. See [release validation](RELEASE_CHECKLIST.md) and [license status](LICENSE_STATUS.md).
 
 - YouTube Music discovery, catalog details, radio queues, and playlist imports.
 - Spotify account playlists, liked songs, artist collections, and YouTube playback matching.

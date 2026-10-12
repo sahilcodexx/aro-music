@@ -1,6 +1,6 @@
 # Aro 1.0.0 release validation
 
-Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version code 13. The maintainer authorized a private development prerelease while component licensing remains unresolved; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Stable 1.0.0 validation is also incomplete. A successful compilation is not proof that every setting, account, or phone works.
+Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version code 13. The maintainer authorized a development prerelease while component licensing remains unresolved; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Stable 1.0.0 validation is also incomplete. A successful compilation is not proof that every setting, account, or phone works.
 
 ## Recorded validation
 
@@ -15,7 +15,7 @@ Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version c
 - APK splits and the AAB use separate Gradle invocations to avoid AGP's split-resource limitation. SDK installation uses the exact `platforms;android-37.0` package. Workflow syntax passes actionlint and third-party actions are pinned.
 - The `production` environment has encrypted signing secrets. Signing material is ignored by Git. The original key must be securely backed up and preserved for upgrades.
 - Initial lint reported 556 errors; targeted fixes reduced this to 548. Existing debt remains in `app/lint-baseline.xml`. A green lint check detects new issues; it does not establish that the baseline errors are fixed. Local release lint passed in a separate invocation after combined analysis hit a generated-Hilt-source tooling error. Final clean-run GitHub debug lint passed. An extra local debug lint attempt was interrupted and is not counted as successful.
-- Aro source branding, shrinker rules, widget snapshot names, and release information replace inherited app names. Original legal notices and credits remain. The inherited root license conflicts with included GPL components; private development publication was explicitly authorized; compatible public distribution rights remain unresolved.
+- Aro source branding, shrinker rules, widget snapshot names, and release information replace inherited app names. Original legal notices and credits remain. The inherited root license conflicts with included GPL components; development publication was explicitly authorized; compatible public distribution rights remain unresolved.
 
 ## Provider coverage
 
