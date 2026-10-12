@@ -21,6 +21,11 @@ Updated 2026-10-12. This repository currently prepares **1.0.0-rc.1**, version c
 - APK splits and the AAB build run in separate Gradle invocations because the Android Gradle Plugin rejects a split shrunk-resource directory when creating a bundle.
 - Inherited source filenames, compiler/shrinker package rules, and widget snapshot names now use Aro. Original credits and license notices remain; an unrelated inherited startup profile was removed.
 
+- GitHub validation run [38203784349](https://github.com/sahilcodexx/aro-music/actions/runs/38203784349) passed the build/lint/unit job and API 30/36 emulator jobs for commit `5f284f1`. The final host-test/native-compatibility additions require a new run.
+- Release configuration: all 237 unit tests passed locally. ARM64, ARMv7 and universal signed APKs build; the AAB builds successfully in a separate invocation with APK splits disabled.
+- The signed ARM64 APK installs and launches on the Samsung SM-M346B running API 36. Signatures verify, and all five ARM64 native libraries meet 16 KiB alignment. Full signed-build playback/setup checks are still being completed.
+- Added account-independent native JavaScript-runtime evaluation and real local audio decoding/clock-advance tests. Both passed on the connected phone; these checks are included in the final API 30/36 CI suite.
+
 ## Provider coverage
 
 | Provider | Current implementation and release status |
