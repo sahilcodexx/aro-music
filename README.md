@@ -30,6 +30,18 @@ When a release is cleared, signed packages and checksums will be available under
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 
+## Getting started
+
+1. Grant audio access if you want Aro to scan music stored on your phone. Your local collection appears in Library.
+2. Use Search to find online songs, albums, artists, and playlists. Start a song or radio queue from its results.
+3. Connect Spotify through Aro's account flow to browse your playlists and liked songs. Sign-in is handled by the provider; selecting a device email only fills the login form.
+4. Use Library's **Import** action with a supported YouTube or Spotify playlist link to create a local playlist copy. Unavailable or unmatched songs may be omitted from the playable copy.
+5. Long-press a home song to pin or unpin it in speed dial. Pull down on Home when you want to refresh discovery.
+
+**Recently played** follows listening history. **Speed dial** prioritizes pinned and other quick picks instead of simply duplicating that history. Recommendations stay cached across track changes; switching songs changes playback and artwork colors without rebuilding the whole home feed. First-time loading uses placeholders to reserve the personal shelves before daily mix appears.
+
+A remote playlist's source count can differ from its playable local count. Spotify songs must find a usable YouTube match, and removed or region-restricted items may not play. Large uncached imports can take longer than cached reopening; see [Spotify loading behavior](SPOTIFY_INTEGRATION.md).
+
 ## Build from source
 
 Install JDK 21, Android SDK package `platforms;android-37.0`, and build tools 36.0.0. Set `sdk.dir` in ignored `local.properties` or configure your Android SDK environment. Use the checked-in wrapper:
