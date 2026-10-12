@@ -2,7 +2,7 @@
 
 Your library, your playlists, and a home feed shaped by what you listen to.
 
-Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.0-rc.1** is our first phone release candidate. Release validation and licensing review are still in progress; no stable release is declared.
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.0-rc.1** is our first phone release candidate. The development candidate is distributed as a prerelease in this private repository; no stable release is declared. Component licensing remains unresolved.
 
 ## What you can do
 
@@ -26,7 +26,7 @@ Aro requires **Android 11 or newer**. The phone build targets Android 16.
 | Universal APK | When unsure; larger download |
 | AAB | Store distribution tooling; cannot be installed directly |
 
-When a release is cleared, signed packages and checksums will be available under [GitHub Releases](https://github.com/sahilcodexx/aro-music/releases). This repository is private, so access is required. Only install packages from a trusted source.
+Signed candidate packages and checksums are available under [GitHub Releases](https://github.com/sahilcodexx/aro-music/releases). This repository is private, so access is required. Only install packages from a trusted source.
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 
@@ -75,7 +75,7 @@ Library metadata, preferences, listening history, and playlist caches are stored
 
 ## License and release status
 
-The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved, and **publication is blocked pending compatible rights and licensing**; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
+The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved. The maintainer authorized a private development prerelease while compatible distribution rights remain undocumented; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
 
 ## Credits
 
