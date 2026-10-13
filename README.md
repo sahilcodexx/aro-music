@@ -53,6 +53,10 @@ Install JDK 21, Android SDK package `platforms;android-37.0`, and build tools 36
 
 InnerTubeX is built from repository sources; an unpublished Maven-local AAR is not required. For emulator tests, signing, bundle builds, and troubleshooting, read the [development guide](DEVELOPMENT.md).
 
+## App showcase website
+
+The `web/` folder contains a responsive Next.js app website with real Aro screenshots, a keyboard-accessible screen selector, Android installation guidance, and release links. It uses Aro’s rounded type, Material-inspired tonal surfaces, original music illustrations, reduced-motion-aware transitions, Lenis scrolling, light/dark themes, and local Privacy and Terms pages. Run `bun install --frozen-lockfile` and `bun run dev` from `web/` to preview it locally. See the [website guide](web/README.md) for build commands and design details.
+
 ## Project documentation
 
 | Document | Contents |

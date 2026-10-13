@@ -1,5 +1,18 @@
 # Aro changelog
 
+## Unreleased
+
+- Linked the header, hero, and download section directly to the versioned APK, retaining release notes/checksums as a secondary link. Added a compact mobile navigation menu with Appearance controls, keyboard/outside dismissal, and reduced-motion transitions; aligned and enlarged footer supporting text.
+
+- Removed the blue hero-phone backdrop while retaining the heading panel and font. Made mockup proportions consistent across desktop and mobile, with the annotation below the phones.
+- Added minimal scrollbars, reduced-motion-aware Lenis scrolling, Motion selection transitions, persistent light/dark themes, and local Privacy and Terms pages based on the project’s documented behavior and license status.
+
+- Refined the website with Material-inspired rounded surfaces, illustrated music-source cards, segmented preview controls, and tonal installation guidance while preserving Aro’s heading font and paired hero phones.
+- Installed the `transitions-dev` design skill and used its panel reveal and icon swap recipes for responsive screen previews and question controls; inactive previews are hidden from assistive technology, changes are announced, and reduced motion is respected.
+
+- Redesigned the app website around Aro’s own rounded typography, blue and plum colors, and real screenshots. Added an accessible four-screen preview, music-source explanations, Android installation steps, and native expandable questions.
+- Corrected website download guidance to Android 11+ ARM64 and linked the versioned candidate release page. Removed the custom CSS loader from the website configuration; motion respects reduced-motion preferences.
+
 ## 1.0.0-rc.1 — 2026-10-12
 
 First Aro phone release candidate. A development prerelease was authorized by the maintainer; compatible component distribution rights remain unresolved. See [release validation](RELEASE_CHECKLIST.md) and [license status](LICENSE_STATUS.md).
