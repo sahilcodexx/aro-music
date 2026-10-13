@@ -65,15 +65,22 @@ jobs:
           cp app/build/outputs/bundle/release/*.aab dist/
           (cd dist && sha256sum *.apk *.aab > SHA256SUMS.txt)
           version=$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)
+          # Keep developer outputs in the CI artifact. The public release gets
+          # one universal APK with a recognizable name and a direct download.
+          mkdir -p publish
+          cp dist/app-universal-release.apk publish/Aro.apk
+          printf '## Download\n\n[**Download Aro.apk**](https://github.com/%s/releases/download/v%s/Aro.apk)\n\nRequires Android 11 or newer. Download the APK and open it to install Aro.\n\n' "$GITHUB_REPOSITORY" "$version" > release-notes.md
+          cat CHANGELOG.md >> release-notes.md
           if gh release view "v$version" --json isDraft,targetCommitish >/dev/null 2>&1; then
             same_draft=$(gh release view "v$version" --json isDraft,targetCommitish --jq ".isDraft and (.targetCommitish == \"$GITHUB_SHA\")")
             if [ "$same_draft" != true ]; then
               echo 'Existing release is published or targets another commit. Increase APP_VERSION_NAME before shipping another build.'
               exit 1
             fi
-            gh release upload "v$version" dist/* --clobber
+            gh release upload "v$version" publish/Aro.apk --clobber
+            gh release edit "v$version" --notes-file release-notes.md
           else
-            gh release create "v$version" dist/* --target "$GITHUB_SHA" --title "Aro $version" --notes-file CHANGELOG.md --draft --prerelease
+            gh release create "v$version" publish/Aro.apk --target "$GITHUB_SHA" --title "Aro $version" --notes-file release-notes.md --draft --prerelease
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
