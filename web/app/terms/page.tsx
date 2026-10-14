@@ -27,7 +27,7 @@ const sections: PolicySection[] = [
     body: (
       <>
         <p>
-          The current phone candidate is v1.0.0-rc.1 for ARM64 devices running
+          The current phone candidate is v1.0.1 for Android devices running
           Android 11 or newer. It is a development release candidate, not a
           stable compatibility guarantee for every device, setting, or connected
           service.
@@ -69,7 +69,7 @@ const sections: PolicySection[] = [
     body: (
       <p>
         The website links to the project’s{" "}
-        <a href={`${REPO}/releases/tag/v1.0.0-rc.1`}>
+        <a href={`${REPO}/releases/tag/v1.0.1`}>
           versioned GitHub release
         </a>
         . Review the release notes and installation requirements before

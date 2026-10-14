@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-## 1.0.1 — pending publication
+## 1.0.1 — 2026-10-14
 
-Phone update prepared for GitHub release validation.
+Phone development release. GitHub Android validation and signed release checks passed; see RELEASE_CHECKLIST.md for evidence and remaining limits.
 
 - Spotify uses one in-app sign-in page, recovers saved sessions, and appears in Accounts without waiting for other providers.
 - Genre discovery uses the YouTube catalog, caches successful results, and offers loading placeholders and Retry.

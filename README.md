@@ -2,7 +2,7 @@
 
 Your library, your playlists, and a home feed shaped by what you listen to.
 
-Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.0-rc.1** is our first phone release candidate. The development candidate is distributed as a prerelease in this repository; no stable release is declared. Component licensing remains unresolved.
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.1** is the current phone development release. It is distributed as a prerelease in this repository; no stable release is declared. Component licensing remains unresolved.
 
 ## What you can do
 
@@ -19,14 +19,9 @@ Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Teleg
 
 Aro requires **Android 11 or newer**. The phone build targets Android 16.
 
-| Package | Use |
-| --- | --- |
-| ARM64 APK | Most modern Android phones |
-| ARMv7 APK | Supported 32-bit ARM devices |
-| Universal APK | When unsure; larger download |
-| AAB | Store distribution tooling; cannot be installed directly |
+Download [**Aro-1.0.1.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.1/Aro-1.0.1.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
 
-Signed candidate packages and checksums are available under [GitHub Releases](https://github.com/sahilcodexx/aro-music/releases). This repository is public; release APKs can be downloaded without repository access. Only install packages from a trusted source.
+[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.1) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. The public download is the single named APK; an AAB cannot be installed directly. Only install packages from a trusted source.
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 

@@ -239,7 +239,7 @@ export default function Home() {
               <a className="text-link release-link" href={RELEASES_URL}>
                 Release notes and checksums <Icon name="external" />
               </a>
-              <p className="download-meta">v1.0.0-rc.1 · Android 11+ · ARM64</p>
+              <p className="download-meta">v1.0.1 · Android 11+ · Universal APK</p>
             </div>
             <div className="install-guide">
               <h3>A little help getting started</h3>
