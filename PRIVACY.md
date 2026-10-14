@@ -10,9 +10,15 @@ Android backup is enabled. Backup rules exclude named provider preference stores
 
 ## Connected services
 
-YouTube/YouTube Music receives catalog and playback requests. Spotify receives sign-in and catalog/playlist requests; Aro stores a session cookie and matches Spotify metadata to YouTube for playback. Selecting a device email does not authenticate an account automatically.
+YouTube/YouTube Music receives catalog and playback requests. Spotify receives sign-in and catalog/playlist requests; Aro stores a session cookie in private app preferences and matches Spotify metadata to YouTube for playback. Spotify handles credentials on its own sign-in page; Aro has no separate device-email chooser.
 
 Optional server and cloud features send requests to the service you connect. Optional AI features send configured requests to the selected AI provider. These services operate under their own terms and privacy policies. Aro is not affiliated with them.
+
+## Update checks and issue reports
+
+Aro checks the public GitHub releases API for newer APKs, caching release metadata and check times on the device. This sends a network request to GitHub without Aro account credentials or listening history. Download APK opens the selected release asset in your default browser; Android handles installation.
+
+Report controls open the repository’s issue chooser. Crash details are not uploaded automatically; copying or sharing them remains your choice.
 
 ## Managing data
 

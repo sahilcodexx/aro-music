@@ -325,6 +325,10 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+                    if (showSetupScreen == false && !showCrashReportDialog) {
+                        com.aro.music.presentation.components.AppUpdatePrompt()
+                    }
+
                     // Show crash report dialog if needed
                     if (showCrashReportDialog && crashLogData != null) {
                         CrashReportDialog(

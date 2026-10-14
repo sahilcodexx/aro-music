@@ -71,8 +71,8 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 @Composable
 fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val issuesUrl = "https://github.com/sahilcodexx/aro-music/issues"
-    val reportUrl = "https://github.com/sahilcodexx/aro-music/issues/new/choose"
+    val issuesUrl = com.aro.music.data.update.AroProject.ISSUES
+    val reportUrl = com.aro.music.data.update.AroProject.REPORT
 
     val fabCornerRadius = 18.dp
 
@@ -700,5 +700,6 @@ private fun launchUrl(context: Context, url: String) {
     try {
         context.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
+        android.widget.Toast.makeText(context, R.string.report_open_failed, android.widget.Toast.LENGTH_LONG).show()
     }
 }

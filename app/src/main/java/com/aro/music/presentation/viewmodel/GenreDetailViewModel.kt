@@ -173,12 +173,20 @@ class GenreDetailViewModel @Inject constructor(
                     isLoadingSongs = false
                 )
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
-                    error = "Failed to load genre details: ${e.message}",
+                    error = "Could not load songs. Check your connection and try again.",
                     isLoadingGenreName = false,
                     isLoadingSongs = false
                 )
             }
+        }
+    }
+
+    fun retry() {
+        if (_uiState.value.isLoadingSongs) return
+        savedStateHandle.get<String>("genreId")?.let {
+            loadGenreDetails(java.net.URLDecoder.decode(it, "UTF-8"))
         }
     }
 
@@ -313,4 +321,3 @@ class GenreDetailViewModel @Inject constructor(
         }
     }
 }
-

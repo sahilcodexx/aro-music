@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -62,43 +64,61 @@ class AccountsViewModel @Inject constructor(
     private val telegramStateFlow = combine(
         telegramRepository.authorizationState
             .map { it is TdApi.AuthorizationStateReady }
-            .distinctUntilChanged(),
-        musicRepository.getAllTelegramChannels().map { it.size }
+            .distinctUntilChanged().onStart { emit(false) },
+        musicRepository.getAllTelegramChannels().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, channelCount ->
         connected to channelCount
     }
 
     private val gDriveStateFlow = combine(
-        gDriveRepository.isLoggedInFlow,
-        gDriveRepository.getFolders().map { it.size }
+        gDriveRepository.isLoggedInFlow.onStart { emit(false) },
+        gDriveRepository.getFolders().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, folderCount ->
         connected to folderCount
     }
 
     private val neteaseStateFlow = combine(
-        neteaseRepository.isLoggedInFlow,
-        neteaseRepository.getPlaylists().map { it.size }
+        neteaseRepository.isLoggedInFlow.onStart { emit(false) },
+        neteaseRepository.getPlaylists().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, playlistCount ->
         connected to playlistCount
     }
 
     private val qqMusicStateFlow = combine(
-        qqMusicRepository.isLoggedInFlow,
-        qqMusicRepository.getPlaylists().map { it.size }
+        qqMusicRepository.isLoggedInFlow.onStart { emit(false) },
+        qqMusicRepository.getPlaylists().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, playlistCount ->
         connected to playlistCount
     }
 
     private val navidromeStateFlow = combine(
-        navidromeRepository.isLoggedInFlow,
-        navidromeRepository.getPlaylists().map { it.size }
+        navidromeRepository.isLoggedInFlow.onStart { emit(false) },
+        navidromeRepository.getPlaylists().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, playlistCount ->
         connected to playlistCount
     }
 
     private val jellyfinStateFlow = combine(
-        jellyfinRepository.isLoggedInFlow,
-        jellyfinRepository.getPlaylists().map { it.size }
+        jellyfinRepository.isLoggedInFlow.onStart { emit(false) },
+        jellyfinRepository.getPlaylists().map { it.size }.onStart { emit(0) }.catch { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            emit(0)
+        }
     ) { connected, playlistCount ->
         connected to playlistCount
     }

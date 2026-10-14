@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="spotify_use_device_email">Use device email</string>
-    <string name="spotify_device_email_description">Choose the Google email you use for Spotify</string>
-    <string name="spotify_device_email_hint">Pick a Google account already on this phone to fill the email on Spotify or Google’s sign-in page. You may still need to verify your sign-in.</string>
-    <string name="spotify_device_email_unavailable">No account picker is available. You can still sign in below.</string>
     <string name="spotify_playlist_count_unknown">Spotify playlist</string>
 </resources>

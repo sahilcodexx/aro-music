@@ -130,6 +130,26 @@ class MusicRepositoryImplTest {
 
     // --- Pruebas para getAudioFiles ---
     @Test
+    fun `genre discovery uses youtube and caches successful results`() = runTest(testDispatcher) {
+        every { mockUserPreferencesRepository.mockGenresEnabledFlow } returns flowOf(false)
+        val tracks = listOf(mockk<Song>(relaxed = true))
+        coEvery { mockInnerTubeRepository.searchSongs("Bollywood songs", 50) } returns tracks
+        assertEquals(tracks, musicRepository.getMusicByGenre("Bollywood").first())
+        assertEquals(tracks, musicRepository.getMusicByGenre("bollywood").first())
+        coVerify(exactly = 1) { mockInnerTubeRepository.searchSongs("Bollywood songs", 50) }
+        coVerify(exactly = 0) { mockStreamingRepository.searchSongsForGenre(any(), any()) }
+    }
+
+    @Test
+    fun `empty genre results can be retried`() = runTest(testDispatcher) {
+        every { mockUserPreferencesRepository.mockGenresEnabledFlow } returns flowOf(false)
+        coEvery { mockInnerTubeRepository.searchSongs("Bengali songs", 50) } returns emptyList()
+        assertTrue(musicRepository.getMusicByGenre("Bengali").first().isEmpty())
+        assertTrue(musicRepository.getMusicByGenre("Bengali").first().isEmpty())
+        coVerify(exactly = 2) { mockInnerTubeRepository.searchSongs("Bengali songs", 50) }
+    }
+
+    @Test
     fun `getAudioFiles observes saved library without fetching trending songs`() = runTest(testDispatcher) {
         val rows = listOf(
             createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path"),

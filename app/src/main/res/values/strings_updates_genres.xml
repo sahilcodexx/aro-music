@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="genre_loading_songs" translatable="false">Loading songs…</string>
+    <string name="genre_load_failed" translatable="false">Could not load songs. Check your connection and try again.</string>
+    <string name="genre_no_songs" translatable="false">No songs found for this genre. Try again.</string>
+    <string name="action_retry_catalog" translatable="false">Retry</string>
+    <string name="update_settings_title" translatable="false">App updates</string>
+    <string name="update_settings_subtitle" translatable="false">Check for a new version and download its APK</string>
+    <string name="update_checking" translatable="false">Checking for updates…</string>
+    <string name="update_available_title" translatable="false">Aro %1$s is available</string>
+    <string name="update_available_body" translatable="false">A new version of Aro is ready to download.</string>
+    <string name="update_download_apk" translatable="false">Download APK</string>
+    <string name="update_later" translatable="false">Later</string>
+    <string name="update_download_failed" translatable="false">Could not open the APK download. Please install a browser and try again.</string>
+    <string name="update_current_title" translatable="false">You’re up to date</string>
+    <string name="update_current_body" translatable="false">You’re using Aro %1$s. No newer APK is available.</string>
+    <string name="update_failed_title" translatable="false">Could not check for updates</string>
+    <string name="update_failed_body" translatable="false">Check your connection and try again.</string>
+    <string name="action_ok_update" translatable="false">OK</string>
+    <string name="report_on_github" translatable="false">Report on GitHub</string>
+    <string name="report_open_failed" translatable="false">Could not open GitHub. Please install a browser and try again.</string>
+</resources>

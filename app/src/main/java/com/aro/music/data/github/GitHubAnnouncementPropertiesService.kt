@@ -36,9 +36,9 @@ class GitHubAnnouncementPropertiesService @Inject constructor() {
      * - play_store_link_pending_message
      */
     suspend fun fetchPlayStoreAnnouncement(
-        owner: String = "theovilardo",
-        repo: String = "Aro",
-        branch: String = "master",
+        owner: String = com.aro.music.data.update.AroProject.OWNER,
+        repo: String = com.aro.music.data.update.AroProject.REPOSITORY,
+        branch: String = "main",
         configPath: String = "remote-config/app-announcements.properties",
     ): Result<PlayStoreAnnouncementRemoteConfig> {
         return withContext(Dispatchers.IO) {

@@ -34,9 +34,11 @@ Release builds use `com.aro.music`; development builds use `com.aro.music.debug`
 
 1. Grant audio access if you want Aro to scan music stored on your phone. Your local collection appears in Library.
 2. Use Search to find online songs, albums, artists, and playlists. Start a song or radio queue from its results.
-3. Connect Spotify through Aro's account flow to browse your playlists and liked songs. Sign-in is handled by the provider; selecting a device email only fills the login form.
+3. Connect Spotify through Aro's account flow to browse your playlists and liked songs. Aro opens Spotify's sign-in page and verifies the session after you log in.
 4. Use Library's **Import** action with a supported YouTube or Spotify playlist link to create a local playlist copy. Unavailable or unmatched songs may be omitted from the playable copy.
-5. Long-press a home song to pin or unpin it in speed dial. Pull down on Home when you want to refresh discovery.
+5. Browse genres in Search to discover online songs. Empty or failed requests offer Retry.
+6. Open **Settings → App updates** to check for a newer release and download its APK. Aro also checks automatically, with cached metadata to limit requests. Install the downloaded APK through Android’s installer.
+7. Long-press a home song to pin or unpin it in speed dial. Pull down on Home when you want to refresh discovery.
 
 **Recently played** follows listening history. **Speed dial** prioritizes pinned and other quick picks instead of simply duplicating that history. Recommendations stay cached across track changes; switching songs changes playback and artwork colors without rebuilding the whole home feed. First-time loading uses placeholders to reserve the personal shelves before daily mix appears.
 
@@ -73,7 +75,7 @@ The `web/` folder contains a responsive Next.js app website with real Aro screen
 
 ## Accounts and privacy
 
-Spotify currently uses web sign-in and a stored session cookie. Selecting a device email only fills the form; the provider still authenticates the account. Sessions may expire and require reconnecting. Aro does not stream Spotify's licensed audio.
+Spotify uses one in-app web sign-in page and a stored session cookie. Aro does not offer a device-email picker or browser OAuth flow. Sessions may expire and require reconnecting; see [Spotify behavior and limitations](SPOTIFY_INTEGRATION.md). Aro does not stream Spotify's licensed audio.
 
 Library metadata, preferences, listening history, and playlist caches are stored on your device. Connecting a service sends requests to that service. Optional AI features use the provider you configure. Do not include passwords, cookies, signing material, or private account information in issue reports.
 

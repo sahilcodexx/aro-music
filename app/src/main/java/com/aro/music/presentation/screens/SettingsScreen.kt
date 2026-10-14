@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -96,8 +97,11 @@ fun SettingsScreen(
         navController: NavController,
         playerViewModel: PlayerViewModel,
         onNavigationIconClick: () -> Unit,
-        settingsViewModel: SettingsViewModel = hiltViewModel()
+        settingsViewModel: SettingsViewModel = hiltViewModel(),
+        updateViewModel: com.aro.music.presentation.viewmodel.AppUpdateViewModel = hiltViewModel()
 ) {
+
+    val updateState by updateViewModel.state.collectAsStateWithLifecycle()
 
     // Animation effects
     val transitionState = remember { MutableTransitionState(false) }
@@ -218,7 +222,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 3 // Device + Accounts + About
+                    val totalItems = mainCategories.size + 4 // Device + Accounts + Updates + About
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -272,6 +276,17 @@ fun SettingsScreen(
                     if (itemIndex < totalItems - 1) {
                         Spacer(modifier = Modifier.height(2.dp))
                     }
+                    itemIndex++
+
+                    ExpressiveNavigationItem(
+                        title = stringResource(R.string.update_settings_title),
+                        subtitle = stringResource(if (updateState.checking) R.string.update_checking else R.string.update_settings_subtitle),
+                        icon = Icons.Rounded.SystemUpdate,
+                        colors = getAccountsColors(isDark),
+                        onClick = { if (!updateState.checking) updateViewModel.checkNow() },
+                        shape = shapeFor(itemIndex)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                     itemIndex++
 
                     ExpressiveCategoryItem(

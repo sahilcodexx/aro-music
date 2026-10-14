@@ -294,7 +294,25 @@ fun GenreDetailScreen(
                         IntOffset(0, extraHeight)
                     }
             ) {
-                // Optimization: Limit rendered items during the navigation transition 
+                if (uiState.isLoadingSongs && uiState.flattenedItems.isEmpty()) {
+                    item(key = "genre_loading") {
+                        Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(Modifier.size(24.dp))
+                            Text(stringResource(R.string.genre_loading_songs))
+                        }
+                    }
+                    items(4, key = { "genre_placeholder_$it" }) {
+                        Surface(Modifier.fillMaxWidth().padding(4.dp).height(88.dp), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainer) {}
+                    }
+                } else if (uiState.flattenedItems.isEmpty()) {
+                    item(key = "genre_empty") {
+                        Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(if (uiState.error != null) stringResource(R.string.genre_load_failed) else stringResource(R.string.genre_no_songs))
+                            FilledTonalButton(onClick = viewModel::retry) { Text(stringResource(R.string.action_retry_catalog)) }
+                        }
+                    }
+                }
+                // Optimization: Limit rendered items during the navigation transition
                 // to ensure the slide-in animation remains smooth.
                 val displayItems = if (isTransitionFinished || uiState.flattenedItems.size < 20) {
                     uiState.flattenedItems

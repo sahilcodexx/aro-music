@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Browse-by-genre now uses the YouTube catalog instead of the legacy streaming endpoint, caches successful results, and shows loading placeholders and Retry for empty or failed requests.
+- Added a newer-version popup and Settings → App updates. Checks use GitHub release metadata; Download APK opens the matching direct APK asset in the default browser. Automatic checks are cached, and older releases are never offered as updates.
+- Enabled repository issues and corrected inherited announcement defaults. Both issue reporting and the crash dialog open Aro’s issue chooser; crash details remain under the user’s control.
+
+- Fixed Accounts waiting for unrelated cloud-library flows before showing a connected Spotify account.
+- Recover existing in-app Spotify sessions at startup and keep connection verification alive when leaving the login screen, while respecting explicit logout.
+- Simplified Spotify connection to one sign-in page, removing device-email selection and the browser OAuth experiment. Kept the existing account playlist/liked-song loading and caches. The local phone candidate is 1.0.0-rc.4 (code 16); it has not been published.
+
 - Linked the header, hero, and download section directly to the versioned APK, retaining release notes/checksums as a secondary link. Added a compact mobile navigation menu with Appearance controls, keyboard/outside dismissal, and reduced-motion transitions; aligned and enlarged footer supporting text.
 
 - Removed the blue hero-phone backdrop while retaining the heading panel and font. Made mockup proportions consistent across desktop and mobile, with the annotation below the phones.

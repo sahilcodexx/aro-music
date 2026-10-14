@@ -32,6 +32,16 @@ Run Gradle operations sequentially in one checkout:
 ./gradlew :app:connectedDebugAndroidTest -Paro.enableAbiSplits=false --no-daemon
 ```
 
+On a computer with about 8 GB of RAM, a large Gradle heap and many R8 threads can exhaust memory while other applications are open. If Linux kills the Java process, try this bounded local release build:
+
+```sh
+./gradlew :app:assembleRelease --no-daemon --console=plain \
+  '-Dorg.gradle.jvmargs=-Xmx2560m -Xms256m -XX:MaxMetaspaceSize=768m -XX:ActiveProcessorCount=2 -Dfile.encoding=UTF-8' \
+  -Dorg.gradle.workers.max=1
+```
+
+The command-line heap setting overrides a larger value in user Gradle properties. Run one Gradle operation at a time; fewer threads can take longer but reduce peak memory. A `Killed process ... (java)` kernel entry establishes an operating-system memory kill rather than a Kotlin compilation error. Check the build log before rerunning.
+
 The full connected suite includes live network/account tests. CI selects account-independent tests on API 30 and 36; inspect `phone-debug.yml` for the exact list. A skipped live test is not evidence that a provider works. The checked-in lint baseline records inherited debt; green lint checks do not resolve those existing errors.
 
 For database changes, preserve legacy data and test migrations into the current schema. For stream changes, check actual decoding and advancing playback time rather than only URL resolution. Verify shrinking-sensitive changes in a signed release build.

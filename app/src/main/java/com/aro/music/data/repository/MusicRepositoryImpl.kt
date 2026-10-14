@@ -133,6 +133,8 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     private val directoryScanMutex = Mutex()
+    private val genreCacheMutex = Mutex()
+    private val genreCache = linkedMapOf<String, Pair<Long, List<Song>>>()
     private val repositoryScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val defaultLibraryPagingConfig = PagingConfig(
         pageSize = 50,
@@ -972,12 +974,19 @@ class MusicRepositoryImpl @Inject constructor(
         return userPreferencesRepository.mockGenresEnabledFlow.flatMapLatest { mockEnabled ->
             flow {
                 val genreName = if (mockEnabled) "Mock" else genreId
-                // Fetch songs for this genre directly from the streaming API.
-                // We do NOT write to the DB; we just return the live results.
+                // Use the same playable catalog as search and home. The legacy
+                // genre service hid provider failures behind an empty list.
                 val songs = if (!genreName.equals("unknown", ignoreCase = true) && !mockEnabled) {
-                    try {
-                        streamingRepository.searchSongsForGenre(genreTag = genreName, limit = 50)
-                    } catch (_: Exception) { emptyList() }
+                    val key = genreName.trim().lowercase(java.util.Locale.ROOT)
+                    val cached = genreCacheMutex.withLock {
+                        genreCache[key]?.takeIf { System.currentTimeMillis() - it.first in 0 until 6 * 60 * 60_000L }?.second
+                    }
+                    cached ?: innerTubeRepository.searchSongs("${genreName.trim()} songs", limit = 50).also { fetched ->
+                        if (fetched.isNotEmpty()) genreCacheMutex.withLock {
+                            genreCache[key] = System.currentTimeMillis() to fetched
+                            if (genreCache.size > 24) genreCache.remove(genreCache.keys.first())
+                        }
+                    }
                 } else {
                     emptyList()
                 }

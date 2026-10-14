@@ -191,7 +191,15 @@ fun CrashReportDialog(
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = {
+            TextButton(onClick = {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(com.aro.music.data.update.AroProject.REPORT)))
+                } catch (_: android.content.ActivityNotFoundException) {
+                    Toast.makeText(context, R.string.report_open_failed, Toast.LENGTH_LONG).show()
+                }
+            }) { Text(stringResource(R.string.report_on_github)) }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.dismiss), maxLines = 1, overflow = TextOverflow.Ellipsis)

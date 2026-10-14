@@ -238,7 +238,7 @@ object Spotify {
         for (attempt in 0 until maxRetries) {
             log(
                 "D",
-                "GQL POST $operationName (token: ${token.take(8)}...)" +
+                "GQL POST $operationName" +
                     if (attempt > 0) " [retry $attempt]" else "",
             )
 
@@ -311,7 +311,7 @@ object Spotify {
         for (attempt in 0 until maxRetries) {
             log(
                 "D",
-                "REST GET $endpoint (token: ${token.take(8)}...)" +
+                "REST GET $endpoint" +
                     if (attempt > 0) " [retry $attempt]" else "",
             )
             val response =

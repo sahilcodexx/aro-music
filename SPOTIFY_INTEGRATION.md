@@ -4,7 +4,11 @@ Spotify supplies account playlists, liked songs, search results, artists, albums
 
 ## Authentication
 
-`SpotifyConnectActivity` hosts the provider's web sign-in. The current integration persists the Spotify session cookie and restores the client session. Device-account selection only prefills email fields on trusted Spotify/Google hosts; passwords and authentication remain with the provider. A reconnect or logout clears playlist snapshots to prevent showing the previous account's data. This is not a native Spotify OAuth SDK integration, and provider changes can break the session flow.
+`SpotifyConnectActivity` opens one Spotify sign-in page inside Aro. There is no Aro device-email picker or browser OAuth flow. Spotify handles email/password and any provider sign-in choices it offers on that page; Aro does not supply a separate Google account chooser.
+
+After sign-in, Aro reads its own WebView session cookies and verifies the Spotify connection. Verification continues if the screen is closed; a failure shows a retry action. Startup restores a saved session or recovers an existing signed-in WebView session unless the user explicitly logged out. Accounts shows Spotify independently of unrelated cloud providers' library loading.
+
+A reconnect or logout clears account caches to prevent showing the previous account's data. No Spotify Developer callback or client ID setup is needed for this flow. Provider changes can break the cookie integration; sessions may expire and require sign-in again.
 
 ## Playlist loading
 
@@ -14,7 +18,7 @@ Spotify supplies account playlists, liked songs, search results, artists, albums
 
 ## Validation
 
-Unit coverage includes snapshot persistence/expiry, single-flight loading, previews, forced refresh, progressive mapping, pagination, queue behavior, and import parsing. Device tests cover trusted-host email prefill and authenticated playlist counts/loading. Live tests require an authenticated development device and network access; emulator CI does not contain a real Spotify account.
+Unit coverage includes snapshot persistence/expiry, single-flight loading, previews, forced refresh, progressive mapping, pagination, queue behavior, and import parsing. Device tests cover authenticated playlist counts/loading; the retired device-email prefill tests are removed. Live tests require an authenticated development device and network access; emulator CI does not contain a real Spotify account.
 
 Earlier device measurements for a 29-track playlist with existing YouTube matches were approximately 1.1 seconds to first track, 1.5 seconds to completion, and 60 milliseconds for cached reopening. These are measured warm-match results, not a guarantee for cold mapping, large playlists, or other networks.
 
