@@ -68,19 +68,21 @@ jobs:
           # Keep developer outputs in the CI artifact. The public release gets
           # one universal APK with a recognizable name and a direct download.
           mkdir -p publish
-          cp dist/app-universal-release.apk publish/Aro.apk
-          printf '## Download\n\n[**Download Aro.apk**](https://github.com/%s/releases/download/v%s/Aro.apk)\n\nRequires Android 11 or newer. Download the APK and open it to install Aro.\n\n' "$GITHUB_REPOSITORY" "$version" > release-notes.md
-          cat CHANGELOG.md >> release-notes.md
+          apk_name="Aro-$version.apk"
+          cp dist/app-universal-release.apk "publish/$apk_name"
+          printf '## Download\n\n[**Download %s**](https://github.com/%s/releases/download/v%s/%s)\n\nRequires Android 11 or newer. Download the APK and open it to install Aro.\n\n' "$apk_name" "$GITHUB_REPOSITORY" "$version" "$apk_name" > release-notes.md
+          awk -v version="$version" '/^## / { if (capture) exit; if (index($0, "## " version " —") == 1) capture=1 } capture { print }' CHANGELOG.md >> release-notes.md
+          printf '\nDevelopment testing release. See LICENSE_STATUS.md and RELEASE_CHECKLIST.md for unresolved distribution rights and verification limits.\n' >> release-notes.md
           if gh release view "v$version" --json isDraft,targetCommitish >/dev/null 2>&1; then
             same_draft=$(gh release view "v$version" --json isDraft,targetCommitish --jq ".isDraft and (.targetCommitish == \"$GITHUB_SHA\")")
             if [ "$same_draft" != true ]; then
               echo 'Existing release is published or targets another commit. Increase APP_VERSION_NAME before shipping another build.'
               exit 1
             fi
-            gh release upload "v$version" publish/Aro.apk --clobber
+            gh release upload "v$version" "publish/$apk_name" --clobber
             gh release edit "v$version" --notes-file release-notes.md
           else
-            gh release create "v$version" publish/Aro.apk --target "$GITHUB_SHA" --title "Aro $version" --notes-file release-notes.md --draft --prerelease
+            gh release create "v$version" "publish/$apk_name" --target "$GITHUB_SHA" --title "Aro $version" --notes-file release-notes.md --draft --prerelease
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
