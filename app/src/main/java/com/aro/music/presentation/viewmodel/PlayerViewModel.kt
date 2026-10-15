@@ -1244,6 +1244,7 @@ class PlayerViewModel @Inject constructor(
      * the combined UI-state pipeline would re-emit every state collector for
      * text the user has not committed to.
      */
+    val isSearching = searchStateHolder.isSearching
     val searchSuggestions: StateFlow<ImmutableList<String>> =
         searchStateHolder.searchSuggestions
 

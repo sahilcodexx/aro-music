@@ -90,7 +90,6 @@ import com.aro.music.presentation.components.HomeCatalogShelf
 import com.aro.music.presentation.viewmodel.HomeFeedViewModel
 import com.aro.music.data.model.Song
 import com.aro.music.presentation.components.BetaInfoBottomSheet
-import com.aro.music.presentation.components.ChangelogBottomSheet
 import com.aro.music.presentation.netease.dashboard.NeteaseDashboardViewModel
 import com.aro.music.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
 import com.aro.music.presentation.navidrome.dashboard.NavidromeDashboardViewModel
@@ -265,7 +264,7 @@ fun HomeScreen(
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
 
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
-    var showChangelogBottomSheet by remember { mutableStateOf(false) }
+    var showStatsBottomSheet by remember { mutableStateOf(false) }
     var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -330,7 +329,7 @@ fun HomeScreen(
                         navController.navigateSafely(Screen.Settings.route)
                     },
                     onMoreOptionsClick = {
-                        showChangelogBottomSheet = true
+                        showStatsBottomSheet = true
                     },
                     onBetaClick = {
                         showBetaInfoBottomSheet = true
@@ -497,7 +496,7 @@ fun HomeScreen(
                             }
                             Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                                 if (homeFeed.isLoading) {
-                                    LoadingIndicator(modifier = Modifier.size(40.dp))
+                                    com.aro.music.presentation.components.SongRowsSkeleton(count = 3)
                                 } else if (homeFeed.canRetry) {
                                     FilledTonalButton(onClick = {
                                         if (homeFeed.continuation == null) homeFeedViewModel.refresh() else homeFeedViewModel.loadMore()
@@ -565,12 +564,14 @@ fun HomeScreen(
     }
     // ── DEBUG OVERLAY (remove when done) ─────────────────────────────────────
 
-    if (showChangelogBottomSheet) {
+    if (showStatsBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showChangelogBottomSheet = false },
+            onDismissRequest = { showStatsBottomSheet = false },
             sheetState = sheetState
         ) {
-            ChangelogBottomSheet()
+            Box(Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.9f)) {
+                StatsScreen(navController = navController, inSheet = true, onClose = { showStatsBottomSheet = false })
+            }
         }
     }
     if (showBetaInfoBottomSheet) {

@@ -46,7 +46,10 @@ const sections: PolicySection[] = [
       <p>
         The app stores music metadata, playlists, favorites, listening history,
         settings, artwork caches, and connected-account session information on
-        your device. This website does not read your app library or
+        your device. Listening history retains track metadata for statistics;
+        sharing a song image creates a temporary PNG on your device and opens
+        Android’s share sheet only when you choose Share image.
+        This website does not read your app library or
         connected-account sessions.
       </p>
     ),
@@ -58,7 +61,9 @@ const sections: PolicySection[] = [
       <p>
         Audio and media permissions let Aro discover songs stored on your phone.
         Notification and foreground-service permissions support playback
-        controls and background playback. Optional device and provider features
+        controls, background playback, and app-update downloads. Android asks
+        for permission before Aro can open a downloaded APK for installation.
+        Optional device and provider features
         may use other permissions. You can manage granted permissions in
         Android’s app settings.
       </p>
@@ -78,7 +83,9 @@ const sections: PolicySection[] = [
         <p>
           Optional server, cloud, and AI features send requests to the service
           or provider you configure. Those services operate under their own
-          terms and privacy policies. Aro is not affiliated with them.
+          terms and privacy policies. App update checks and APK downloads contact
+          GitHub. Downloads use temporary on-device files and are verified before
+          installation. Aro is not affiliated with these services.
         </p>
       </>
     ),

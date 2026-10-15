@@ -52,7 +52,7 @@ jobs:
           disk-size: 2048M
           ram-size: 2048M
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest -Paro.enableAbiSplits=false -Pandroid.testInstrumentationRunnerArguments.class=com.aro.music.playback.NativePlaybackCompatibilityTest,com.aro.music.data.database.MusicDaoTest,com.aro.music.data.database.AroDatabaseMigrationTest,com.aro.music.ui.theme.ArtworkThemeContrastTest,com.aro.music.presentation.components.PersonalShelvesLayoutTest,com.aro.music.presentation.components.AppUpdateDialogDeviceTest --no-daemon --console=plain
+          script: ./gradlew :app:connectedDebugAndroidTest -Paro.enableAbiSplits=false -Pandroid.testInstrumentationRunnerArguments.class=com.aro.music.playback.NativePlaybackCompatibilityTest,com.aro.music.data.database.MusicDaoTest,com.aro.music.data.database.AroDatabaseMigrationTest,com.aro.music.ui.theme.ArtworkThemeContrastTest,com.aro.music.presentation.components.PersonalShelvesLayoutTest,com.aro.music.presentation.components.AppUpdateDialogDeviceTest,com.aro.music.data.stats.StatsHistoryCompatibilityDeviceTest,com.aro.music.presentation.sharing.SongShareCardDeviceTest,com.aro.music.presentation.sharing.SongShareSheetLayoutDeviceTest --no-daemon --console=plain
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:

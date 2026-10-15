@@ -4,14 +4,14 @@ import { Icon } from "./icons";
 import MusicArtwork from "./music-artwork";
 import Questions from "./questions";
 import { SiteHeader, SiteFooter } from "./site-shell";
-import { APK_URL, RELEASES_URL } from "./project-links";
+import { APK_URL, ARM64_APK_URL, RELEASES_URL } from "./project-links";
 
 const REPO = "https://github.com/sahilcodexx/aro-music";
 
 const questions = [
   [
     "What do I need to run Aro?",
-    "An ARM64 Android phone running Android 11 or newer. Aro is currently a development release candidate; broader device compatibility is still being tested. There is no iPhone version.",
+    "An Android phone running Android 11 or newer. Choose the universal APK when unsure; the smaller ARM64 APK requires an ARM64 device. Broader device compatibility is still being tested. There is no iPhone version.",
   ],
   [
     "Can I play music already on my phone?",
@@ -60,8 +60,8 @@ export default function Home() {
                 </a>
               </div>
               <p className="release-note">
-                Android 11+ <span aria-hidden="true">/</span> Development
-                release candidate
+                Android 11+ <span aria-hidden="true">/</span> 1.0.2
+                release
               </p>
             </div>
             <div className="hero-visual-surface">
@@ -236,10 +236,13 @@ export default function Home() {
               <a className="button button-dark" href={APK_URL}>
                 <Icon name="download" /> Download APK
               </a>
+              <a className="text-link release-link" href={ARM64_APK_URL}>
+                Smaller APK · ARM64 phones only <Icon name="download" />
+              </a>
               <a className="text-link release-link" href={RELEASES_URL}>
                 Release notes and checksums <Icon name="external" />
               </a>
-              <p className="download-meta">v1.0.1 · Android 11+ · Universal APK</p>
+              <p className="download-meta">v1.0.2 · Android 11+ · Universal APK</p>
             </div>
             <div className="install-guide">
               <h3>A little help getting started</h3>
@@ -276,7 +279,7 @@ export default function Home() {
                 </li>
               </ol>
               <p className="candidate-note">
-                This is a development release candidate.{" "}
+                Android 11 or newer is required.{" "}
                 <a href={`${REPO}/blob/main/RELEASE_CHECKLIST.md`}>
                   See tested features and known limits.
                 </a>

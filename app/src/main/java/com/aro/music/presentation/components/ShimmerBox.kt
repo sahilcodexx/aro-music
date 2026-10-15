@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Brush
 
 @Composable
 fun ShimmerBox(modifier: Modifier = Modifier) {
+    if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        Box(modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh))
+        return
+    }
     // Use MaterialTheme colors for proper dark/light mode support
     val baseColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest

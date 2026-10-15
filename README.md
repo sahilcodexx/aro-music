@@ -2,7 +2,7 @@
 
 Your library, your playlists, and a home feed shaped by what you listen to.
 
-Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.1** is the current phone development release. It is distributed as a prerelease in this repository; no stable release is declared. Component licensing remains unresolved.
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.2** is the current phone release, published without the GitHub prerelease flag at the maintainer’s request. Component licensing remains unresolved; broader device and provider verification is incomplete.
 
 ## What you can do
 
@@ -19,9 +19,9 @@ Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Teleg
 
 Aro requires **Android 11 or newer**. The phone build targets Android 16.
 
-Download [**Aro-1.0.1.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.1/Aro-1.0.1.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
+Download [**Aro-1.0.2-universal.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.2/Aro-1.0.2-universal.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
 
-[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.1) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. The public download is the single named APK; an AAB cannot be installed directly. Only install packages from a trusted source.
+[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.2) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. Choose the universal APK when unsure, or the [smaller ARM64 APK](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.2/Aro-1.0.2-arm64-v8a.apk) for an ARM64 phone. Install one APK; an AAB cannot be installed directly. Only install packages from a trusted source.
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 
@@ -32,12 +32,17 @@ Release builds use `com.aro.music`; development builds use `com.aro.music.debug`
 3. Connect Spotify through Aro's account flow to browse your playlists and liked songs. Aro opens Spotify's sign-in page and verifies the session after you log in.
 4. Use Library's **Import** action with a supported YouTube or Spotify playlist link to create a local playlist copy. Unavailable or unmatched songs may be omitted from the playable copy.
 5. Browse genres in Search to discover online songs. Empty or failed requests offer Retry.
-6. Open **Settings → App updates** to check for a newer release and download its APK. Aro also checks automatically, with cached metadata to limit requests. Install the downloaded APK through Android’s installer.
+6. Open **Settings → App updates** to check for a newer release. Current source downloads assets with a published checksum in the background using resumable ranges, verifies the checksum and Aro signing certificate, and offers Android installation. Assets without a checksum open in your browser. GitHub is the only host; download speed still depends on its route to your network.
 7. Long-press a home song to pin or unpin it in speed dial. Pull down on Home when you want to refresh discovery.
+8. Open the Home stats icon for listening highlights, or **Settings → Changelog** for release notes. The full player’s share icon previews a song image before opening Android’s share sheet.
+
+These features are included in 1.0.2; see the changelog and validation record for coverage and limitations.
 
 **Recently played** follows listening history. **Speed dial** prioritizes pinned and other quick picks instead of simply duplicating that history. Recommendations stay cached across track changes; switching songs changes playback and artwork colors without rebuilding the whole home feed. First-time loading uses placeholders to reserve the personal shelves before daily mix appears.
 
 A remote playlist's source count can differ from its playable local count. Spotify songs must find a usable YouTube match, and removed or region-restricted items may not play. Large uncached imports can take longer than cached reopening; see [Spotify loading behavior](SPOTIFY_INTEGRATION.md).
+
+Release assets provide smaller ARM64 and ARMv7 APKs alongside universal. Choose universal when unsure; these are standalone installers with the same features. See [release preparation and APK choices](RELEASE.md).
 
 ## Build from source
 

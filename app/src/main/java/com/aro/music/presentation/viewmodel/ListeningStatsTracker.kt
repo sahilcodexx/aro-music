@@ -33,6 +33,10 @@ class ListeningStatsTracker @Inject constructor(
     private val dailyMixManager: DailyMixManager,
     private val playbackStatsRepository: PlaybackStatsRepository
 ) {
+    fun rememberTrack(songId: String, title: String?, artist: String?, album: String?, artworkUri: String?, genre: String?) {
+        playbackStatsRepository.rememberTrack(songId, title, artist, album, artworkUri, genre)
+    }
+
     private var currentSession: ActiveSession? = null
     private var pendingVoluntarySongId: String? = null
     private var scope: CoroutineScope? = null

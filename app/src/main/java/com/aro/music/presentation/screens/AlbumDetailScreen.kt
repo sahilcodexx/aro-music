@@ -164,7 +164,7 @@ fun AlbumDetailScreen(
         when {
             uiState.isLoading && uiState.album == null -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    ContainedLoadingIndicator()
+                    com.aro.music.presentation.components.SongRowsSkeleton()
                 }
             }
 

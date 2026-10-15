@@ -223,6 +223,29 @@ class PlaybackStatsRepositoryTest {
         assertThat(summary.topGenres.single().uniqueArtists).isEqualTo(2)
     }
 
+    @Test
+    fun `streaming metadata supplies song artist album and genre when library is empty`() {
+        val now = System.currentTimeMillis()
+        val metadata = PlaybackStatsRepository.TrackMetadata("Streamed song", "Stream artist", "Stream album", "https://example.org/art.jpg", "Pop")
+        val event = PlaybackStatsRepository.PlaybackEvent("-123", now, 60_000, metadata = metadata)
+        val summary = createRepository().buildSummaryFromEvents(StatsTimeRange.ALL, emptyList(), now, listOf(event))
+        assertThat(summary.topSongs.single().title).isEqualTo("Streamed song")
+        assertThat(summary.topArtists.single().artist).isEqualTo("Stream artist")
+        assertThat(summary.topAlbums.single().album).isEqualTo("Stream album")
+        assertThat(summary.topGenres.single().genre).isEqualTo("Pop")
+        assertThat(summary.totalDurationMs).isEqualTo(60_000)
+    }
+
+    @Test
+    fun `legacy obfuscated history survives named-field serialization`() {
+        val gson = com.google.gson.Gson()
+        val event = gson.fromJson("""{"a":"legacy-id","b":100000,"c":5000,"d":95000,"e":100000}""", PlaybackStatsRepository.PlaybackEvent::class.java)
+        assertThat(event.songId).isEqualTo("legacy-id")
+        assertThat(event.durationMs).isEqualTo(5000)
+        assertThat(gson.toJson(event)).contains("\"songId\":\"legacy-id\"")
+        assertThat(gson.toJson(event)).doesNotContain("\"a\":")
+    }
+
     private fun createRepository(): PlaybackStatsRepository {
         val uniqueDir = createTempDirectory(
             "playback-stats-test-${Instant.now().toEpochMilli()}-"

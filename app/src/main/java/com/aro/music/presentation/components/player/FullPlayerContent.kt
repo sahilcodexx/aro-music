@@ -102,6 +102,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -1454,6 +1455,10 @@ private fun SongMetadataDisplaySection(
     onClickArtist: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var shareSong by remember { mutableStateOf<Song?>(null) }
+    shareSong?.let { selected ->
+        com.aro.music.presentation.sharing.SongShareSheet(selected, onDismiss = { shareSong = null })
+    }
     Row(
         modifier
             .fillMaxWidth()
@@ -1525,6 +1530,13 @@ private fun SongMetadataDisplaySection(
                     )
                 }
             }
+        }
+
+        FilledIconButton(
+            onClick = { shareSong = song }, enabled = song != null,
+            colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor)
+        ) {
+            Icon(androidx.compose.material.icons.Icons.Rounded.Share, contentDescription = stringResource(R.string.share_song_image))
         }
 
         if (showQueueButton) {

@@ -19,4 +19,14 @@
     <string name="action_ok_update" translatable="false">OK</string>
     <string name="report_on_github" translatable="false">Report on GitHub</string>
     <string name="report_open_failed" translatable="false">Could not open GitHub. Please install a browser and try again.</string>
+    <string name="update_downloading" translatable="false">Downloading Aro</string>
+    <string name="update_download_background" translatable="false">You can keep listening. Interrupted downloads resume automatically.</string>
+    <string name="update_download_background_action" translatable="false">Continue in background</string>
+    <string name="update_download_cancel" translatable="false">Cancel download</string>
+    <string name="update_download_ready" translatable="false">Update ready</string>
+    <string name="update_download_verified" translatable="false">The APK’s checksum and Aro signing certificate are verified. Android may ask you to allow updates from Aro.</string>
+    <string name="update_download_install" translatable="false">Install APK</string>
+    <string name="update_download_failed_title" translatable="false">Download couldn’t finish</string>
+    <string name="update_download_retry_body" translatable="false">Check your connection and try again. Completed parts are kept for retry.</string>
+    <string name="update_download_progress" translatable="false">%1$.1f / %2$.1f MB</string>
 </resources>

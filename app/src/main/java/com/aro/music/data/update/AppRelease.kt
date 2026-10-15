@@ -36,7 +36,7 @@ data class AppVersion(val major: Int, val minor: Int, val patch: Int, val prerel
     }
 }
 
-data class AppRelease(val tag: String, val version: AppVersion, val apkUrl: String, val notes: String)
+data class AppRelease(val tag: String, val version: AppVersion, val apkUrl: String, val notes: String, val sha256: String? = null)
 
 object AppReleaseParser {
     fun latest(json: String, current: AppVersion, supportedAbis: List<String>): AppRelease? {
@@ -61,9 +61,9 @@ object AppReleaseParser {
                     "universal" in name -> 2
                     else -> 1
                 }
-                rank to url
-            }.maxByOrNull { it.first }?.second ?: return@releaseLoop null
-            AppRelease(tag, version, apk, release["body"]?.jsonPrimitive?.contentOrNull.orEmpty().take(4000))
+                Triple(rank, url, asset["digest"]?.jsonPrimitive?.contentOrNull?.removePrefix("sha256:")?.takeIf { it.matches(Regex("[0-9a-f]{64}")) })
+            }.maxByOrNull { it.first } ?: return@releaseLoop null
+            AppRelease(tag, version, apk.second, release["body"]?.jsonPrimitive?.contentOrNull.orEmpty().take(4000), apk.third)
         }.maxByOrNull { it.version }
     }
     fun trustedApkUrl(url: String): Boolean = runCatching {

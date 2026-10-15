@@ -138,7 +138,9 @@ private const val PULL_TO_REFRESH_MIN_DURATION_MS = 3500L
 @Composable
 fun StatsScreen(
     navController: NavController,
-    statsViewModel: StatsViewModel = hiltViewModel()
+    statsViewModel: StatsViewModel = hiltViewModel(),
+    inSheet: Boolean = false,
+    onClose: () -> Unit = { navController.popBackStack() }
 ) {
     val uiState by statsViewModel.uiState.collectAsStateWithLifecycle()
     val summary = uiState.summary
@@ -146,9 +148,9 @@ fun StatsScreen(
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
 
-    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val statusBarHeight = if (inSheet) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 62.dp + statusBarHeight
-    val maxTopBarHeight = 176.dp
+    val maxTopBarHeight = if (inSheet) 82.dp else 106.dp + statusBarHeight
 
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
@@ -265,7 +267,7 @@ fun StatsScreen(
         ) {
             if (uiState.isLoading && summary == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    ContainedLoadingIndicator()
+                    com.aro.music.presentation.components.SongRowsSkeleton()
                 }
             } else {
                 val showDailyRhythm = summary?.range == StatsTimeRange.DAY || summary?.range == StatsTimeRange.WEEK
@@ -350,30 +352,33 @@ fun StatsScreen(
                         .background(backgroundColor)
                         .padding(bottom = 8.dp) // Reduced padding below tabs
                 ) {
-                    CollapsibleCommonTopBar(
-                        title = stringResource(R.string.presentation_batch_g_stats_title),
-                        collapseFraction = collapseFraction,
-                        headerHeight = currentTopBarHeightDp,
-                        onBackClick = { navController.popBackStack() },
-                        containerColor = Color.Transparent,
-                        actions = {
-                            FilledIconButton(
-                                modifier = Modifier
-                                    .padding(end = 12.dp),
-                                onClick = statsViewModel::requestStatsRefresh,
-                                enabled = !uiState.isLoading && !uiState.isRefreshing && !isPullRefreshAnimating,
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Refresh,
-                                    contentDescription = stringResource(R.string.presentation_batch_g_stats_cd_refresh)
-                                )
-                            }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(currentTopBarHeightDp)
+                            .padding(start = 20.dp, end = 16.dp, top = statusBarHeight),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.presentation_batch_g_stats_title),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        FilledIconButton(
+                            onClick = statsViewModel::requestStatsRefresh,
+                            enabled = !uiState.isLoading && !uiState.isRefreshing && !isPullRefreshAnimating,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Icon(Icons.Rounded.Refresh, stringResource(R.string.presentation_batch_g_stats_cd_refresh))
                         }
-                    )
+                    }
 
                     RangeTabsHeader(
                         ranges = uiState.availableRanges,

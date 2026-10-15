@@ -1,6 +1,14 @@
 # Aro changelog
 
-## Unreleased
+## 1.0.2 — 2026-10-15
+
+- Release preparation now stages clearly named smaller ARM64/ARMv7 standalone APKs alongside universal, with a download-choice table and checksums.
+
+- Listening categories include streamed songs and retain track metadata in history. Stable history field names also read older shrunk release records.
+- Home opens Listening Stats in a bottom sheet with a compact title/reload row and no back icon; Changelog moves to Settings.
+- Song lists and artwork show loading skeletons while requests are pending, respecting disabled system animations.
+- The full player previews an artwork-colored song card with bold Aro typography, a contrasting inner surface, and Artwork/Soft/Dark choices. Title and artist sit together, with a compact Aro icon/name inside the card and no separate tagline footer. The whole image fits above separate share controls; landscape uses a side-by-side layout. Sharing exports the preview as a PNG through Android's share sheet.
+- In-app updates use four resumable GitHub byte ranges when the release asset provides a SHA-256 digest. Downloads continue in the background; checksum and signing-certificate checks precede Android installation. GitHub remains the only host, so routing-related slowdowns can still occur. Assets without a digest retain browser download behavior.
 
 ## 1.0.1 — 2026-10-14
 

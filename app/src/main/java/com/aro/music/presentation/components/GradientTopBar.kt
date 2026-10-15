@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -177,8 +178,8 @@ fun HomeGradientTopBar(
                     onClick = onMoreOptionsClick
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.round_newspaper_24),
-                        contentDescription = stringResource(R.string.presentation_batch_g_topbar_cd_changelog)
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.BarChart,
+                        contentDescription = stringResource(R.string.presentation_batch_g_stats_title)
                     )
                 }
                 FilledIconButton(

@@ -13,6 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import com.aro.music.data.update.ApkDownloadWorker
+import java.util.UUID
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,9 +33,21 @@ import com.aro.music.presentation.viewmodel.AppUpdateViewModel
 fun AppUpdatePrompt(viewModel: AppUpdateViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var workId by remember { mutableStateOf(context.getSharedPreferences("apk-download", android.content.Context.MODE_PRIVATE).getString("work", null)?.let { runCatching { UUID.fromString(it) }.getOrNull() }) }
+    ApkDownloadPrompt(workId, onRetry = viewModel::checkNow)
     LaunchedEffect(Unit) { viewModel.checkAutomatically() }
     AppUpdateDialog(state.dialog, BuildConfig.VERSION_NAME, viewModel::dismiss, viewModel::checkNow) { url ->
-        try {
+        val release = (state.dialog as? UpdateDialog.Available)?.release
+        if (release?.sha256 != null) {
+            scope.launch {
+                try {
+                    workId = ApkDownloadWorker.enqueue(context, release)
+                    viewModel.dismiss()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { Toast.makeText(context, R.string.update_download_failed, Toast.LENGTH_LONG).show() }
+            }
+        } else try {
             // This asset URL starts the browser's normal APK download, not a release-page visit.
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://example.org")).addCategory(Intent.CATEGORY_BROWSABLE)
             val browser = context.packageManager.resolveActivity(browserIntent, 0)?.activityInfo?.packageName?.takeUnless { it == "android" }

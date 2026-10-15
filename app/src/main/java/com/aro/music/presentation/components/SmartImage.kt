@@ -146,14 +146,7 @@ fun SmartImage(
                             alpha = alpha
                         )
                     } else {
-                        Placeholder(
-                            modifier = Modifier.fillMaxSize(),
-                            drawableResId = placeholderResId,
-                            contentDescription = contentDescription,
-                            containerColor = placeHolderBackgroundColor,
-                            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            alpha = alpha
-                        )
+                        ShimmerBox(Modifier.fillMaxSize())
                     }
                 }
                 else -> {
@@ -169,16 +162,23 @@ fun SmartImage(
             }
         }
     } else {
-        AsyncImage(
-            model = request,
-            contentDescription = contentDescription,
-            modifier = clippedModifier,
-            contentScale = contentScale,
-            colorFilter = colorFilter,
-            alpha = alpha,
-            placeholder = painterResource(placeholderResId),
-            error = painterResource(errorResId)
-        )
+        var loading by remember(request) { androidx.compose.runtime.mutableStateOf(false) }
+        Box(clippedModifier) {
+            AsyncImage(
+                model = request,
+                contentDescription = contentDescription,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = contentScale,
+                colorFilter = colorFilter,
+                alpha = alpha,
+                placeholder = painterResource(placeholderResId),
+                error = painterResource(errorResId),
+                onLoading = { loading = true },
+                onSuccess = { loading = false },
+                onError = { loading = false }
+            )
+            if (loading) ShimmerBox(Modifier.fillMaxSize())
+        }
     }
 }
 

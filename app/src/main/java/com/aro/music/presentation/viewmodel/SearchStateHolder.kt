@@ -49,6 +49,8 @@ class SearchStateHolder @Inject constructor(
     }
 
     // Search State
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching = _isSearching.asStateFlow()
     private val _searchResults = MutableStateFlow<ImmutableList<SearchResultItem>>(persistentListOf())
     val searchResults = _searchResults.asStateFlow()
 
@@ -107,6 +109,7 @@ class SearchStateHolder @Inject constructor(
                 .debounce(SUGGESTIONS_DEBOUNCE_MS)
                 .collectLatest { query ->
                     if (query.isBlank()) {
+                        _isSearching.value = false
                         if (_searchSuggestions.value.isNotEmpty()) {
                             _searchSuggestions.value = persistentListOf()
                         }
@@ -152,6 +155,7 @@ class SearchStateHolder @Inject constructor(
                     }
 
                     val requestId = latestSearchRequestId.incrementAndGet()
+                    _isSearching.value = true
                     try {
                         // Routed through MusicRepository so the selected filter is
                         // honoured and favourite state is merged in. The previous
@@ -172,6 +176,8 @@ class SearchStateHolder @Inject constructor(
                             Timber.e(e, "Error performing search for query: $query")
                             _searchResults.value = persistentListOf()
                         }
+                    } finally {
+                        if (requestId == latestSearchRequestId.get()) _isSearching.value = false
                     }
                 }
         }

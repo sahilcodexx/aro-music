@@ -46,6 +46,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -101,6 +102,12 @@ fun SettingsScreen(
         updateViewModel: com.aro.music.presentation.viewmodel.AppUpdateViewModel = hiltViewModel()
 ) {
 
+    var showChangelog by remember { mutableStateOf(false) }
+    if (showChangelog) {
+        androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showChangelog = false }) {
+            com.aro.music.presentation.components.ChangelogBottomSheet()
+        }
+    }
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
 
     // Animation effects
@@ -222,7 +229,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 4 // Device + Accounts + Updates + About
+                    val totalItems = mainCategories.size + 5 // Device + Accounts + Updates + About
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -284,6 +291,17 @@ fun SettingsScreen(
                         icon = Icons.Rounded.SystemUpdate,
                         colors = getAccountsColors(isDark),
                         onClick = { if (!updateState.checking) updateViewModel.checkNow() },
+                        shape = shapeFor(itemIndex)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    itemIndex++
+
+                    ExpressiveNavigationItem(
+                        title = stringResource(R.string.changelog_settings_title),
+                        subtitle = stringResource(R.string.changelog_settings_subtitle),
+                        icon = Icons.Rounded.History,
+                        colors = getAccountsColors(isDark),
+                        onClick = { showChangelog = true },
                         shape = shapeFor(itemIndex)
                     )
                     Spacer(modifier = Modifier.height(2.dp))

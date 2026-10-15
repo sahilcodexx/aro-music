@@ -66,11 +66,11 @@ data class ChangelogVersion(
 private fun changelogVersions(): List<ChangelogVersion> = listOf(
     ChangelogVersion(
         version = BuildConfig.VERSION_NAME,
-        date = "2026-10-12",
+        date = "2026-10-15",
         sections = listOf(
-            ChangelogSection(R.string.presentation_batch_g_changelog_sec_highlights, R.array.presentation_batch_g_changelog_070_highlights),
-            ChangelogSection(R.string.presentation_batch_g_changelog_sec_improvements, R.array.presentation_batch_g_changelog_070_improvements),
-            ChangelogSection(R.string.presentation_batch_g_changelog_sec_fixes, R.array.presentation_batch_g_changelog_070_fixes)
+            ChangelogSection(R.string.presentation_batch_g_changelog_sec_highlights, R.array.aro_changelog_102_highlights),
+            ChangelogSection(R.string.presentation_batch_g_changelog_sec_improvements, R.array.aro_changelog_102_improvements),
+            ChangelogSection(R.string.presentation_batch_g_changelog_sec_fixes, R.array.aro_changelog_102_fixes)
         )
     )
 )

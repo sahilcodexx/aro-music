@@ -27,10 +27,10 @@ const sections: PolicySection[] = [
     body: (
       <>
         <p>
-          The current phone candidate is v1.0.1 for Android devices running
-          Android 11 or newer. It is a development release candidate, not a
-          stable compatibility guarantee for every device, setting, or connected
-          service.
+          The current phone release is v1.0.2 for Android devices running
+          Android 11 or newer. It is published without the GitHub prerelease flag. Compatibility
+          varies by device, setting, and connected service; broader testing
+          remains incomplete.
         </p>
         <p>
           Read the{" "}
@@ -69,7 +69,7 @@ const sections: PolicySection[] = [
     body: (
       <p>
         The website links to the project’s{" "}
-        <a href={`${REPO}/releases/tag/v1.0.1`}>
+        <a href={`${REPO}/releases/tag/v1.0.2`}>
           versioned GitHub release
         </a>
         . Review the release notes and installation requirements before

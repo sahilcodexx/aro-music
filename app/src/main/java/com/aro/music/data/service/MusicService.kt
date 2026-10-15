@@ -530,6 +530,11 @@ class MusicService : MediaLibraryService() {
             return
         }
 
+        val trackMetadata = mediaItem.mediaMetadata
+        listeningStatsTracker.rememberTrack(songId, trackMetadata.title?.toString(),
+            trackMetadata.artist?.toString(), trackMetadata.albumTitle?.toString(),
+            trackMetadata.artworkUri?.toString(), trackMetadata.genre?.toString())
+
         val positionMs = player.currentPosition.coerceAtLeast(0L)
         val durationMs = player.duration
         val fallbackDurationMs = mediaItem.mediaMetadata.extras
@@ -2305,6 +2310,7 @@ class MusicService : MediaLibraryService() {
             return
         }
 
+        listeningStatsTracker.rememberTrack(songId, snapshot.title, snapshot.artist, null, snapshot.artworkUri?.toString(), null)
         if (activeCastStatsOccurrenceId != snapshot.occurrenceId) {
             activeCastStatsOccurrenceId = snapshot.occurrenceId
             listeningStatsTracker.onTrackChanged(

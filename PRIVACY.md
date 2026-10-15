@@ -16,9 +16,15 @@ Optional server and cloud features send requests to the service you connect. Opt
 
 ## Update checks and issue reports
 
-Aro checks the public GitHub releases API for newer APKs, caching release metadata and check times on the device. This sends a network request to GitHub without Aro account credentials or listening history. Download APK opens the selected release asset in your default browser; Android handles installation.
+Aro checks the public GitHub releases API for newer APKs, caching release metadata and check times on the device. This sends a network request to GitHub without Aro account credentials or listening history. When the asset includes a SHA-256 digest, Aro downloads it in resumable ranges into private cache using a background worker. It verifies the digest and the installed Aro signing certificate before offering Android installation. Android may ask you to allow installation from Aro. Assets without a digest open in the browser. GitHub is the only download host.
 
 Report controls open the repository’s issue chooser. Crash details are not uploaded automatically; copying or sharing them remains your choice.
+
+## Song image sharing
+
+Aro renders the selected song’s title, artist, and artwork on the device. Artwork may be fetched from its existing provider URL. Sharing creates a PNG in private cache and grants temporary read access through Android’s share sheet; Aro does not automatically send it to another person or service. Old share images are removed when generating later cards after 24 hours, or when Android clears the cache.
+
+Listening history can retain track title, artist, album, artwork URL, and genre so streaming statistics remain available when catalog caches change. This stays on the device unless you export or back up the data.
 
 ## Managing data
 

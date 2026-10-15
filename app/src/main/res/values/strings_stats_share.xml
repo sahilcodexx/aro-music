@@ -1,0 +1,26 @@
+<resources>
+    <string name="changelog_settings_title" translatable="false">Changelog</string>
+    <string name="changelog_settings_subtitle" translatable="false">See what’s new in Aro</string>
+    <string name="share_song_image" translatable="false">Share song image</string>
+    <string name="share_song_title" translatable="false">Share what’s playing</string>
+    <string name="share_song_action" translatable="false">Share image</string>
+    <string name="share_song_preparing" translatable="false">Preparing image…</string>
+    <string name="share_song_failed" translatable="false">Could not create the share image. Please try again.</string>
+    <string name="share_song_close" translatable="false">Close</string>
+    <string name="share_style_artwork" translatable="false">Artwork</string>
+    <string name="share_style_soft" translatable="false">Soft</string>
+    <string name="share_style_dark" translatable="false">Dark</string>
+    <string-array name="aro_changelog_102_highlights" translatable="false">
+        <item>Share artwork-colored song images with Artwork, Soft, and Dark styles.</item>
+        <item>Open Listening Stats directly from Home; find Changelog in Settings.</item>
+    </string-array>
+    <string-array name="aro_changelog_102_improvements" translatable="false">
+        <item>Song lists and artwork show loading skeletons while content arrives.</item>
+        <item>Updates download in the background with resumable ranges and verified checksums.</item>
+        <item>Smaller architecture-specific APKs are available alongside universal.</item>
+    </string-array>
+    <string-array name="aro_changelog_102_fixes" translatable="false">
+        <item>Listening categories include streamed songs and retain new track metadata.</item>
+        <item>Share previews fit above their controls in portrait and beside them in landscape.</item>
+    </string-array>
+</resources>

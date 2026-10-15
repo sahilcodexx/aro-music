@@ -2,6 +2,7 @@ package com.aro.music.data.stats
 
 import android.content.Context
 import android.util.AtomicFile
+import com.google.gson.annotations.SerializedName
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
@@ -50,12 +51,35 @@ class PlaybackStatsRepository @Inject constructor(
 
     private val sessionGapThresholdMs = TimeUnit.MINUTES.toMillis(30)
 
+    data class TrackMetadata(
+        val title: String,
+        val artist: String,
+        val album: String?,
+        val artworkUri: String?,
+        val genre: String?
+    )
+
+    private val recentMetadata = linkedMapOf<String, TrackMetadata>()
+
+    fun rememberTrack(songId: String, title: String?, artist: String?, album: String?, artworkUri: String?, genre: String?) {
+        if (songId.isBlank() || title.isNullOrBlank()) return
+        synchronized(recentMetadata) {
+            recentMetadata[songId] = TrackMetadata(title.take(1000), artist.orEmpty().take(1000), album?.take(1000), artworkUri?.take(4096), genre?.take(200))
+            if (recentMetadata.size > 128) recentMetadata.remove(recentMetadata.keys.first())
+        }
+    }
+
+    suspend fun playedSongIds(): List<String> = withContext(Dispatchers.IO) {
+        readEvents().map { it.songId }.distinct()
+    }
+
     data class PlaybackEvent(
-        val songId: String,
-        val timestamp: Long,
-        val durationMs: Long,
-        val startTimestamp: Long? = null,
-        val endTimestamp: Long? = null
+        @SerializedName(value = "songId", alternate = ["a"]) val songId: String,
+        @SerializedName(value = "timestamp", alternate = ["b"]) val timestamp: Long,
+        @SerializedName(value = "durationMs", alternate = ["c"]) val durationMs: Long,
+        @SerializedName(value = "startTimestamp", alternate = ["d"]) val startTimestamp: Long? = null,
+        @SerializedName(value = "endTimestamp", alternate = ["e"]) val endTimestamp: Long? = null,
+        val metadata: TrackMetadata? = null
     )
 
     data class PlaybackHistoryEntry(
@@ -176,7 +200,8 @@ class PlaybackStatsRepository @Inject constructor(
             timestamp = coercedTimestamp,
             durationMs = coercedDuration,
             startTimestamp = start,
-            endTimestamp = coercedTimestamp
+            endTimestamp = coercedTimestamp,
+            metadata = synchronized(recentMetadata) { recentMetadata[songId] }
         )
         val writeSucceeded = updateEventsAtomically { events ->
             val cutoff = sanitizedEvent.endMillis() - MAX_HISTORY_AGE_MS
@@ -238,7 +263,16 @@ class PlaybackStatsRepository @Inject constructor(
             )
         }
 
-        val songMap = songs.associateBy { it.id }
+        // Old history rows remain valid. Prefer current catalog rows, then the
+        // metadata captured at playback, even after a streaming cache is cleared.
+        val snapshots = allEvents.sortedBy { it.timestamp }.mapNotNull { event ->
+            event.metadata?.let { metadata ->
+                Song.emptySong().copy(id = event.songId, title = metadata.title,
+                    artist = metadata.artist, album = metadata.album.orEmpty(),
+                    albumArtUriString = metadata.artworkUri, genre = metadata.genre)
+            }
+        }
+        val songMap = (snapshots + songs).associateBy { it.id }
         val normalizedEvents = filteredEvents
 
         val segmentsBySong = normalizedEvents

@@ -322,7 +322,7 @@ fun PlaylistDetailScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(top = innerPadding.calculateTopPadding()), Alignment.Center
-            ) { CircularProgressIndicator() }
+            ) { com.aro.music.presentation.components.SongRowsSkeleton() }
         } else if (uiState.playlistNotFound) {
             Box(
                 Modifier
@@ -334,7 +334,7 @@ fun PlaylistDetailScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(top = innerPadding.calculateTopPadding()), Alignment.Center
-            ) { CircularProgressIndicator() }
+            ) { com.aro.music.presentation.components.SongRowsSkeleton() }
         } else {
             Column(
                 modifier = Modifier

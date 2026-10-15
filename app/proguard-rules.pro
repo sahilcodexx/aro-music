@@ -243,3 +243,7 @@
 -keepclassmembers class com.aro.music.data.model.** { *; }
 -keepclassmembers class com.aro.music.data.jiosaavn.** { *; }
 -keepclassmembers class com.aro.music.data.itunes.** { *; }
+
+# Playback history is an on-disk and backup contract, not transient UI data.
+-keep class com.aro.music.data.stats.PlaybackStatsRepository$PlaybackEvent { *; }
+-keep class com.aro.music.data.stats.PlaybackStatsRepository$TrackMetadata { *; }

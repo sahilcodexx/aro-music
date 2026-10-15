@@ -17,6 +17,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -33,6 +34,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <queries>
+        <!-- Debug builds also verify downloads against the installed production signer. -->
+        <package android:name="com.aro.music" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
@@ -244,6 +247,9 @@
                 <action android:name="com.aro.music.ACTION_WIDGET_UPDATE_PLAYBACK_STATE" />
             </intent-filter>
         </receiver>
+
+        <service android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync" tools:node="merge" />
 
         <service
             android:name=".data.service.http.MediaFileHttpServerService"

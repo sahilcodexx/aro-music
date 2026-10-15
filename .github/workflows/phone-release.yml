@@ -50,6 +50,7 @@ jobs:
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/*.apk dist/
+          cp app/build/outputs/apk/release/output-metadata.json dist/
           rm -rf app/build/intermediates/shrunk_resources_proto_format/release
           ./gradlew :app:bundleRelease -Paro.enableAbiSplits=false --no-daemon --console=plain
       - name: Verify signatures and prepare release
@@ -65,13 +66,8 @@ jobs:
           cp app/build/outputs/bundle/release/*.aab dist/
           (cd dist && sha256sum *.apk *.aab > SHA256SUMS.txt)
           version=$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)
-          # Keep developer outputs in the CI artifact. The public release gets
-          # one universal APK with a recognizable name and a direct download.
-          mkdir -p publish
-          apk_name="Aro-$version.apk"
-          cp dist/app-universal-release.apk "publish/$apk_name"
-          printf '## Download\n\n[**Download %s**](https://github.com/%s/releases/download/v%s/%s)\n\nRequires Android 11 or newer. Download the APK and open it to install Aro.\n\n' "$apk_name" "$GITHUB_REPOSITORY" "$version" "$apk_name" > release-notes.md
-          awk -v version="$version" '/^## / { if (capture) exit; if (index($0, "## " version " —") == 1) capture=1 } capture { print }' CHANGELOG.md >> release-notes.md
+          # Every public APK is a complete installer with a clear architecture name.
+          python3 scripts/prepare-release.py --source dist --destination publish --version "$version" --repository "$GITHUB_REPOSITORY" --notes release-notes.md
           printf '\nDevelopment testing release. See LICENSE_STATUS.md and RELEASE_CHECKLIST.md for unresolved distribution rights and verification limits.\n' >> release-notes.md
           if gh release view "v$version" --json isDraft,targetCommitish >/dev/null 2>&1; then
             same_draft=$(gh release view "v$version" --json isDraft,targetCommitish --jq ".isDraft and (.targetCommitish == \"$GITHUB_SHA\")")
@@ -79,10 +75,10 @@ jobs:
               echo 'Existing release is published or targets another commit. Increase APP_VERSION_NAME before shipping another build.'
               exit 1
             fi
-            gh release upload "v$version" "publish/$apk_name" --clobber
+            gh release upload "v$version" publish/*.apk publish/SHA256SUMS.txt --clobber
             gh release edit "v$version" --notes-file release-notes.md
           else
-            gh release create "v$version" "publish/$apk_name" --target "$GITHUB_SHA" --title "Aro $version" --notes-file release-notes.md --draft --prerelease
+            gh release create "v$version" publish/*.apk publish/SHA256SUMS.txt --target "$GITHUB_SHA" --title "Aro $version" --notes-file release-notes.md --draft --prerelease
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -168,12 +169,9 @@ class StatsViewModel @Inject constructor(
     }
 
     private suspend fun loadSongs(): List<Song> {
-        cachedSongs?.let { existing ->
-            if (existing.isNotEmpty()) return existing
-        }
-        val songs = musicRepository.getAllSongsOnce()
-        cachedSongs = songs
-        return songs
+        val local = musicRepository.getAllSongsOnce()
+        val played = musicRepository.getSongsByIds(playbackStatsRepository.playedSongIds()).first()
+        return (local + played).distinctBy { it.id }
     }
 
     private fun PlaybackStatsSummary.hasListeningActivity(): Boolean {

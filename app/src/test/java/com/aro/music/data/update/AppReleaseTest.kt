@@ -34,6 +34,19 @@ class AppReleaseTest {
         assertTrue(AppReleaseParser.trustedApkUrl("${AroProject.URL}/releases/download/v2.0.0/Aro.apk"))
         listOf("http://github.com/sahilcodexx/aro-music/releases/download/v2.0.0/Aro.apk", "https://github.com.evil.test/sahilcodexx/aro-music/releases/download/v2.0.0/Aro.apk", "https://github.com/other/app/releases/download/v2.0.0/Aro.apk", "https://github.com/sahilcodexx/aro-music/releases/download/../../other/Aro.apk", "https://github.com/sahilcodexx/aro-music/releases/download/v2.0.0/Source.zip").forEach { assertFalse(AppReleaseParser.trustedApkUrl(it),it) }
     }
+    @Test fun `selected APK retains its own valid checksum`() {
+        val digest = "ab".repeat(32)
+        val data = releases(buildJsonObject {
+            put("tag_name", "v2.0.0"); put("draft", false); put("prerelease", false)
+            putJsonArray("assets") {
+                listOf("Aro-universal.apk" to "bad", "Aro-arm64.apk" to "sha256:$digest").forEach { (name, hash) ->
+                    add(buildJsonObject { put("name", name); put("browser_download_url", "${AroProject.URL}/releases/download/v2.0.0/$name"); put("digest", hash) })
+                }
+            }
+        })
+        assertEquals(digest, AppReleaseParser.latest(data, AppVersion.parse("1.0.0")!!, listOf("arm64-v8a"))!!.sha256)
+        assertNull(AppReleaseParser.latest(data, AppVersion.parse("1.0.0")!!, listOf("x86_64"))!!.sha256)
+    }
     private fun releases(vararg entries: JsonObject) = JsonArray(entries.toList()).toString()
     private fun release(tag: String, prerelease: Boolean = false, draft: Boolean = false, assets: List<String> = listOf("Aro.apk")) = buildJsonObject {
         put("tag_name",tag);put("draft",draft);put("prerelease",prerelease);put("body","Changes")

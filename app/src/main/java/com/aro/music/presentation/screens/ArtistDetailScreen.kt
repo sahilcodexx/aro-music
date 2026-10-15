@@ -251,7 +251,7 @@ fun ArtistDetailScreen(
             when {
                 uiState.isLoading && uiState.artist == null -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        ContainedLoadingIndicator()
+                        com.aro.music.presentation.components.SongRowsSkeleton()
                     }
                 }
                 uiState.error != null && uiState.artist == null -> {

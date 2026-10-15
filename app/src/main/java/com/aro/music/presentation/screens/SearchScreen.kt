@@ -188,6 +188,7 @@ fun SearchScreen(
     LaunchedEffect(searchQuery, currentFilter) {
         playerViewModel.performSearch(searchQuery)
     }
+    val isSearching by playerViewModel.isSearching.collectAsStateWithLifecycle()
     val searchResults = searchUiState.searchResults
     val searchSuggestions by playerViewModel.searchSuggestions.collectAsStateWithLifecycle()
     val handleSongMoreOptionsClick: (Song) -> Unit = { song ->
@@ -405,7 +406,9 @@ fun SearchScreen(
                                 // YouTube Music suggestions for what is typed —
                                 // the same assist Meld's search box gives. Tapping
                                 // one runs that query.
-                                if (searchSuggestions.isNotEmpty() && searchQuery.isNotBlank()) {
+                                if (isSearching) {
+                                    com.aro.music.presentation.components.SongRowsSkeleton()
+                                } else if (searchSuggestions.isNotEmpty() && searchQuery.isNotBlank()) {
                                     SearchSuggestionsList(
                                         suggestions = searchSuggestions,
                                         onSuggestionClick = { suggestion ->
