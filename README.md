@@ -81,7 +81,7 @@ Library metadata, preferences, listening history, and playlist caches are stored
 
 ## License and release status
 
-The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved. The maintainer authorized a development prerelease while compatible distribution rights remain undocumented; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
+The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved. The maintainer authorized publication, including the regular 1.0.2 GitHub release, while compatible distribution rights remain undocumented; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
 
 ## Credits
 
