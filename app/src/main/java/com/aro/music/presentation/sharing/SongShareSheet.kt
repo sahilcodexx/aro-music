@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val shareTitle = stringResource(R.string.share_song_action)
     val scheme = MaterialTheme.colorScheme
     val fallback = remember(scheme) { SongShareCard.Colors(scheme.secondaryContainer.toArgb(), scheme.onSecondaryContainer.toArgb(), scheme.primary.toArgb(), scheme.onPrimary.toArgb()) }
     var artwork by remember(song.id) { mutableStateOf<Bitmap?>(null) }
@@ -76,7 +77,7 @@ fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
                 sharing = true
                 try {
                     val file = withContext(Dispatchers.IO) { SongShareCard.writePng(context, ready) }
-                    context.startActivity(Intent.createChooser(SongShareCard.intent(context, file), context.getString(R.string.share_song_action)))
+                    context.startActivity(Intent.createChooser(SongShareCard.intent(context, file), shareTitle))
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
                     Toast.makeText(context, R.string.share_song_failed, Toast.LENGTH_LONG).show()

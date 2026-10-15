@@ -1,6 +1,6 @@
 # Aro changelog
 
-## 1.0.2 — 2026-10-15
+## 1.0.2 — 2026-10-16
 
 - Release preparation now stages clearly named smaller ARM64/ARMv7 standalone APKs alongside universal, with a download-choice table and checksums.
 

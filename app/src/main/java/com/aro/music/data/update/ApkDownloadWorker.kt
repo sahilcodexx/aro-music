@@ -50,6 +50,7 @@ class ApkDownloadWorker(context: Context, parameters: WorkerParameters) : Corout
         catch (_: Exception) { Result.failure() }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun foreground(): ForegroundInfo {
         val context = applicationContext
         val manager = context.getSystemService(NotificationManager::class.java)
