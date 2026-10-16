@@ -68,9 +68,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf // Added
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -113,8 +117,8 @@ import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SurroundSound
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.material.icons.rounded.Check // Added import for Switch check icon
 import androidx.media3.common.util.UnstableApi
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -149,7 +153,6 @@ import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.automirrored.rounded.ViewQuilt
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -666,7 +669,8 @@ private fun BandSlidersSection(
                     )
                 }
                 EqualizerViewMode.SLIDERS -> {
-                    val pagerState = rememberPagerState(pageCount = { 2 })
+                    val pagerState = rememberPagerState(pageCount = { maxOf(1, (bandLevels.size + 4) / 5) })
+                    val pagerScope = rememberCoroutineScope()
 
                     HorizontalPager(
                         state = pagerState,
@@ -695,22 +699,24 @@ private fun BandSlidersSection(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Page Indicator
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(pagerState.pageCount) { iteration ->
-                             val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest
-                            Box(
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .clip(CircleShape)
-                                    .background(color)
-                                    .size(if (pagerState.currentPage == iteration) 10.dp else 8.dp)
-                            )
+                    if (pagerState.pageCount > 1) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            repeat(pagerState.pageCount) { page ->
+                                val pageDescription = stringResource(R.string.equalizer_band_page, page + 1, pagerState.pageCount)
+                                IconButton(
+                                    onClick = { pagerScope.launch { pagerState.animateScrollToPage(page) } },
+                                    modifier = Modifier.semantics {
+                                        contentDescription = pageDescription
+                                        selected = pagerState.currentPage == page
+                                    }
+                                ) {
+                                    Box(Modifier.size(if (pagerState.currentPage == page) 10.dp else 8.dp)
+                                        .clip(CircleShape).background(
+                                            if (pagerState.currentPage == page) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                                        ))
+                                }
+                            }
                         }
                     }
                 }
@@ -947,7 +953,7 @@ private fun CustomVerticalSlider(
 ) {
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
-    val view = LocalView.current
+    val updateValue by rememberUpdatedState(onValueChange)
     val thumbSizePx = with(density) { thumbSize.toPx() }
     val thumbRadiusPx = thumbSizePx / 2
     
@@ -1005,54 +1011,47 @@ private fun CustomVerticalSlider(
         // thumb Y position (center)
         val thumbCenterY = heightPx - verticalPaddingPx - thumbRadiusPx - (displayNormalizedValue * safeTrackHeight)
         
+        fun dispatchValue(touchY: Float, forceHaptic: Boolean = false) {
+            val trackTopY = verticalPaddingPx + thumbRadiusPx
+            val relativeY = (touchY - trackTopY).coerceIn(0f, safeTrackHeight)
+            val newNormalized = 1f - (relativeY / safeTrackHeight)
+            dragNormalizedValue = newNormalized
+            val newValue = valueRange.start + newNormalized * (valueRange.endInclusive - valueRange.start)
+            updateValue(newValue)
+
+            val newInt = newValue.roundToInt()
+            if (forceHaptic || newInt != lastHapticValue) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                lastHapticValue = newInt
+            }
+        }
+
         androidx.compose.foundation.Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(50))
                 .pointerInput(enabled, valueRange.start, valueRange.endInclusive, safeTrackHeight, heightPx) {
                     if (!enabled) return@pointerInput
-                    fun dispatchValue(touchY: Float, forceHaptic: Boolean = false) {
-                        val trackTopY = verticalPaddingPx + thumbRadiusPx
-                        val relativeY = (touchY - trackTopY).coerceIn(0f, safeTrackHeight)
-                        val newNormalized = 1f - (relativeY / safeTrackHeight)
-                        dragNormalizedValue = newNormalized
-                        val newValue = valueRange.start + newNormalized * (valueRange.endInclusive - valueRange.start)
-                        onValueChange(newValue)
-
-                        val newInt = newValue.roundToInt()
-                        if (forceHaptic || newInt != lastHapticValue) {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            lastHapticValue = newInt
+                    detectTapGestures { position -> dispatchValue(position.y, forceHaptic = true) }
+                }
+                .pointerInput(enabled, valueRange.start, valueRange.endInclusive, safeTrackHeight, heightPx) {
+                    if (!enabled) return@pointerInput
+                    // Wait for a vertical drag before consuming movement; horizontal swipes
+                    // belong to the surrounding band pager and must not change gain.
+                    try {
+                        detectVerticalDragGestures(
+                            onDragStart = { position ->
+                                isInteracting = true
+                                dispatchValue(position.y, forceHaptic = true)
+                            },
+                            onDragEnd = { isInteracting = false },
+                            onDragCancel = { isInteracting = false }
+                        ) { change, _ ->
+                            change.consume()
+                            dispatchValue(change.position.y)
                         }
-                    }
-
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        view.parent?.requestDisallowInterceptTouchEvent(true)
-                        isInteracting = true
-                        down.consume()
-                        dispatchValue(down.position.y, forceHaptic = true)
-
-                        var activePointerId = down.id
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val pointerChange = event.changes.firstOrNull { it.id == activePointerId }
-                                ?: event.changes.firstOrNull { it.pressed }?.also { activePointerId = it.id }
-                                ?: break
-
-                            if (!pointerChange.pressed) {
-                                pointerChange.consume()
-                                break
-                            }
-
-                            if (pointerChange.position.y != pointerChange.previousPosition.y) {
-                                pointerChange.consume()
-                                dispatchValue(pointerChange.position.y)
-                            }
-                        }
-
+                    } finally {
                         isInteracting = false
-                        view.parent?.requestDisallowInterceptTouchEvent(false)
                     }
                 }
         ) {
