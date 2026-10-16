@@ -2,6 +2,7 @@ package com.aro.music.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -40,6 +42,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import com.aro.music.R
 import com.aro.music.data.model.Lyrics
 import androidx.compose.material.icons.rounded.Tune
@@ -113,39 +119,49 @@ fun LyricsFloatingToolbar(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        Row(
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.7f), CircleShape)
         ) {
-            ToggleSegmentButton(
-                modifier = Modifier.weight(1f).height(50.dp),
-                active = showSyncedLyrics,
-                enabled = hasSyncedLyrics,
-                activeColor = accentColor,
-                inactiveColor = backgroundColor,
-                activeContentColor = onAccentColor,
-                inactiveContentColor = onBackgroundColor,
-                activeCornerRadius = 50.dp,
-                onClick = { onShowSyncedLyricsChange(true) },
-                text = stringResource(R.string.presentation_batch_g_lyrics_mode_synced)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(6.dp).clip(CircleShape).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ToggleSegmentButton(
+                    modifier = Modifier.weight(1f).height(50.dp).semantics {
+                        selected = showSyncedLyrics
+                        role = Role.RadioButton
+                    },
+                    active = showSyncedLyrics,
+                    enabled = hasSyncedLyrics,
+                    activeColor = accentColor,
+                    inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
+                    activeContentColor = onAccentColor,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurface,
+                    activeCornerRadius = 60.dp,
+                    onClick = { onShowSyncedLyricsChange(true) },
+                    text = stringResource(R.string.presentation_batch_g_lyrics_mode_synced)
+                )
 
-            ToggleSegmentButton(
-                modifier = Modifier.weight(1f).height(50.dp),
-                active = !showSyncedLyrics,
-                enabled = true,
-                activeColor = accentColor,
-                inactiveColor = backgroundColor,
-                activeContentColor = onAccentColor,
-                inactiveContentColor = onBackgroundColor,
-                activeCornerRadius = 50.dp,
-                onClick = { onShowSyncedLyricsChange(false) },
-                text = stringResource(R.string.presentation_batch_g_lyrics_mode_static)
-            )
+                ToggleSegmentButton(
+                    modifier = Modifier.weight(1f).height(50.dp).semantics {
+                        selected = !showSyncedLyrics
+                        role = Role.RadioButton
+                    },
+                    active = !showSyncedLyrics,
+                    enabled = true,
+                    activeColor = accentColor,
+                    inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
+                    activeContentColor = onAccentColor,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurface,
+                    activeCornerRadius = 60.dp,
+                    onClick = { onShowSyncedLyricsChange(false) },
+                    text = stringResource(R.string.presentation_batch_g_lyrics_mode_static)
+                )
+            }
         }
-        
         Spacer(modifier = Modifier.width(8.dp))
 
         IconButton(
