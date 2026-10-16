@@ -51,6 +51,8 @@ data class PlaylistUiState(
     val currentPlaylistDetails: Playlist? = null,
     val isLoading: Boolean = false,
     val playlistNotFound: Boolean = false,
+    val isUpdatingArtwork: Boolean = false,
+    val artworkUpdateFailed: Boolean = false,
 
     //Sort option
     val currentPlaylistSortOption: SortOption = SortOption.PlaylistNameAZ,
@@ -83,6 +85,7 @@ class PlaylistViewModel @Inject constructor(
     private val aiPlaylistGenerator: AiPlaylistGenerator,
     private val m3uManager: M3uManager,
     private val spotifyRepository: com.aro.music.spotify.SpotifyRepository,
+    private val artworkPreferences: com.aro.music.data.preferences.PlaylistArtworkPreferences,
     private val playlistImporter: com.aro.music.data.playlist.PlaylistImportRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -171,12 +174,18 @@ class PlaylistViewModel @Inject constructor(
             // Then, collect playlists and apply the sort option
             kotlinx.coroutines.flow.combine(
                 playlistPreferencesRepository.userPlaylistsFlow,
-                spotifyRepository.libraryPlaylistsFlow
-            ) { local, spotify -> local + spotify }.collect { playlists ->
+                spotifyRepository.libraryPlaylistsFlow,
+                artworkPreferences.overridesFlow
+            ) { local, spotify, overrides ->
+                (local + spotify).map { artworkPreferences.apply(it, overrides) } to overrides
+            }.collect { (playlists, overrides) ->
                 val currentSortOption =
                     _uiState.value.currentPlaylistSortOption // Use the most up-to-date sort option
                 val sortedPlaylists = sortPlaylistsList(playlists, currentSortOption)
-                _uiState.update { it.copy(playlists = sortedPlaylists) }
+                _uiState.update { state ->
+                    state.copy(playlists = sortedPlaylists,
+                        currentPlaylistDetails = state.currentPlaylistDetails?.let { artworkPreferences.apply(it, overrides) })
+                }
             }
         }
         // Collect subsequent changes to sort option from preferences
@@ -234,8 +243,9 @@ class PlaylistViewModel @Inject constructor(
                     val persisted = hashSetOf<String>()
                     suspend fun show(result: com.aro.music.spotify.SpotifyRepository.ResolvedPlaylist, loading: Boolean) {
                         musicRepository.cacheCatalogSongs(result.songs.filter { persisted.add(it.id) })
+                        val displayPlaylist = artworkPreferences.apply(result.playlist, artworkPreferences.overridesFlow.first())
                         _uiState.update {
-                            it.copy(currentPlaylistDetails = result.playlist,
+                            it.copy(currentPlaylistDetails = displayPlaylist,
                                 currentPlaylistSongs = if (orderMode is PlaylistSongsOrderMode.Sorted) applySortToSongs(result.songs, orderMode.option) else result.songs,
                                 playlistSongsOrderMode = orderMode, isLoading = loading, playlistNotFound = false)
                         }
@@ -639,6 +649,44 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
+    fun clearArtworkUpdateError() {
+        _uiState.update { it.copy(artworkUpdateFailed = false) }
+    }
+
+    fun updatePlaylistArtwork(playlistId: String, uri: Uri?) {
+        val playlist = _uiState.value.currentPlaylistDetails ?: return
+        if (playlist.id != playlistId || isFolderPlaylistId(playlistId) || _uiState.value.isUpdatingArtwork) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUpdatingArtwork = true, artworkUpdateFailed = false) }
+            try {
+                val savedPath = uri?.let {
+                    saveCoverImageToInternalStorage(it, UUID.randomUUID().toString(), 1f, 0f, 0f)
+                        ?: throw IOException("Unable to save playlist artwork")
+                }
+                if (playlistId.startsWith("spotify:")) {
+                    artworkPreferences.set(playlistId, savedPath)
+                } else {
+                    // Change only artwork; never replace playlist membership or overwrite a rename.
+                    playlistPreferencesRepository.updatePlaylistArtwork(playlistId, savedPath)
+                }
+                _uiState.update { state ->
+                    state.copy(
+                        currentPlaylistDetails = state.currentPlaylistDetails?.let {
+                            if (it.id == playlistId) it.copy(coverImageUri = savedPath) else it
+                        },
+                        playlists = state.playlists.map { if (it.id == playlistId) it.copy(coverImageUri = savedPath) else it }
+                    )
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.update { it.copy(artworkUpdateFailed = true) }
+            } finally {
+                _uiState.update { it.copy(isUpdatingArtwork = false) }
+            }
+        }
+    }
+
     fun updatePlaylistParameters(
         playlistId: String,
         name: String,
@@ -725,7 +773,11 @@ class PlaylistViewModel @Inject constructor(
                 it.copy(currentPlaylistDetails = updatedPlaylist)
             }
 
-            playlistPreferencesRepository.updatePlaylist(updatedPlaylist)
+            if (playlistId.startsWith("spotify:")) {
+                if (coverImageUri != currentPlaylist.coverImageUri) artworkPreferences.set(playlistId, savedCoverPath)
+            } else {
+                playlistPreferencesRepository.updatePlaylist(updatedPlaylist)
+            }
         }
     }
 

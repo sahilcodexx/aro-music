@@ -24,6 +24,9 @@ interface LocalPlaylistDao {
     @Query("SELECT * FROM playlists WHERE id = :playlistId LIMIT 1")
     suspend fun getPlaylistById(playlistId: String): PlaylistEntity?
 
+    @Query("UPDATE playlists SET cover_image_uri = :coverImageUri, last_modified = :lastModified WHERE id = :playlistId")
+    suspend fun updatePlaylistArtwork(playlistId: String, coverImageUri: String?, lastModified: Long): Int
+
     @Query("SELECT COUNT(*) FROM playlists")
     suspend fun getPlaylistCount(): Int
 

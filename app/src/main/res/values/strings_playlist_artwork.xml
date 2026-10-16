@@ -1,0 +1,8 @@
+<resources>
+    <string translatable="false" name="playlist_change_artwork">Change artwork</string>
+    <string translatable="false" name="playlist_choose_image">Choose image</string>
+    <string translatable="false" name="playlist_use_first_song_art">Use first song art</string>
+    <string translatable="false" name="playlist_artwork_help">Choose a custom cover or use the first song’s artwork. This changes the cover in Aro only.</string>
+    <string translatable="false" name="playlist_cover_description">Cover for %1$s</string>
+    <string translatable="false" name="playlist_artwork_failed">Could not save that image. Your previous cover was kept. Try another image.</string>
+</resources>

@@ -101,6 +101,13 @@ class PlaylistPreferencesRepository @Inject constructor(
         localPlaylistDao.upsertPlaylist(updated.toEntity())
     }
 
+    suspend fun updatePlaylistArtwork(playlistId: String, coverImageUri: String?) {
+        ensureMigratedIfNeeded()
+        check(localPlaylistDao.updatePlaylistArtwork(playlistId, coverImageUri, System.currentTimeMillis()) == 1) {
+            "Playlist no longer exists"
+        }
+    }
+
     suspend fun updatePlaylist(playlist: Playlist) {
         ensureMigratedIfNeeded()
         val updated = playlist.copy(lastModified = System.currentTimeMillis())
