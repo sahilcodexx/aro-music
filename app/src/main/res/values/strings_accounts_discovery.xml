@@ -1,0 +1,6 @@
+<resources>
+    <string name="cloud_spotify_connected" translatable="false">Connected · Open playlists and liked songs</string>
+    <string name="cloud_spotify_connect" translatable="false">Connect for playlists and liked songs</string>
+    <string name="accounts_connect_more_title" translatable="false">Connect another service</string>
+    <string name="accounts_connect_more_body" translatable="false">Your linked accounts stay connected. Choose another provider below to add an account.</string>
+</resources>

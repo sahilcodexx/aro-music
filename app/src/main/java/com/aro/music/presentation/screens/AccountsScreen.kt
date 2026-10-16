@@ -92,6 +92,7 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 @Composable
 fun AccountsScreen(
     onBackClick: () -> Unit,
+    onOpenSpotifyLibrary: () -> Unit = {},
     onOpenNeteaseDashboard: () -> Unit = {},
     onOpenQqMusicDashboard: () -> Unit = {},
     onOpenNavidromeDashboard: () -> Unit = {},
@@ -204,7 +205,8 @@ fun AccountsScreen(
                     ConnectedAccountCard(
                         account = account,
                         onManage = {
-                            openService(
+                            if (account.service == ExternalServiceAccount.SPOTIFY) onOpenSpotifyLibrary()
+                            else openService(
                                 context = context,
                                 service = account.service,
                                 onOpenNeteaseDashboard = onOpenNeteaseDashboard,
@@ -225,12 +227,16 @@ fun AccountsScreen(
                             painterResource(R.drawable.ic_jellyfin)
                         } else if (account.service == ExternalServiceAccount.NAVIDROME) {
                             painterResource(R.drawable.ic_navidrome_md3)
+                        } else if (account.service == ExternalServiceAccount.SPOTIFY) {
+                            painterResource(R.drawable.ic_spotify)
                         } else null
                     )
                 }
-            } else {
+            }
+            if (uiState.disconnectedServices.isNotEmpty()) {
                 item {
-                    EmptyAccountsCard(
+                    AvailableAccountsCard(
+                        hasConnectedAccounts = uiState.connectedAccounts.isNotEmpty(),
                         disconnectedServices = uiState.disconnectedServices,
                         onConnect = { service ->
                             openService(
@@ -301,7 +307,7 @@ private fun AccountsHeroSection(
                 )
                 HeroStatTile(
                     title = statAvailable,
-                    value = (connectedCount + disconnectedCount).toString(),
+                    value = disconnectedCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -523,12 +529,13 @@ private fun ConnectedAccountCard(
 }
 
 @Composable
-private fun EmptyAccountsCard(
+private fun AvailableAccountsCard(
+    hasConnectedAccounts: Boolean,
     disconnectedServices: List<ExternalServiceAccount>,
     onConnect: (ExternalServiceAccount) -> Unit
 ) {
-    val noLinkedTitle = stringResource(R.string.presentation_batch_b_accounts_no_linked_title)
-    val noLinkedBody = stringResource(R.string.presentation_batch_b_accounts_no_linked_body)
+    val noLinkedTitle = stringResource(if (hasConnectedAccounts) R.string.accounts_connect_more_title else R.string.presentation_batch_b_accounts_no_linked_title)
+    val noLinkedBody = stringResource(if (hasConnectedAccounts) R.string.accounts_connect_more_body else R.string.presentation_batch_b_accounts_no_linked_body)
     val connectTemplate = stringResource(R.string.presentation_batch_b_accounts_connect_service)
     val serviceSoonTemplate = stringResource(R.string.presentation_batch_b_accounts_service_paren_coming_soon)
     Card(

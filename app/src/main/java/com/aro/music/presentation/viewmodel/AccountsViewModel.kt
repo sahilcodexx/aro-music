@@ -257,7 +257,7 @@ class AccountsViewModel @Inject constructor(
         val disconnectedServices = buildList {
             if (!spotifyConnected) add(ExternalServiceAccount.SPOTIFY)
             if (!telegramConnected) add(ExternalServiceAccount.TELEGRAM)
-            if (!gDriveConnected) add(ExternalServiceAccount.GOOGLE_DRIVE)
+            // Drive connection is unavailable; retain legacy linked-account management only.
             if (!neteaseConnected) add(ExternalServiceAccount.NETEASE)
             if (!qqConnected) add(ExternalServiceAccount.QQ_MUSIC)
             if (!navidromeConnected) add(ExternalServiceAccount.NAVIDROME)

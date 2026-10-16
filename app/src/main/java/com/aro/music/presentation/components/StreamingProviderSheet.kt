@@ -3,6 +3,8 @@ package com.aro.music.presentation.components
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +43,9 @@ import com.aro.music.ui.theme.GoogleSansRounded
 @Composable
 fun StreamingProviderSheet(
     onDismissRequest: () -> Unit,
+    isSpotifyLoggedIn: Boolean = false,
+    onNavigateToSpotifyLibrary: () -> Unit = {},
+    isTelegramLoggedIn: Boolean = false,
     isNeteaseLoggedIn: Boolean = false,
     onNavigateToNeteaseDashboard: () -> Unit = {},
     isQqMusicLoggedIn: Boolean = false,
@@ -68,6 +73,7 @@ fun StreamingProviderSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState())
                 .padding(bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -105,25 +111,30 @@ fun StreamingProviderSheet(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     ProviderRow(
-                        iconPainter = painterResource(R.drawable.telegram),
-                        iconTint = Color(0xFF2AABEE),
-                        title = "Telegram",
-                        subtitle = "Stream from channels & chats",
+                        iconPainter = painterResource(R.drawable.ic_spotify),
+                        iconTint = Color(0xFF1DB954),
+                        title = "Spotify",
+                        subtitle = stringResource(if (isSpotifyLoggedIn) R.string.cloud_spotify_connected else R.string.cloud_spotify_connect),
                         shape = providerSegmentItemShape,
+                        isConnected = isSpotifyLoggedIn,
                         onClick = {
-                            context.startActivity(Intent(context, TelegramLoginActivity::class.java))
+                            if (isSpotifyLoggedIn) onNavigateToSpotifyLibrary()
+                            else context.startActivity(Intent(context, com.aro.music.spotify.SpotifyConnectActivity::class.java))
                             onDismissRequest()
                         }
                     )
 
                     ProviderRow(
-                        iconPainter = painterResource(R.drawable.rounded_drive_export_24),
-                        iconTint = Color(0xFF4285F4),
-                        title = "Google Drive",
-                        subtitle = "Coming soon",
+                        iconPainter = painterResource(R.drawable.telegram),
+                        iconTint = Color(0xFF2AABEE),
+                        title = "Telegram",
+                        subtitle = if (isTelegramLoggedIn) "Connected · Channels & chats" else "Stream from channels & chats",
+                        isConnected = isTelegramLoggedIn,
                         shape = providerSegmentItemShape,
-                        enabled = false,
-                        onClick = { }
+                        onClick = {
+                            context.startActivity(Intent(context, TelegramLoginActivity::class.java))
+                            onDismissRequest()
+                        }
                     )
 
                     ProviderRow(
