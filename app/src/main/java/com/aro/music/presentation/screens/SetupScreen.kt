@@ -33,6 +33,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -284,7 +285,7 @@ fun SetupScreen(
                 pagerState = pagerState,
                 animated = (pagerState.currentPage != 0),
                 isNextButtonEnabled = isNextButtonEnabled,
-                isFinishButtonEnabled = uiState.allPermissionsGranted,
+                isFinishButtonEnabled = allRequiredPermissionsGrantedNow(context),
                 onNextClicked = {
                     val page = pages[pagerState.currentPage]
                     if (isPermissionGateSatisfied(context, page, uiState)) {
@@ -384,7 +385,7 @@ fun SetupScreen(
                         uiState = uiState,
                         onModeSelected = setupViewModel::setAppThemeMode
                     )
-                    SetupPage.Finish -> FinishPage()
+                    SetupPage.Finish -> FinishPage(uiState)
                     SetupPage.LibraryLayout -> LibraryLayoutPage(
                         uiState = uiState,
                         onModeSelected = setupViewModel::setLibraryNavigationMode,
@@ -552,8 +553,7 @@ sealed class SetupPage {
 
 private fun buildSetupPages(sdkInt: Int): List<SetupPage> {
     val pages = mutableListOf<SetupPage>(
-        SetupPage.Welcome,
-        SetupPage.MediaPermission
+        SetupPage.Welcome
     )
 
     if (sdkInt >= Build.VERSION_CODES.TIRAMISU) {
@@ -561,7 +561,6 @@ private fun buildSetupPages(sdkInt: Int): List<SetupPage> {
     }
 
     pages += SetupPage.BackupRestore
-    pages += SetupPage.DirectorySelection
     pages += SetupPage.ThemeSelection
     pages += SetupPage.LibraryLayout
     pages += SetupPage.NavBarLayout
@@ -610,14 +609,13 @@ private fun isPermissionGateSatisfied(
 }
 
 private fun allRequiredPermissionsGrantedNow(context: Context): Boolean {
-    val mediaGranted = hasMediaPermissionNow(context)
     val notificationsGranted =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
-    return mediaGranted && notificationsGranted
+    return notificationsGranted
 }
 
 private fun hasMediaPermissionNow(context: Context): Boolean {
@@ -642,118 +640,21 @@ private fun isIgnoringBatteryOptimizationsNow(context: Context): Boolean {
 
 @Composable
 fun WelcomePage() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    SetupPageFrame(
+        title = stringResource(R.string.setup_design_welcome_title),
+        description = stringResource(R.string.setup_design_welcome_body),
+        iconRes = R.drawable.aro_base_monochrome
     ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.setup_welcome_prefix),
-                style = ExpTitleTypography.displayLarge.copy(
-                    fontSize = 42.sp,
-                    lineHeight = 1.1.em
-                ),
-            )
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.displayLarge.copy(
-                    fontFamily = GoogleSansRounded,
-                    fontSize = 46.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    lineHeight = 1.1.em
-                ),
-            )
+        SetupInfoPanel {
+            SetupInfoRow(R.drawable.rounded_settings_24,
+                stringResource(R.string.setup_design_look_title), stringResource(R.string.setup_design_look_body))
+            SetupInfoRow(R.drawable.rounded_library_music_24,
+                stringResource(R.string.setup_design_library_title), stringResource(R.string.setup_design_library_body))
+            SetupInfoRow(R.drawable.rounded_play_arrow_24,
+                stringResource(R.string.setup_design_playback_title), stringResource(R.string.setup_design_playback_body))
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 2.dp,
-            shadowElevation = 0.dp
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.setup_beta_symbol),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = stringResource(R.string.setup_beta_label),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        // Placeholder for vector art
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                //.background(color = Color.Red)
-                .clip(RoundedCornerShape(20.dp))
-        ){
-            MaterialYouVectorDrawable(
-                modifier = Modifier.fillMaxSize(),
-                drawableResId = R.drawable.welcome_art
-            )
-            SineWaveLine(
-                modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .height(32.dp)
-                .padding(horizontal = 8.dp)
-                .padding(bottom = 4.dp),
-                animate = true,
-                color = MaterialTheme.colorScheme.surface,
-                alpha = 0.95f,
-                strokeWidth = 16.dp,
-                amplitude = 4.dp,
-                waves = 7.6f,
-                phase = 0f
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .height(22.dp)
-                    .background(color = MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 8.dp)
-                    .padding(bottom = 4.dp)
-            ){
-
-            }
-            SineWaveLine(
-                modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .height(32.dp)
-                .padding(horizontal = 8.dp)
-                .padding(bottom = 4.dp),
-                animate = true,
-                color = MaterialTheme.colorScheme.primary, //Container.copy(alpha = 0.9f),
-                alpha = 0.95f,
-                strokeWidth = 4.dp,
-                amplitude = 4.dp,
-                waves = 7.6f,
-                phase = 0f
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = stringResource(R.string.setup_intro_body), style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.setup_design_change_later), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -830,6 +731,7 @@ fun NotificationsPermissionPage(
         buttonText = if (isGranted) stringResource(R.string.setup_permission_granted) else stringResource(R.string.setup_enable_notifications),
         buttonEnabled = !isGranted,
         icons = notificationIcons,
+        preview = { SetupPlaybackPreview() },
         onGrantClicked = {
             if (!isGranted) {
                 permissionState.launchMultiplePermissionRequest()
@@ -863,6 +765,10 @@ fun AlarmsPermissionPage(
         buttonText = if (isGranted) stringResource(R.string.setup_permission_granted) else stringResource(R.string.setup_grant_permission_generic),
         buttonEnabled = !isGranted,
         icons = icons,
+        preview = { SetupInfoPanel {
+                SetupInfoRow(R.drawable.rounded_timer_24, stringResource(R.string.setup_design_timer_title),
+                    stringResource(R.string.setup_design_timer_body))
+            } },
         onGrantClicked = {
             if (!isGranted) {
                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
@@ -906,6 +812,10 @@ fun BackupRestorePage(
             R.drawable.rounded_lyrics_24,
             R.drawable.rounded_monitoring_24
         ),
+        preview = { SetupInfoPanel {
+                SetupInfoRow(R.drawable.rounded_upload_file_24, stringResource(R.string.setup_design_backup_title),
+                    stringResource(R.string.setup_design_backup_body))
+            } },
         onGrantClicked = onImportClicked
     ) {
         AnimatedVisibility(
@@ -1001,54 +911,18 @@ fun ThemeSelectionPage(
         )
     )
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
+    SetupPageFrame(
+        title = stringResource(R.string.setup_theme_title),
+        description = stringResource(R.string.setup_theme_subtitle),
+        iconRes = R.drawable.rounded_settings_24
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.setup_theme_title),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = GoogleSansRounded,
-                    fontSize = 32.sp
-                ),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.setup_theme_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             themeOptions.forEach { option ->
-                ThemeModeOptionCard(
-                    option = option,
-                    selected = uiState.appThemeMode == option.mode,
-                    onClick = { onModeSelected(option.mode) }
-                )
+                ThemeModeOptionCard(option, uiState.appThemeMode == option.mode) { onModeSelected(option.mode) }
             }
-
-            Text(
-                text = stringResource(R.string.setup_theme_footer),
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            )
         }
+        Text(stringResource(R.string.setup_theme_footer), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -1059,120 +933,7 @@ private fun ThemeModeOptionCard(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-            } else {
-                MaterialTheme.colorScheme.surfaceContainer
-            }
-        ),
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Surface(
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.secondaryContainer
-                },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.size(46.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = option.icon,
-                        contentDescription = null,
-                        tint = if (selected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        }
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = option.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (option.recommended) {
-                    Surface(
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.primaryContainer
-                        },
-                        contentColor = if (selected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        },
-                        shape = RoundedCornerShape(999.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.setup_recommended),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                        )
-                    }
-                }
-                Text(
-                    text = option.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Surface(
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest
-                },
-                contentColor = if (selected) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                shape = CircleShape
-            ) {
-                Box(
-                    modifier = Modifier.size(28.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (selected) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f))
-                        )
-                    }
-                }
-            }
-        }
-    }
+    SetupChoiceRow(option.title, option.description, selected, onClick, option.icon)
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -1183,261 +944,49 @@ fun LibraryLayoutPage(
     onSkip: () -> Unit
 ) {
     val isCompact = uiState.libraryNavigationMode == "compact_pill"
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
+    SetupPageFrame(
+        title = stringResource(R.string.setup_library_layout_title),
+        description = stringResource(R.string.setup_library_layout_subtitle),
+        iconRes = R.drawable.rounded_library_music_24
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            //modifier = Modifier.padding(top = 24.dp)
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.setup_library_layout_title),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = GoogleSansRounded,
-                    fontSize = 32.sp
-                ),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.setup_library_layout_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        SetupInfoPanel {
+            Text(stringResource(R.string.setup_design_preview), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LibraryHeaderPreview(isCompact)
         }
-
-        // Preview Section
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            LibraryHeaderPreview(isCompact = isCompact)
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SetupChoiceRow(stringResource(R.string.setup_design_compact_title),
+                stringResource(R.string.setup_compact_mode_pill_hint), isCompact,
+                { onModeSelected("compact_pill") })
+            SetupChoiceRow(stringResource(R.string.setup_design_tabs_title),
+                stringResource(R.string.setup_compact_mode_tab_hint), !isCompact,
+                { onModeSelected("tab_row") })
         }
-        
-        // Controls Section
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                shape = RoundedCornerShape(24.dp),
-                onClick = { onModeSelected(if (isCompact) "tab_row" else "compact_pill") }
-            ) {
-                Row(
-                   modifier = Modifier
-                       .padding(horizontal = 20.dp, vertical = 16.dp)
-                       .fillMaxWidth(),
-                   verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.setup_compact_mode),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (isCompact) stringResource(R.string.setup_compact_mode_pill_hint) else stringResource(R.string.setup_compact_mode_tab_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = isCompact,
-                        onCheckedChange = { checked ->
-                            onModeSelected(if (checked) "compact_pill" else "tab_row")
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = stringResource(R.string.setup_library_layout_footer),
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+        Text(stringResource(R.string.setup_library_layout_footer), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 fun LibraryHeaderPreview(isCompact: Boolean) {
-    val gradientColors = listOf(
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-        Color.Transparent
-    )
-    
-    Card(
-        shape = RoundedCornerShape(
-            topStart = 24.dp,
-            topEnd = 24.dp,
-            bottomStart = 0.dp,
-            bottomEnd = 0.dp
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        //elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .background(Brush.verticalGradient(gradientColors))
-        ) {
-            AnimatedContent(
-                targetState = isCompact,
-                transitionSpec = {
-                    (fadeIn(animationSpec = tween(400)) + scaleIn(initialScale = 0.95f))
-                        .togetherWith(fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.95f))
-                },
-                label = "HeaderPreviewAnim"
-            ) { compact ->
-                if (compact) {
-                    // Compact Mode Preview
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Row(
-                            modifier = Modifier
-                                .padding(top = 24.dp, start = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            LibraryNavigationPillSetupShow(
-                                title = stringResource(R.string.setup_preview_songs_label),
-                                isExpanded = false,
-                                iconRes = R.drawable.rounded_music_note_24,
-                                pageIndex = 0,
-                                onClick = {},
-                                onArrowClick = {}
-                            )
-                        }
-                    }
-                } else {
-                    // Standard Mode Preview
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 24.dp, start = 20.dp, end = 20.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.tab_library),
-                            fontFamily = GoogleSansRounded,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 40.sp,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier.background(
-                                        MaterialTheme.colorScheme.surfaceContainerLowest,
-                                        shape = CircleShape
-                                    )
-                                ) {
-                                    Text(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 14.dp),
-                                        text = stringResource(R.string.tab_songs),
-                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .width(20.dp)
-                                        .height(3.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.primary,
-                                            RoundedCornerShape(100)
-                                        )
-                                )
-                            }
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier.background(
-                                        MaterialTheme.colorScheme.surfaceContainerLowest,
-                                        shape = CircleShape
-                                    )
-                                ) {
-                                    Text(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 14.dp),
-                                        text = stringResource(R.string.tab_albums),
-                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .width(20.dp)
-                                        .height(3.dp)
-                                        .background(
-                                            Color.Transparent,
-                                            RoundedCornerShape(100)
-                                        )
-                                )
-                            }
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier.background(
-                                        MaterialTheme.colorScheme.surfaceContainerLowest,
-                                        shape = CircleShape
-                                    )
-                                ) {
-                                    Text(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 14.dp),
-                                        text = stringResource(R.string.tab_artists),
-                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .width(20.dp)
-                                        .height(3.dp)
-                                        .background(
-                                            Color.Transparent,
-                                            RoundedCornerShape(100)
-                                        )
-                                )
-                            }
-                        }
-                    }
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        if (isCompact) {
+            Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(10.dp))
+                Text(stringResource(R.string.setup_preview_songs_label), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f))
+                Icon(Icons.Rounded.KeyboardArrowDown, null)
+            }
+        } else {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(R.string.setup_preview_songs_label, R.string.setup_preview_albums_label,
+                    R.string.setup_preview_artists_label, R.string.setup_preview_playlists_label).forEachIndexed { index, label ->
+                    Text(stringResource(label), style = MaterialTheme.typography.labelMedium,
+                        color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                        modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -1486,6 +1035,10 @@ fun BatteryOptimizationPage(
         buttonText = if (isIgnoringBatteryOptimizations) stringResource(R.string.setup_permission_granted) else stringResource(R.string.setup_disable_battery_optimization),
         buttonEnabled = !isIgnoringBatteryOptimizations,
         icons = batteryIcons,
+        preview = { SetupInfoPanel {
+                SetupInfoRow(R.drawable.rounded_play_arrow_24, stringResource(R.string.setup_design_background_title),
+                    stringResource(R.string.setup_design_background_body))
+            } },
         onGrantClicked = {
             if (!isIgnoringBatteryOptimizations) {
                 try {
@@ -1514,30 +1067,26 @@ fun BatteryOptimizationPage(
 }
 
 @Composable
-fun FinishPage() {
-    val finishIcons = persistentListOf(
-        R.drawable.rounded_check_circle_24,
-        R.drawable.round_favorite_24,
-        R.drawable.rounded_celebration_24,
-        R.drawable.round_favorite_24,
-        R.drawable.rounded_explosion_24
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+fun FinishPage(uiState: SetupUiState) {
+    SetupPageFrame(
+        title = stringResource(R.string.setup_all_set_title),
+        description = stringResource(R.string.setup_all_set_body),
+        iconRes = R.drawable.rounded_check_circle_24
     ) {
-        Text(text = stringResource(R.string.setup_all_set_title), style = MaterialTheme.typography.headlineLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-        PermissionIconCollage(
-            modifier = Modifier.height(230.dp),
-            icons = finishIcons
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = stringResource(R.string.setup_all_set_body), style = MaterialTheme.typography.bodyLarge)
+        SetupInfoPanel {
+            SetupInfoRow(R.drawable.rounded_settings_24, stringResource(R.string.setup_theme_title),
+                stringResource(when (uiState.appThemeMode) {
+                    AppThemeMode.DARK -> R.string.setup_theme_dark_title
+                    AppThemeMode.LIGHT -> R.string.setup_theme_light_title
+                    else -> R.string.setup_theme_follow_title
+                }))
+            SetupInfoRow(R.drawable.rounded_library_music_24, stringResource(R.string.setup_library_layout_title),
+                stringResource(if (uiState.libraryNavigationMode == "compact_pill") R.string.setup_design_compact_title else R.string.setup_design_tabs_title))
+            SetupInfoRow(R.drawable.rounded_home_24, stringResource(R.string.setup_app_navigation_title),
+                stringResource(if (uiState.navBarStyle == "full_width") R.string.setup_design_full_width_title else R.string.setup_design_floating_title))
+        }
+        Text(stringResource(R.string.setup_design_finish_import), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -1550,74 +1099,25 @@ fun PermissionPageLayout(
     icons: ImmutableList<Int>,
     buttonEnabled: Boolean = true,
     onGrantClicked: () -> Unit,
+    preview: @Composable () -> Unit = {},
     content: @Composable () -> Unit = {}
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = GoogleSansRounded,
-                    fontSize = 32.sp
-                ),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
+    SetupPageFrame(title, description, icons.firstOrNull() ?: R.drawable.rounded_settings_24) {
+        preview()
+        Button(
+            onClick = onGrantClicked,
+            enabled = buttonEnabled,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
         ) {
-            PermissionIconCollage(
-                modifier = Modifier.height(220.dp),
-                icons = icons
-            )
-        }
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            content()
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onGrantClicked,
-                enabled = buttonEnabled,
-                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
-            ) {
-                AnimatedContent(targetState = granted, label = "ButtonAnim") { isGranted ->
-                    if (isGranted) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Check, null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(buttonText)
-                        }
-                    } else {
-                        Text(
-                            text = buttonText,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
+            if (granted) {
+                Icon(Icons.Rounded.Check, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(buttonText, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         }
+        content()
     }
 }
 
@@ -2212,240 +1712,54 @@ fun NavBarLayoutPage(
     onCustomizeRadius: () -> Unit,
     onSkip: () -> Unit
 ) {
-    val isDefault = uiState.navBarStyle != "full_width" // Default or null is default
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
+    val isDefault = uiState.navBarStyle != "full_width"
+    SetupPageFrame(
+        title = stringResource(R.string.setup_app_navigation_title),
+        description = stringResource(R.string.setup_app_navigation_subtitle),
+        iconRes = R.drawable.rounded_home_24
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.setup_app_navigation_title),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = GoogleSansRounded,
-                    fontSize = 32.sp
-                ),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.setup_app_navigation_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        SetupInfoPanel {
+            Text(stringResource(R.string.setup_design_preview), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            NavBarPreview(isDefault)
         }
-
-        // Preview Section
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            NavBarPreview(isDefault = isDefault)
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SetupChoiceRow(stringResource(R.string.setup_design_floating_title),
+                stringResource(R.string.setup_nav_floating_pill_description), isDefault,
+                { onModeSelected("default") })
+            SetupChoiceRow(stringResource(R.string.setup_design_full_width_title),
+                stringResource(R.string.setup_nav_full_width_description), !isDefault,
+                { onModeSelected("full_width") })
         }
-        
-        // Controls Section
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                shape = RoundedCornerShape(24.dp),
-                onClick = { onModeSelected(if (isDefault) "full_width" else "default") }
-            ) {
-                Column(
-                    modifier = Modifier
-                       .padding(horizontal = 20.dp, vertical = 16.dp)
-                       .fillMaxWidth()
-                ) {
-                    Row(
-                       modifier = Modifier.fillMaxWidth(),
-                       verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.setup_navbar_default_style),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (isDefault) stringResource(R.string.setup_nav_floating_pill_description) else stringResource(R.string.setup_nav_full_width_description),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = isDefault,
-                            onCheckedChange = { checked ->
-                                onModeSelected(if (checked) "default" else "full_width")
-                            }
-                        )
-                    }
-                    
-                    AnimatedVisibility(
-                        visible = true, // Always visible now
-                        enter =   androidx.compose.animation.expandVertically() + fadeIn(),
-                        exit = androidx.compose.animation.shrinkVertically() + fadeOut()
-                    ) {
-                         Column {
-                             Spacer(modifier = Modifier.height(16.dp))
-                             FilledTonalButton(
-                                 onClick = onCustomizeRadius,
-                                 modifier = Modifier.fillMaxWidth(),
-                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                 )
-                             ) {
-                                 Icon(Icons.Rounded.RoundedCorner, contentDescription = null, modifier = Modifier.size(18.dp))
-                                 Spacer(modifier = Modifier.width(8.dp))
-                                 Text(stringResource(R.string.customize_corner_radius))
-                             }
-                         }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = stringResource(R.string.setup_navbar_footer),
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
+        FilledTonalButton(onClick = onCustomizeRadius, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = RoundedCornerShape(16.dp)) {
+            Icon(Icons.Rounded.RoundedCorner, null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.customize_corner_radius))
         }
+        Text(stringResource(R.string.setup_navbar_footer), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 fun NavBarPreview(isDefault: Boolean) {
-    val gradientColors = listOf(
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f), // Lighter top
-        MaterialTheme.colorScheme.surfaceContainer, // Darker bottom
-    )
-    
-    // Simulate the bottom of a screen
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp) // Taller to show bottom part clearly
-            .padding(horizontal = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
+    Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = if (isDefault) 12.dp else 0.dp),
+            shape = if (isDefault) RoundedCornerShape(24.dp) else RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ) {
-            // Content placeholder
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                 // Fake content lines
-                 repeat(3) {
-                     Box(
-                         modifier = Modifier
-                             .fillMaxWidth(if(it==1) 0.7f else 1f)
-                             .height(12.dp)
-                             .clip(RoundedCornerShape(6.dp))
-                             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                     )
-                 }
-            }
-            
-            // Navbar
-            Box(
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
-                AnimatedContent(
-                    targetState = isDefault,
-                    transitionSpec = {
-                        (fadeIn(animationSpec = tween(400)) + slideInVertically { it })
-                            .togetherWith(fadeOut(animationSpec = tween(200)) + slideOutVertically { it })
-                    },
-                    label = "NavbarPreviewAnim"
-                ) { default ->
-                    if (default) {
-                        // Default Pill Style
-                         Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(80.dp),
-                            shape = AbsoluteSmoothCornerShape(
-                                cornerRadiusTL = 28.dp,
-                                cornerRadiusTR = 28.dp,
-                                cornerRadiusBL = 28.dp,
-                                cornerRadiusBR = 28.dp,
-                                smoothnessAsPercentTL = 60,
-                                smoothnessAsPercentTR = 60,
-                                smoothnessAsPercentBL = 60,
-                                smoothnessAsPercentBR = 60
-                            ),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            tonalElevation = 6.dp
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    } else {
-                        // Full Width Style
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            tonalElevation = 6.dp,
-                            // Simulated rounded top corners for preview if desired, or simplified
-                            shape = AbsoluteSmoothCornerShape(
-                                cornerRadiusTL = 28.dp, // Default preview radius
-                                smoothnessAsPercentTL = 60,
-                                cornerRadiusTR = 28.dp,
-                                smoothnessAsPercentTR = 60,
-                                cornerRadiusBL = 0.dp,
-                                smoothnessAsPercentBL = 60,
-                                cornerRadiusBR = 0.dp,
-                                smoothnessAsPercentBR = 60
-                            )
-                        ) {
-                             Row(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
+            Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                listOf(R.drawable.rounded_home_24 to R.string.setup_design_home,
+                    R.drawable.rounded_search_24 to R.string.setup_design_search,
+                    R.drawable.rounded_library_music_24 to R.string.setup_design_library).forEach { (icon, label) ->
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(painterResource(icon), null, modifier = Modifier.size(22.dp))
+                        Text(stringResource(label), style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
