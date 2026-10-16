@@ -89,7 +89,6 @@ import com.aro.music.presentation.components.HomeSongShelfPlaceholder
 import com.aro.music.presentation.components.HomeCatalogShelf
 import com.aro.music.presentation.viewmodel.HomeFeedViewModel
 import com.aro.music.data.model.Song
-import com.aro.music.presentation.components.BetaInfoBottomSheet
 import com.aro.music.presentation.netease.dashboard.NeteaseDashboardViewModel
 import com.aro.music.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
 import com.aro.music.presentation.navidrome.dashboard.NavidromeDashboardViewModel
@@ -264,11 +263,10 @@ fun HomeScreen(
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
 
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
+    var showBetaDetails by remember { mutableStateOf(false) }
     var showStatsBottomSheet by remember { mutableStateOf(false) }
-    var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    val betaSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     LocalContext.current
 
@@ -331,15 +329,13 @@ fun HomeScreen(
                     onMoreOptionsClick = {
                         showStatsBottomSheet = true
                     },
-                    onBetaClick = {
-                        showBetaInfoBottomSheet = true
-                    },
                     onTelegramClick = {
                          showStreamingProviderSheet = true
                     },
                     onMenuClick = {
                         // onOpenSidebar() // Disabled
                     },
+                    onBrandClick = { showBetaDetails = true },
                     isScrolled = isScrolledPastThreshold.value
                 )
             }
@@ -543,6 +539,12 @@ fun HomeScreen(
 
         }
     }
+    if (showBetaDetails) {
+        ModalBottomSheet(onDismissRequest = { showBetaDetails = false }) {
+            com.aro.music.presentation.components.BetaInfoBottomSheet()
+        }
+    }
+
     if (showOptionsBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { showOptionsBottomSheet = false },
@@ -574,22 +576,23 @@ fun HomeScreen(
             }
         }
     }
-    if (showBetaInfoBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showBetaInfoBottomSheet = false },
-            sheetState = betaSheetState,
-            //contentWindowInsets = { WindowInsets.statusBars.only(WindowInsets.statusBars) }
-        ) {
-            BetaInfoBottomSheet()
-        }
-    }
     if (showStreamingProviderSheet) {
+        val accountsViewModel: com.aro.music.presentation.viewmodel.AccountsViewModel = hiltViewModel()
+        val accounts by accountsViewModel.uiState.collectAsStateWithLifecycle()
+        val connected = accounts.connectedAccounts.map { it.service }.toSet()
         val isNeteaseLoggedIn by neteaseViewModel.isLoggedIn.collectAsStateWithLifecycle()
         val isQqMusicLoggedIn by qqMusicViewModel.isLoggedIn.collectAsStateWithLifecycle()
         val isNavidromeLoggedIn by navidromeViewModel.isLoggedIn.collectAsStateWithLifecycle()
         val isJellyfinLoggedIn by jellyfinViewModel.isLoggedIn.collectAsStateWithLifecycle()
         StreamingProviderSheet(
             onDismissRequest = { showStreamingProviderSheet = false },
+            isSpotifyLoggedIn = com.aro.music.presentation.viewmodel.ExternalServiceAccount.SPOTIFY in connected,
+            onNavigateToSpotifyLibrary = {
+                val index = playerViewModel.libraryTabsFlow.value.indexOf("PLAYLISTS")
+                if (index >= 0) playerViewModel.onLibraryTabSelected(index)
+                navController.navigateSafely(Screen.Library.route)
+            },
+            isTelegramLoggedIn = com.aro.music.presentation.viewmodel.ExternalServiceAccount.TELEGRAM in connected,
             isNeteaseLoggedIn = isNeteaseLoggedIn,
             onNavigateToNeteaseDashboard = {
                 navController.navigateSafely(Screen.NeteaseDashboard.route)

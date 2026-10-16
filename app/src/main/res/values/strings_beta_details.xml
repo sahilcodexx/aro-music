@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aro_brand_name" translatable="false">Aro</string>
+    <string name="beta_details_brand_description" translatable="false">Aro, open beta details</string>
+    <string name="beta_details_settings_title" translatable="false">Beta details</string>
+    <string name="beta_details_settings_subtitle" translatable="false">Testing notes, known limitations, and reporting issues</string>
+</resources>

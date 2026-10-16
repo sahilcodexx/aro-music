@@ -46,6 +46,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -102,6 +103,12 @@ fun SettingsScreen(
         updateViewModel: com.aro.music.presentation.viewmodel.AppUpdateViewModel = hiltViewModel()
 ) {
 
+    var showBetaDetails by remember { mutableStateOf(false) }
+    if (showBetaDetails) {
+        androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showBetaDetails = false }) {
+            com.aro.music.presentation.components.BetaInfoBottomSheet()
+        }
+    }
     var showChangelog by remember { mutableStateOf(false) }
     if (showChangelog) {
         androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showChangelog = false }) {
@@ -229,7 +236,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 5 // Device + Accounts + Updates + About
+                    val totalItems = mainCategories.size + 6 // Device + Accounts + Updates + Changelog + Beta details + About
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -302,6 +309,17 @@ fun SettingsScreen(
                         icon = Icons.Rounded.History,
                         colors = getAccountsColors(isDark),
                         onClick = { showChangelog = true },
+                        shape = shapeFor(itemIndex)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    itemIndex++
+
+                    ExpressiveNavigationItem(
+                        title = stringResource(R.string.beta_details_settings_title),
+                        subtitle = stringResource(R.string.beta_details_settings_subtitle),
+                        icon = Icons.Rounded.Info,
+                        colors = getAccountsColors(isDark),
+                        onClick = { showBetaDetails = true },
                         shape = shapeFor(itemIndex)
                     )
                     Spacer(modifier = Modifier.height(2.dp))

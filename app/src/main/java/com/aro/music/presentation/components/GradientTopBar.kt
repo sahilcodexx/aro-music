@@ -32,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -101,11 +103,12 @@ fun GenreGradientTopBar(
 fun HomeGradientTopBar(
     onNavigationIconClick: () -> Unit,
     onMoreOptionsClick: () -> Unit,
-    onBetaClick: () -> Unit,
     onTelegramClick: () -> Unit,
     onMenuClick: () -> Unit = {},
+    onBrandClick: () -> Unit = {},
     isScrolled: Boolean = false,
 ) {
+    val brandDescription = stringResource(R.string.beta_details_brand_description)
     val surfaceContainerHigh = MaterialTheme.colorScheme.surfaceContainerHighest
 
     AroStatusBarStyle(color = surfaceContainerHigh)
@@ -126,30 +129,22 @@ fun HomeGradientTopBar(
                 modifier = Modifier.padding(start = 12.dp)
             ) {
                 FilledTonalButton(
-                    modifier = Modifier.padding(start = 4.dp),
+                    onClick = onBrandClick,
                     shape = CircleShape,
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ),
-                    onClick = onBetaClick
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.presentation_batch_g_topbar_beta_letter),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Black
-                        )
-                        Text(
-                            text = stringResource(R.string.presentation_batch_g_topbar_beta),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    modifier = Modifier.semantics {
+                        contentDescription = brandDescription
                     }
+                ) {
+                    Icon(painterResource(R.drawable.aro_base_monochrome), contentDescription = null,
+                        modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.size(6.dp))
+                    Text(stringResource(R.string.aro_brand_name), style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold)
                 }
             }
         },
