@@ -27,6 +27,12 @@ class ArtworkThemeContrastTest {
                 assertTrue("$seed $style surface $dark", contrast(scheme.onSurface, scheme.surface) >= 4.5f)
                 assertTrue("$seed $style nav labels $dark", contrast(scheme.onPrimaryContainer, scheme.primaryContainer) >= 4.5f)
                 assertTrue("$seed $style selected nav icon $dark", contrast(scheme.onPrimary, scheme.primary) >= 4.5f)
+                val containers = listOf(scheme.surfaceContainerLowest, scheme.surfaceContainerLow,
+                    scheme.surfaceContainer, scheme.surfaceContainerHigh, scheme.surfaceContainerHighest)
+                for (container in containers) {
+                    assertTrue("$seed $style card text $dark", contrast(scheme.onSurface, container) >= 4.5f)
+                    assertTrue("$seed $style card subtitle $dark", contrast(scheme.onSurfaceVariant, container) >= 4.5f)
+                }
                 if (dark) assertTrue("$seed $style background too bright", scheme.background.luminance() < 0.05f)
                 else assertTrue("$seed $style light background too dark", scheme.background.luminance() > 0.85f)
             }

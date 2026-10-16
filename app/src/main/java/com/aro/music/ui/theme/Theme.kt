@@ -18,6 +18,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.material3.ColorScheme
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -113,18 +114,48 @@ val LightColorScheme = lightColorScheme(
     onError = AroWhite
 )
 
+/** Shared tonal surfaces keep cards, sheets, and settings in the active palette. */
+internal fun tonalSurfaceScheme(scheme: ColorScheme, dark: Boolean): ColorScheme {
+    val background = scheme.background
+    val lowest = if (dark) lerp(background, Color.Black, 0.10f) else background
+    val low = lerp(background, scheme.primaryContainer, 0.18f)
+    val container = lerp(background, scheme.primaryContainer, 0.30f)
+    val high = lerp(background, scheme.primaryContainer, 0.42f)
+    val highest = lerp(background, scheme.primaryContainer, 0.54f)
+    val surfaces = listOf(background, lowest, low, container, high, highest)
+    fun foreground(candidate: Color): Color {
+        fun minimumContrast(color: Color) = surfaces.minOf { surface ->
+            val a = color.luminance()
+            val b = surface.luminance()
+            (maxOf(a, b) + 0.05f) / (minOf(a, b) + 0.05f)
+        }
+        if (minimumContrast(candidate) >= 4.5f) return candidate
+        return if (minimumContrast(Color.White) >= minimumContrast(Color.Black)) Color.White else Color.Black
+    }
+    return scheme.copy(
+        surfaceContainerLowest = lowest,
+        surfaceContainerLow = low,
+        surfaceContainer = container,
+        surfaceContainerHigh = high,
+        surfaceContainerHighest = highest,
+        surfaceVariant = highest,
+        surfaceDim = if (dark) background else high,
+        surfaceBright = if (dark) highest else background,
+        onSurface = foreground(scheme.onSurface),
+        onSurfaceVariant = foreground(scheme.onSurfaceVariant)
+    )
+}
+
 /** Keep the artwork hue while reserving bright containers for controls. */
 internal fun subtleArtworkScheme(scheme: ColorScheme, dark: Boolean): ColorScheme {
     val background = scheme.primaryContainer.copy(alpha = if (dark) 0.35f else 0.12f)
         .compositeOver(if (dark) Color(0xFF141414) else Color.White)
-    return scheme.copy(
-        background = background, surface = background, surfaceContainerLowest = background,
+    return tonalSurfaceScheme(scheme.copy(
+        background = background, surface = background,
         onBackground = readableArtworkText(scheme.onBackground, background),
-        onSurface = readableArtworkText(scheme.onSurface, background),
-        onSurfaceVariant = readableArtworkText(scheme.onSurfaceVariant, background),
         onPrimary = readableArtworkText(scheme.onPrimary, scheme.primary),
         onPrimaryContainer = readableArtworkText(scheme.onPrimaryContainer, scheme.primaryContainer),
-    )
+    ), dark)
 }
 
 // Desaturating a cover can reduce contrast in the generated palette. Keep its
@@ -168,7 +199,7 @@ fun AroTheme(
 
     val targetScheme = if (subtleArtworkBackground && colorSchemePairOverride != null) {
         subtleArtworkScheme(selectedColorScheme, darkTheme)
-    } else selectedColorScheme
+    } else tonalSurfaceScheme(selectedColorScheme, darkTheme)
     val background by animateColorAsState(targetScheme.background, tween(500), label = "ArtworkBackground")
     val finalColorScheme = targetScheme.copy(background = background, surface = background)
 
