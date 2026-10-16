@@ -239,6 +239,10 @@ class SyncManager @Inject constructor(
         policy: ExistingWorkPolicy,
         notifyObserver: Boolean = true
     ) {
+        // Cloud maintenance must not block an offline local library.
+        val connectivity = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val capabilities = connectivity?.let { it.getNetworkCapabilities(it.activeNetwork) }
+        if (capabilities?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) != true) return
         workManager.enqueueUniqueWork(
             SyncWorker.WORK_NAME,
             policy,

@@ -185,4 +185,41 @@ class MusicDaoTest {
         val titles = results.map { it.title }.sorted()
         assertEquals(listOf("Cool Song", "Coolest Song Ever"), titles)
     }
+    @Test
+    fun playlistArtworkUpdatePreservesSongsOrderAndMetadata() = runTest {
+        val dao = db.localPlaylistDao()
+        val original = PlaylistEntity(id = "cover-test", name = "Saved playlist", createdAt = 123L,
+            lastModified = 456L, source = "LOCAL", coverColorArgb = 42)
+        dao.upsertPlaylist(original)
+        dao.replacePlaylistSongs(original.id, listOf("song-b", "song-a", "song-c"))
+        assertEquals(1, dao.updatePlaylistArtwork(original.id, "/saved/cover.jpg", 789L))
+        assertEquals(original.copy(coverImageUri = "/saved/cover.jpg", lastModified = 789L), dao.getPlaylistById(original.id))
+        assertEquals(listOf("song-b", "song-a", "song-c"), dao.observePlaylistSongs(original.id).first().map { it.songId })
+        assertEquals(1, dao.updatePlaylistArtwork(original.id, null, 790L))
+        assertNull(dao.getPlaylistById(original.id)?.coverImageUri)
+        assertEquals(3, dao.observePlaylistSongs(original.id).first().size)
+        assertEquals(0, dao.updatePlaylistArtwork("missing-playlist", "/saved/cover.jpg", 800L))
+    }
+
+    @Test
+    fun confirmedLocalImportPreservesExistingEditsCloudRowsAndFavorites() = runTest {
+        val existing = createSongEntity(1L, "Edited local title", "Artist 1", "Album X", "/music/one.mp3")
+            .copy(lyrics = "Saved lyrics", isFavorite = true)
+        val cloud = createSongEntity(50L, "Cloud track", "Artist 1", "Album X", "/Cloud/track")
+            .copy(sourceType = SourceType.TELEGRAM, contentUriString = "telegram://cloud")
+        musicDao.insertSongs(listOf(existing, cloud))
+        val newSong = createSongEntity(2L, "New local song", "Artist 1", "Album X", "/music/two.mp3")
+        val albums = listOf(createAlbumEntity(201L, "Album X"))
+        val artists = listOf(createArtistEntity(101L, "Artist 1"))
+        val candidates = listOf(existing.copy(title = "Device title", lyrics = null, isFavorite = false), newSong,
+            cloud.copy(sourceType = SourceType.LOCAL, contentUriString = "content://media/external/audio/media/50"))
+        assertEquals(1, musicDao.importLocalMusic(candidates, albums, artists))
+        assertEquals(existing, musicDao.getSongByIdOnce(existing.id))
+        assertEquals(cloud, musicDao.getSongByIdOnce(cloud.id))
+        assertEquals(2, musicDao.getLocalSongCount().first())
+        assertEquals(0, musicDao.importLocalMusic(candidates, albums, artists))
+        assertEquals(3, musicDao.getSongCountOnce())
+        assertEquals(existing, musicDao.getSongByIdOnce(existing.id))
+    }
+
 }

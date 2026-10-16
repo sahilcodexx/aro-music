@@ -51,7 +51,8 @@ private data class GenreSeed(
 @Singleton
 class LibraryStateHolder @Inject constructor(
     private val musicRepository: MusicRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val connectivity: ConnectivityStateHolder
 ) {
 
     // --- State ---
@@ -89,13 +90,12 @@ class LibraryStateHolder @Inject constructor(
      * When hideLocalMedia is true, forces ONLINE filter (excludes source_type = 0).
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    private val effectiveStorageFilter: kotlinx.coroutines.flow.Flow<com.aro.music.data.model.StorageFilter> =
+    val effectiveStorageFilter: kotlinx.coroutines.flow.Flow<com.aro.music.data.model.StorageFilter> =
         kotlinx.coroutines.flow.combine(
             _currentStorageFilter,
-            userPreferencesRepository.hideLocalMediaFlow
-        ) { filter, hideLocal ->
-            if (hideLocal) com.aro.music.data.model.StorageFilter.ONLINE else filter
-        }
+            userPreferencesRepository.hideLocalMediaFlow,
+            connectivity.isOnline
+        ) { filter, hideLocal, online -> effectiveLibraryStorageFilter(filter, hideLocal, online) }
 
     private fun effectiveFoldersStorageFilter(
         selectedFilter: com.aro.music.data.model.StorageFilter
@@ -258,7 +258,9 @@ class LibraryStateHolder @Inject constructor(
 
         songsJob = scope?.launch {
             _isLoadingLibrary.value = true
-            musicRepository.getAudioFiles().conflate().collect { songs ->
+            kotlinx.coroutines.flow.combine(musicRepository.getAudioFiles(), connectivity.isOnline) { songs, online ->
+                if (online) songs else songs.filter { it.isLocalLibrarySong() }
+            }.conflate().collect { songs ->
                 // Process heavy list conversions on Default dispatcher to avoid blocking UI
                 val immutableSongs = withContext(Dispatchers.Default) { songs.toImmutableList() }
                 val songsMap = withContext(Dispatchers.Default) { songs.associateBy { it.id } }

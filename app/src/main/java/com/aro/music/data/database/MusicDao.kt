@@ -109,6 +109,33 @@ interface MusicDao {
     """)
     fun getLibrarySongCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM songs WHERE source_type = 0")
+    fun getLocalSongCount(): Flow<Int>
+
+    @Query("UPDATE albums SET song_count = (SELECT COUNT(*) FROM songs WHERE album_id = albums.id) WHERE id IN (:ids)")
+    suspend fun refreshImportedAlbumCounts(ids: List<Long>)
+
+    @Query("UPDATE artists SET track_count = (SELECT COUNT(*) FROM songs WHERE artist_id = artists.id) WHERE id IN (:ids)")
+    suspend fun refreshImportedArtistCounts(ids: List<Long>)
+
+    /** Add confirmed local imports without replacing existing edits or deleting any source. */
+    @Transaction
+    suspend fun importLocalMusic(songs: List<SongEntity>, albums: List<AlbumEntity>, artists: List<ArtistEntity>): Int {
+        require(songs.all { it.sourceType == SourceType.LOCAL })
+        artists.chunked(250).forEach { insertArtistsIgnoreConflicts(it) }
+        albums.chunked(250).forEach { insertAlbumsIgnoreConflicts(it) }
+        var imported = 0
+        songs.chunked(250).forEach { chunk ->
+            val inserted = insertSongsIgnoreConflicts(chunk)
+            val newSongs = chunk.filterIndexed { index, _ -> inserted[index] != -1L }
+            imported += newSongs.size
+            insertSongArtistCrossRefs(newSongs.map { SongArtistCrossRef(it.id, it.artistId, true) })
+        }
+        albums.map { it.id }.chunked(250).forEach { refreshImportedAlbumCounts(it) }
+        artists.map { it.id }.chunked(250).forEach { refreshImportedArtistCounts(it) }
+        return imported
+    }
+
     // --- Insert Operations ---
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSongsIgnoreConflicts(songs: List<SongEntity>): List<Long>

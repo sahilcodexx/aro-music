@@ -480,6 +480,18 @@ fun LibraryArtistsTab(
     storageFilter: StorageFilter = StorageFilter.ALL
 ) {
     val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
+    val isListView by playerViewModel.isArtistsListView.collectAsStateWithLifecycle()
+    val songs by playerViewModel.allSongsFlow.collectAsStateWithLifecycle()
+    val artworkByArtist = remember(songs) {
+        buildMap<Long, String> {
+            songs.forEach { song ->
+                val art = song.albumArtUriString?.takeIf { it.isNotBlank() } ?: return@forEach
+                putIfAbsent(song.artistId, art)
+                song.artists.forEach { putIfAbsent(it.id, art) }
+            }
+        }
+    }
     val artistFastScrollLabelProvider = remember(artists, currentArtistSortOption) {
         { index: Int ->
             artistFastScrollLabel(
@@ -500,7 +512,7 @@ fun LibraryArtistsTab(
         lastHandledArtistSortKey = currentSortKey
         pendingArtistSortScrollReset = true
         artistSortSawRefreshLoading = false
-        listState.scrollToItem(0)
+        if (isListView) listState.scrollToItem(0) else gridState.scrollToItem(0)
     }
 
     LaunchedEffect(artists.loadState.refresh, pendingArtistSortScrollReset) {
@@ -510,7 +522,7 @@ fun LibraryArtistsTab(
             return@LaunchedEffect
         }
         if (!artistSortSawRefreshLoading) return@LaunchedEffect
-        listState.scrollToItem(0)
+        if (isListView) listState.scrollToItem(0) else gridState.scrollToItem(0)
         pendingArtistSortScrollReset = false
     }
 
@@ -547,29 +559,44 @@ fun LibraryArtistsTab(
         }
 
         shouldShowInitialLoading -> {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 26.dp,
-                            topEnd = 26.dp,
-                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                            bottomEnd = PlayerSheetCollapsedCornerRadius
+            if (isListView) {
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 26.dp,
+                                topEnd = 26.dp,
+                                bottomStart = PlayerSheetCollapsedCornerRadius,
+                                bottomEnd = PlayerSheetCollapsedCornerRadius
+                            )
                         )
-                    )
-                    .fillMaxSize(),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
-            ) {
-                item(key = "skeleton_top_spacer") { Spacer(Modifier.height(4.dp)) }
-                items(10, key = { "skeleton_artist_$it" }) {
-                    ArtistListItem(
-                        artist = Artist.empty(),
-                        onClick = {},
-                        isLoading = true
-                    )
+                        .fillMaxSize(),
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
+                ) {
+                    item(key = "skeleton_top_spacer") { Spacer(Modifier.height(4.dp)) }
+                    items(10, key = { "skeleton_artist_$it" }) {
+                        ArtistListItem(
+                            artist = Artist.empty(),
+                            onClick = {},
+                            isLoading = true
+                        )
+                    }
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(148.dp),
+                    state = gridState,
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(top = 4.dp, bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
+                ) {
+                    items(8, key = { "skeleton_artist_card_$it" }) {
+                        ArtistLibraryItem(Artist.empty(), {}, isLoading = true, isCard = true)
+                    }
                 }
             }
         }
@@ -601,37 +628,64 @@ fun LibraryArtistsTab(
                     }
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
-                                .clip(
-                                    RoundedCornerShape(
-                                        topStart = 26.dp,
-                                        topEnd = 26.dp,
-                                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                                        bottomEnd = PlayerSheetCollapsedCornerRadius
-                                    )
-                                ),
-                            state = listState,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
-                        ) {
-                            items(
-                                count = artists.itemCount,
-                                key = { index -> artists.peek(index)?.id ?: "artist_placeholder_$index" },
-                                contentType = { "artist" }
-                            ) { index ->
-                                val artist = artists[index]
-                                if (artist != null) {
-                                    val rememberedOnClick = remember(artist.id, onArtistClick) {
-                                        { onArtistClick(artist.id) }
+                        if (isListView) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                                    .clip(
+                                        RoundedCornerShape(
+                                            topStart = 26.dp,
+                                            topEnd = 26.dp,
+                                            bottomStart = PlayerSheetCollapsedCornerRadius,
+                                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                                        )
+                                    ),
+                                state = listState,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
+                            ) {
+                                items(
+                                    count = artists.itemCount,
+                                    key = { index -> artists.peek(index)?.id ?: "artist_placeholder_$index" },
+                                    contentType = { "artist" }
+                                ) { index ->
+                                    val artist = artists[index]
+                                    if (artist != null) {
+                                        val rememberedOnClick = remember(artist.id, onArtistClick) {
+                                            { onArtistClick(artist.id) }
+                                        }
+                                        ArtistListItem(artist = artist, onClick = rememberedOnClick, fallbackArtwork = artworkByArtist[artist.id])
+                                    } else {
+                                        ArtistListItem(
+                                            artist = Artist.empty(),
+                                            onClick = {},
+                                            isLoading = true
+                                        )
                                     }
-                                    ArtistListItem(artist = artist, onClick = rememberedOnClick)
-                                } else {
-                                    ArtistListItem(
-                                        artist = Artist.empty(),
-                                        onClick = {},
-                                        isLoading = true
+                                }
+                            }
+
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Adaptive(148.dp),
+                                state = gridState,
+                                modifier = Modifier.fillMaxSize().padding(start = 12.dp, end = 22.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(top = 4.dp, bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
+                            ) {
+                                items(
+                                    count = artists.itemCount,
+                                    key = { artists.peek(it)?.id ?: "artist_card_placeholder_$it" },
+                                    contentType = { "artist_card" }
+                                ) { index ->
+                                    val artist = artists[index]
+                                    ArtistLibraryItem(
+                                        artist = artist ?: Artist.empty(),
+                                        onClick = { artist?.let { onArtistClick(it.id) } },
+                                        isLoading = artist == null,
+                                        isCard = true,
+                                        fallbackArtwork = artist?.let { artworkByArtist[it.id] }
                                     )
                                 }
                             }
@@ -643,13 +697,23 @@ fun LibraryArtistsTab(
                         else
                             bottomBarHeight + 16.dp
 
-                        ExpressiveScrollBar(
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .padding(end = 4.dp, top = 16.dp, bottom = bottomPadding),
-                            listState = listState,
-                            dragLabelProvider = artistFastScrollLabelProvider
-                        )
+                        if (isListView) {
+                            ExpressiveScrollBar(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 4.dp, top = 16.dp, bottom = bottomPadding),
+                                listState = listState,
+                                dragLabelProvider = artistFastScrollLabelProvider
+                            )
+                        } else {
+                            ExpressiveScrollBar(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 4.dp, top = 16.dp, bottom = bottomPadding),
+                                gridState = gridState,
+                                dragLabelProvider = artistFastScrollLabelProvider
+                            )
+                        }
                     }
                 }
             }

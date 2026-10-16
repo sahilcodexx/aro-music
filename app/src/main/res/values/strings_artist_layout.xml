@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="artist_layout_list" translatable="false">Artist list</string>
+    <string name="artist_layout_cards" translatable="false">Artist cards</string>
+    <string name="artist_show_list" translatable="false">Show artists as a list</string>
+    <string name="artist_show_cards" translatable="false">Show artists as cards</string>
+    <string name="library_layout_list" translatable="false">List layout</string>
+    <string name="library_layout_cards" translatable="false">Card layout</string>
+    <string name="library_show_list" translatable="false">Switch to list layout</string>
+    <string name="library_show_cards" translatable="false">Switch to card layout</string>
+</resources>

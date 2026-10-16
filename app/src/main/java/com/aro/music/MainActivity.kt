@@ -241,28 +241,19 @@ class MainActivity : ComponentActivity() {
             var showCrashReportDialog by remember { mutableStateOf(false) }
             var crashLogData by remember { mutableStateOf<CrashLogData?>(null) }
             
-            // Permissions Logic
-            val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                listOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-            @OptIn(ExperimentalPermissionsApi::class)
-            val permissionState = rememberMultiplePermissionsState(permissions = permissions)
-            // Determine if we need to show Setup based on completion OR missing permissions
-            val permissionsValid = permissionState.allPermissionsGranted
-            val showSetupScreen = remember(isSetupComplete, permissionsValid, isBenchmarkMode) {
+            // Audio access is optional and requested only from the confirmed local-import flow.
+            val showSetupScreen = remember(isSetupComplete, isBenchmarkMode) {
                 when {
                     isBenchmarkMode -> false
                     isSetupComplete == null -> null
-                    else -> !isSetupComplete!! || !permissionsValid
+                    else -> !isSetupComplete!!
                 }
             }
 
-            // Sync Trigger: When we are NOT showing setup (meaning permissions are good and setup is done)
+            // Cloud sync remains separate from the explicitly confirmed local import.
             LaunchedEffect(showSetupScreen) {
                 if (showSetupScreen == false) {
-                     LogUtils.i(this, "Setup complete/skipped and permissions valid. Starting sync.")
+                     LogUtils.i(this, "Setup complete. Starting cloud sync.")
                      mainViewModel.startSync()
                 }
             }

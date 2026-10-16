@@ -220,6 +220,8 @@ constructor(
         val IS_GENRE_GRID_VIEW = booleanPreferencesKey("is_genre_grid_view")
 
         // Album View Preference
+        val IS_PLAYLISTS_LIST_VIEW = booleanPreferencesKey("is_playlists_list_view")
+        val IS_ARTISTS_LIST_VIEW = booleanPreferencesKey("is_artists_list_view")
         val IS_ALBUMS_LIST_VIEW = booleanPreferencesKey("is_albums_list_view")
 
         // Collage Pattern
@@ -708,6 +710,22 @@ constructor(
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_GENRE_GRID_VIEW] = isGrid
         }
+    }
+
+    val isPlaylistsListViewFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_PLAYLISTS_LIST_VIEW] ?: false
+    }
+
+    suspend fun setPlaylistsListView(isList: Boolean) {
+        dataStore.edit { it[PreferencesKeys.IS_PLAYLISTS_LIST_VIEW] = isList }
+    }
+
+    val isArtistsListViewFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_ARTISTS_LIST_VIEW] ?: false
+    }
+
+    suspend fun setArtistsListView(isList: Boolean) {
+        dataStore.edit { it[PreferencesKeys.IS_ARTISTS_LIST_VIEW] = isList }
     }
 
     val isAlbumsListViewFlow: Flow<Boolean> =

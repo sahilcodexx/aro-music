@@ -28,6 +28,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
@@ -73,11 +75,28 @@ fun AppNavigation(
     onOpenSidebar: () -> Unit
 ) {
     var startDestination by remember { mutableStateOf<String?>(null) }
+    val localImportViewModel: com.aro.music.presentation.viewmodel.LocalMusicImportViewModel = hiltViewModel()
+
+    val online by localImportViewModel.isOnline.collectAsStateWithLifecycle()
+    val currentEntry by navController.currentBackStackEntryAsState()
+    var redirectedThisOfflineSession by remember { mutableStateOf(false) }
+    LaunchedEffect(online, currentEntry?.destination?.route) {
+        if (online) redirectedThisOfflineSession = false
+        else if (!redirectedThisOfflineSession && currentEntry?.destination?.route in listOf(Screen.Home.route, Screen.Search.route)
+            && localImportViewModel.shouldOpenOfflineLibrary()) {
+            redirectedThisOfflineSession = true
+            val index = playerViewModel.libraryTabsFlow.value.indexOf("SONGS")
+            if (index >= 0) playerViewModel.onLibraryTabSelected(index)
+            navController.navigate(Screen.Library.route) { launchSingleTop = true }
+        }
+    }
 
     LaunchedEffect(Unit) {
-        startDestination = userPreferencesRepository.launchTabFlow
-            .first()
-            .toRoute()
+        startDestination = if (localImportViewModel.shouldOpenOfflineLibrary()) {
+            val index = playerViewModel.libraryTabsFlow.value.indexOf("SONGS")
+            if (index >= 0) playerViewModel.onLibraryTabSelected(index)
+            Screen.Library.route
+        } else userPreferencesRepository.launchTabFlow.first().toRoute()
     }
 
     startDestination?.let { initialRoute ->
@@ -227,6 +246,11 @@ fun AppNavigation(
                 ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
                     AccountsScreen(
                         onBackClick = { navController.popBackStack() },
+                        onOpenSpotifyLibrary = {
+                            val index = playerViewModel.libraryTabsFlow.value.indexOf("PLAYLISTS")
+                            if (index >= 0) playerViewModel.onLibraryTabSelected(index)
+                            navController.navigateSafely(Screen.Library.route)
+                        },
                         onOpenNeteaseDashboard = {
                             navController.navigateSafely(Screen.NeteaseDashboard.route)
                         },

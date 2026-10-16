@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -88,7 +93,6 @@ import com.aro.music.presentation.viewmodel.PlaylistUiState
 import com.aro.music.presentation.viewmodel.PlaylistSelectionStateHolder
 import com.aro.music.utils.formatSongCount
 import com.aro.music.ui.theme.GoogleSansRounded
-import androidx.compose.foundation.combinedClickable
 import kotlinx.coroutines.flow.map
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -240,6 +244,9 @@ fun PlaylistItems(
 ) {
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
+    val savedListLayout by playerViewModel.isPlaylistsListView.collectAsStateWithLifecycle()
+    val isListView = isAddingToPlaylist || savedListLayout
     val playlistFastScrollLabelProvider = remember(filteredPlaylists, currentSortOption) {
         { index: Int ->
             playlistFastScrollLabel(
@@ -256,65 +263,111 @@ fun PlaylistItems(
         if (currentSortKey == lastHandledPlaylistSortKey) return@LaunchedEffect
         lastHandledPlaylistSortKey = currentSortKey
         pendingPlaylistSortScrollReset = true
-        listState.scrollToItem(0)
+        if (isListView) listState.scrollToItem(0) else gridState.scrollToItem(0)
     }
 
     LaunchedEffect(filteredPlaylists, pendingPlaylistSortScrollReset) {
         if (!pendingPlaylistSortScrollReset) return@LaunchedEffect
-        listState.scrollToItem(0)
+        if (isListView) listState.scrollToItem(0) else gridState.scrollToItem(0)
         pendingPlaylistSortScrollReset = false
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
-                .fillMaxSize()
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 12.dp,
-                        topEnd = 12.dp,
-                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                        bottomEnd = PlayerSheetCollapsedCornerRadius
-                    )
-                ),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + 30.dp)
-        ) {
-            items(filteredPlaylists, key = { it.id }) { playlist ->
-                val rememberedOnClick = remember(playlist.id) {
-                    {
-                        if (isAddingToPlaylist && currentSong != null && selectedPlaylists != null) {
-                            val currentSelection = selectedPlaylists[playlist.id] ?: false
-                            selectedPlaylists[playlist.id] = !currentSelection
-                        } else if (isSelectionMode) {
-                            onPlaylistSelectionToggle(playlist)
-                        } else {
-                            navController?.navigateSafely(Screen.PlaylistDetail.createRoute(playlist.id))
+        if (isListView) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                    .fillMaxSize()
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 12.dp,
+                            topEnd = 12.dp,
+                            bottomStart = PlayerSheetCollapsedCornerRadius,
+                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                        )
+                    ),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + 30.dp)
+            ) {
+                items(filteredPlaylists, key = { it.id }) { playlist ->
+                    val rememberedOnClick = remember(playlist.id) {
+                        {
+                            if (isAddingToPlaylist && currentSong != null && selectedPlaylists != null) {
+                                val currentSelection = selectedPlaylists[playlist.id] ?: false
+                                selectedPlaylists[playlist.id] = !currentSelection
+                            } else if (isSelectionMode) {
+                                onPlaylistSelectionToggle(playlist)
+                            } else {
+                                navController?.navigateSafely(Screen.PlaylistDetail.createRoute(playlist.id))
+                            }
                         }
                     }
-                }
-                val selectionIndex = remember(playlist.id, selectedPlaylistIds) {
-                    if (selectedPlaylistIds.contains(playlist.id)) {
-                        selectedPlaylistIds.toList().indexOf(playlist.id)
-                    } else {
-                        -1
+                    val selectionIndex = remember(playlist.id, selectedPlaylistIds) {
+                        if (selectedPlaylistIds.contains(playlist.id)) {
+                            selectedPlaylistIds.toList().indexOf(playlist.id)
+                        } else {
+                            -1
+                        }
                     }
+                    PlaylistItem(
+                        playlist = playlist,
+                        playerViewModel = playerViewModel,
+                        onClick = { rememberedOnClick() },
+                        isAddingToPlaylist = isAddingToPlaylist,
+                        selectedPlaylists = selectedPlaylists,
+                        isSelectionMode = isSelectionMode,
+                        isSelected = selectedPlaylistIds.contains(playlist.id),
+                        selectionIndex = selectionIndex,
+                        onLongPress = { onPlaylistLongPress(playlist) },
+                        onPlaylistSelectionToggle = { onPlaylistSelectionToggle(playlist) }
+                    )
                 }
-                PlaylistItem(
-                    playlist = playlist,
-                    playerViewModel = playerViewModel,
-                    onClick = { rememberedOnClick() },
-                    isAddingToPlaylist = isAddingToPlaylist,
-                    selectedPlaylists = selectedPlaylists,
-                    isSelectionMode = isSelectionMode,
-                    isSelected = selectedPlaylistIds.contains(playlist.id),
-                    selectionIndex = selectionIndex,
-                    onLongPress = { onPlaylistLongPress(playlist) },
-                    onPlaylistSelectionToggle = { onPlaylistSelectionToggle(playlist) }
-                )
             }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(148.dp),
+                state = gridState,
+                modifier = Modifier.fillMaxSize().padding(start = 12.dp, end = 22.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(top = 4.dp, bottom = bottomBarHeight + MiniPlayerHeight + 30.dp)
+            ) {
+                items(filteredPlaylists, key = { it.id }) { playlist ->
+                    val rememberedOnClick = remember(playlist.id) {
+                        {
+                            if (isAddingToPlaylist && currentSong != null && selectedPlaylists != null) {
+                                val currentSelection = selectedPlaylists[playlist.id] ?: false
+                                selectedPlaylists[playlist.id] = !currentSelection
+                            } else if (isSelectionMode) {
+                                onPlaylistSelectionToggle(playlist)
+                            } else {
+                                navController?.navigateSafely(Screen.PlaylistDetail.createRoute(playlist.id))
+                            }
+                        }
+                    }
+                    val selectionIndex = remember(playlist.id, selectedPlaylistIds) {
+                        if (selectedPlaylistIds.contains(playlist.id)) {
+                            selectedPlaylistIds.toList().indexOf(playlist.id)
+                        } else {
+                            -1
+                        }
+                    }
+                    PlaylistItem(
+                        playlist = playlist,
+                        isCard = true,
+                        playerViewModel = playerViewModel,
+                        onClick = { rememberedOnClick() },
+                        isAddingToPlaylist = isAddingToPlaylist,
+                        selectedPlaylists = selectedPlaylists,
+                        isSelectionMode = isSelectionMode,
+                        isSelected = selectedPlaylistIds.contains(playlist.id),
+                        selectionIndex = selectionIndex,
+                        onLongPress = { onPlaylistLongPress(playlist) },
+                        onPlaylistSelectionToggle = { onPlaylistSelectionToggle(playlist) }
+                    )
+                }
+                }
         }
         
         val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong()) 
@@ -326,7 +379,8 @@ fun PlaylistItems(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 4.dp, top = 16.dp, bottom = bottomPadding),
-            listState = listState,
+            listState = if (isListView) listState else null,
+            gridState = if (isListView) null else gridState,
             dragLabelProvider = playlistFastScrollLabelProvider
         )
     }
@@ -339,6 +393,7 @@ fun PlaylistItem(
     playerViewModel: PlayerViewModel,
     onClick: () -> Unit,
     isAddingToPlaylist: Boolean,
+    isCard: Boolean = false,
     selectedPlaylists: SnapshotStateMap<String, Boolean>? = null,
     isSelectionMode: Boolean = false,
     isSelected: Boolean = false,
@@ -346,6 +401,7 @@ fun PlaylistItem(
     onLongPress: () -> Unit = {},
     onPlaylistSelectionToggle: () -> Unit = {}
 ) {
+    val cardShape = RoundedCornerShape(if (isCard) 20.dp else 12.dp)
     val playlistPreviewSongIds = remember(playlist.songIds) {
         playlist.songIds.take(4)
     }
@@ -376,6 +432,7 @@ fun PlaylistItem(
         targetValue = when {
             isAddingToPlaylist -> MaterialTheme.colorScheme.surfaceContainerHigh
             isSelected -> MaterialTheme.colorScheme.secondaryContainer
+            isCard -> MaterialTheme.colorScheme.surfaceContainerHigh
             else -> MaterialTheme.colorScheme.surfaceContainerLow
         },
         animationSpec = tween(durationMillis = 300),
@@ -397,7 +454,7 @@ fun PlaylistItem(
                     Modifier.border(
                         width = selectionBorderWidth,
                         color = selectionBorderColor,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = cardShape
                     )
                 } else {
                     Modifier
@@ -415,131 +472,166 @@ fun PlaylistItem(
                     onLongPress()
                 }
             ),
+        shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            PlaylistCover(
-                playlist = playlist,
-                playlistSongs = playlistSongs ?: emptyList(),
-                size = 48.dp
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.padding(end = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = playlist.name,
-                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = GoogleSansRounded),
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    if (playlist.isAiGenerated) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.gemini_ai),
-                            contentDescription = "AI Generated",
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(20.dp)
-                        )
+        if (isCard) {
+            BoxWithConstraints(Modifier.fillMaxWidth().padding(10.dp)) {
+                val artworkSize = maxWidth
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box {
+                        PlaylistCover(playlist, playlistSongs ?: emptyList(), size = artworkSize)
+                        if (isSelected && isSelectionMode) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                Text((selectionIndex + 1).toString(), modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
                     }
-                    if (playlist.source == "NETEASE") {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.netease_cloud_music_logo_icon_206716__1_),
-                            contentDescription = "Netease Music",
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    if (playlist.source == "TELEGRAM" || playlist.source == "TELEGRAM_TOPIC") {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.telegram),
-                            contentDescription = "Telegram",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    if (playlist.source == "TELEGRAM_TOPIC") {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Rounded.Topic,
-                            contentDescription = "Topic",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    if (playlist.source == "QQMUSIC") {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Rounded.Album,
-                            contentDescription = "QQ Music",
-                            tint = Color(0xFF2E7D32), // 修改为绿色
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    if (playlist.source == "NAVIDROME") {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.ic_navidrome),
-                            contentDescription = "Navidrome",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-                Text(
-                    text = (playlist.remoteSongCount ?: playlist.songIds.size.takeIf { playlist.source != "SPOTIFY" })
-                        ?.let { formatSongCount(it) } ?: stringResource(R.string.spotify_playlist_count_unknown),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (isSelected && isSelectionMode) {
-                Spacer(modifier = Modifier.width(10.dp))
-                Box(
-                    modifier = Modifier
-                        .size(26.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (selectionIndex >= 0) {
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(playlist.name, style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, maxLines = 2,
+                            overflow = TextOverflow.Ellipsis)
                         Text(
-                            text = (selectionIndex + 1).toString(),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.CheckCircle,
-                            contentDescription = stringResource(R.string.presentation_batch_g_cd_selected),
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
+                            text = (playlist.remoteSongCount ?: playlist.songIds.size.takeIf { playlist.source != "SPOTIFY" })
+                                ?.let { formatSongCount(it) } ?: stringResource(R.string.spotify_playlist_count_unknown),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
-
-            if (isAddingToPlaylist && selectedPlaylists != null) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Checkbox(
-                    checked = selectedPlaylists[playlist.id] ?: false,
-                    onCheckedChange = { isChecked -> selectedPlaylists[playlist.id] = isChecked }
+        } else {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PlaylistCover(
+                    playlist = playlist,
+                    playlistSongs = playlistSongs ?: emptyList(),
+                    size = 48.dp
                 )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.padding(end = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = playlist.name,
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = GoogleSansRounded),
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (playlist.isAiGenerated) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.gemini_ai),
+                                contentDescription = "AI Generated",
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        if (playlist.source == "NETEASE") {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.netease_cloud_music_logo_icon_206716__1_),
+                                contentDescription = "Netease Music",
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        if (playlist.source == "TELEGRAM" || playlist.source == "TELEGRAM_TOPIC") {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.telegram),
+                                contentDescription = "Telegram",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        if (playlist.source == "TELEGRAM_TOPIC") {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.Topic,
+                                contentDescription = "Topic",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        if (playlist.source == "QQMUSIC") {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.Album,
+                                contentDescription = "QQ Music",
+                                tint = Color(0xFF2E7D32), // 修改为绿色
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        if (playlist.source == "NAVIDROME") {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.ic_navidrome),
+                                contentDescription = "Navidrome",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = (playlist.remoteSongCount ?: playlist.songIds.size.takeIf { playlist.source != "SPOTIFY" })
+                            ?.let { formatSongCount(it) } ?: stringResource(R.string.spotify_playlist_count_unknown),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (isSelected && isSelectionMode) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (selectionIndex >= 0) {
+                            Text(
+                                text = (selectionIndex + 1).toString(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.CheckCircle,
+                                contentDescription = stringResource(R.string.presentation_batch_g_cd_selected),
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (isAddingToPlaylist && selectedPlaylists != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Checkbox(
+                        checked = selectedPlaylists[playlist.id] ?: false,
+                        onCheckedChange = { isChecked -> selectedPlaylists[playlist.id] = isChecked }
+                    )
+                }
             }
         }
     }

@@ -715,11 +715,7 @@ class PlayerViewModel @Inject constructor(
                 // Logic must match effectiveStorageFilter in LibraryStateHolder
                 val baseFilter = playerUiState.value.currentStorageFilter
                 val hideLocal = playerUiState.value.hideLocalMedia
-                val storageFilter = if (hideLocal) {
-                    com.aro.music.data.model.StorageFilter.ONLINE
-                } else {
-                    baseFilter
-                }
+                val storageFilter = effectiveLibraryStorageFilter(baseFilter, hideLocal, connectivityStateHolder.isOnline.value)
 
                 val sortedIds = musicRepository.getSongIdsSorted(sortOption, storageFilter)
 
@@ -2023,7 +2019,7 @@ class PlayerViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            libraryStateHolder.currentStorageFilter.collect { filter ->
+            libraryStateHolder.effectiveStorageFilter.collect { filter ->
                 _playerUiState.update { it.copy(currentStorageFilter = filter) }
             }
         }
@@ -4375,6 +4371,20 @@ class PlayerViewModel @Inject constructor(
                 )
             }
         )
+    }
+
+    val isPlaylistsListView = userPreferencesRepository.isPlaylistsListViewFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setPlaylistsListView(isList: Boolean) {
+        viewModelScope.launch { userPreferencesRepository.setPlaylistsListView(isList) }
+    }
+
+    val isArtistsListView = userPreferencesRepository.isArtistsListViewFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setArtistsListView(isList: Boolean) {
+        viewModelScope.launch { userPreferencesRepository.setArtistsListView(isList) }
     }
 
     fun setAlbumsListView(isList: Boolean) {

@@ -38,6 +38,10 @@ import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.material.icons.rounded.Dataset
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material3.ButtonDefaults
@@ -90,6 +94,10 @@ fun LibraryActionRow(
     showSortButton: Boolean,
     showLocateButton: Boolean = false,
     showImportButton: Boolean = true,
+    showLocalImportButton: Boolean = false,
+    showLayoutButton: Boolean = false,
+    isListView: Boolean = false,
+    onLayoutClick: () -> Unit = {},
     isPlaylistTab: Boolean,
     onImportM3uClick: () -> Unit = {},
     isFoldersTab: Boolean,
@@ -106,7 +114,7 @@ fun LibraryActionRow(
     currentStorageFilter: com.aro.music.data.model.StorageFilter = com.aro.music.data.model.StorageFilter.ALL,
     onStorageFilterClick: () -> Unit = {}
 ) {
-    val shouldShowImport = isPlaylistTab && showImportButton
+    val shouldShowImport = (isPlaylistTab || showLocalImportButton) && showImportButton
 
     Row(
         modifier = modifier
@@ -275,7 +283,7 @@ fun LibraryActionRow(
             
             // Logic for Sort Button (Rightmost)
             val sortStartCorner by animateDpAsState(
-                targetValue = if (showLocateButton || showStorageFilterButton) 8.dp else outerCorner,
+                targetValue = if (showLocateButton || showStorageFilterButton || showLayoutButton) 8.dp else outerCorner,
                 label = "SortStartCorner"
             )
 
@@ -380,6 +388,30 @@ fun LibraryActionRow(
                 }
 
                 Spacer(modifier = Modifier.width(gapBetweenFilterAndSort))
+
+                if (showLayoutButton) {
+                    val currentLayout = stringResource(
+                        if (isListView) R.string.library_layout_list else R.string.library_layout_cards
+                    )
+                    FilledTonalIconButton(
+                        onClick = onLayoutClick,
+                        shape = RoundedCornerShape(
+                            topStart = if (showLocateButton || showStorageFilterButton) 8.dp else outerCorner,
+                            bottomStart = if (showLocateButton || showStorageFilterButton) 8.dp else outerCorner,
+                            topEnd = 8.dp,
+                            bottomEnd = 8.dp
+                        ),
+                        modifier = Modifier.size(genHeight).semantics { stateDescription = currentLayout }
+                    ) {
+                        Icon(
+                            imageVector = if (isListView) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
+                            contentDescription = stringResource(
+                                if (isListView) R.string.library_show_cards else R.string.library_show_list
+                            )
+                        )
+                    }
+                    Spacer(Modifier.width(4.dp))
+                }
 
                 // Sort Button
                 FilledTonalIconButton(

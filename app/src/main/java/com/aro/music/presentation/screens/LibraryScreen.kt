@@ -78,7 +78,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
@@ -138,6 +137,7 @@ import com.aro.music.data.model.FolderSource
 import com.aro.music.data.model.Song
 import com.aro.music.data.model.SortOption
 import com.aro.music.data.model.StorageFilter
+import com.aro.music.presentation.viewmodel.isLocalLibrarySong
 import com.aro.music.presentation.components.MiniPlayerHeight
 import com.aro.music.presentation.components.SmartImage
 import com.aro.music.presentation.components.resolveNavBarOccupiedHeight
@@ -172,7 +172,6 @@ import com.aro.music.presentation.screens.search.components.GenreTypography
 import com.aro.music.presentation.components.SyncProgressBar
 import com.aro.music.presentation.viewmodel.LibraryViewModel
 import com.aro.music.utils.formatSongCount
-import androidx.paging.compose.collectAsLazyPagingItems
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -230,13 +229,11 @@ import com.aro.music.presentation.components.PlaylistContainer
 import com.aro.music.presentation.components.subcomps.PlayingEqIcon
 import com.aro.music.ui.theme.GoogleSansRounded
 import java.util.Locale
-import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.focus.focusModifier
 import com.aro.music.data.model.PlaylistShapeType
 import kotlinx.coroutines.flow.first
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.LoadState
 import com.aro.music.presentation.components.ExpressiveScrollBar
@@ -438,6 +435,12 @@ fun LibraryScreen(
 ) {
     // La recolección de estados de alto nivel se mantiene mínima.
     val context = LocalContext.current // Added context
+    val localImportViewModel: com.aro.music.presentation.viewmodel.LocalMusicImportViewModel = hiltViewModel()
+    val online by localImportViewModel.isOnline.collectAsStateWithLifecycle()
+    val localSongIds by remember(playerViewModel) {
+        playerViewModel.allSongsFlow.map { songs -> songs.filter { it.isLocalLibrarySong() }.map { it.id }.toSet() }
+    }.collectAsStateWithLifecycle(initialValue = emptySet())
+
     val haptic = LocalHapticFeedback.current
     val lastTabIndex by playerViewModel.lastLibraryTabIndexFlow.collectAsStateWithLifecycle()
     val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle() // Reintroducir favoriteIds aquí
@@ -494,6 +497,7 @@ fun LibraryScreen(
     val isGeneratingAiPlaylist by playerViewModel.isGeneratingAiPlaylist.collectAsStateWithLifecycle()
     val aiError by playerViewModel.aiError.collectAsStateWithLifecycle()
     var showPlaylistImportDialog by remember { mutableStateOf(false) }
+    var showLocalImportChoices by remember { mutableStateOf(false) }
     val playlistImportState by playlistViewModel.importState.collectAsStateWithLifecycle()
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var showPlaylistCreationTypeDialog by remember { mutableStateOf(false) }
@@ -988,6 +992,8 @@ fun LibraryScreen(
             }
         }
     ) { innerScaffoldPadding ->
+        val isPlaylistsListView by playerViewModel.isPlaylistsListView.collectAsStateWithLifecycle()
+        val isArtistsListView by playerViewModel.isArtistsListView.collectAsStateWithLifecycle()
         val playerUiState by remember(playerViewModel) {
             playerViewModel.playerUiState
                 .map { uiState -> uiState.toLibraryScreenProjection() }
@@ -1055,10 +1061,13 @@ fun LibraryScreen(
                         val visiblePlaylists = remember(
                             playlistUiState.playlists,
                             playlistUiState.showTelegramCloudPlaylists,
-                            playlistUiState.telegramTopicDisplayMode
+                            playlistUiState.telegramTopicDisplayMode,
+                            online, localSongIds
                         ) {
                             val mode = playlistUiState.telegramTopicDisplayMode
-                            val allPlaylists = playlistUiState.playlists
+                            val allPlaylists = if (online) playlistUiState.playlists else playlistUiState.playlists.filter {
+                                com.aro.music.presentation.viewmodel.isOfflineLibraryPlaylist(it, localSongIds)
+                            }
 
                             // When Telegram cloud is hidden, remove all Telegram playlists
                             if (!playlistUiState.showTelegramCloudPlaylists) {
@@ -1256,7 +1265,14 @@ fun LibraryScreen(
                                     onLocateClick = { locateAction?.invoke() },
                                     isPlaylistTab = currentTabId == LibraryTabId.PLAYLISTS,
                                     isFoldersTab = false,
-                                    onImportM3uClick = { m3uImportLauncher.launch("audio/x-mpegurl") },
+                                    showLocalImportButton = currentTabId == LibraryTabId.SONGS,
+                                    showLayoutButton = currentTabId == LibraryTabId.ARTISTS || currentTabId == LibraryTabId.FOLDERS || currentTabId == LibraryTabId.PLAYLISTS,
+                                    isListView = if (currentTabId == LibraryTabId.PLAYLISTS) isPlaylistsListView else isArtistsListView,
+                                    onLayoutClick = {
+                                        if (currentTabId == LibraryTabId.PLAYLISTS) playerViewModel.setPlaylistsListView(!isPlaylistsListView)
+                                        else playerViewModel.setArtistsListView(!isArtistsListView)
+                                    },
+                                    onImportM3uClick = { showLocalImportChoices = true },
                                     currentFolder = playerUiState.currentFolder,
                                     folderRootPath = playerUiState.folderSourceRootPath.ifBlank {
                                         Environment.getExternalStorageDirectory().path
@@ -1265,11 +1281,11 @@ fun LibraryScreen(
                                     onFolderClick = { playerViewModel.navigateToFolder(it) },
                                     onNavigateBack = { playerViewModel.navigateBackFolder() },
                                     isShuffleEnabled = isShuffleEnabled,
-                                    showStorageFilterButton = currentTabId == LibraryTabId.SONGS ||
+                                    showStorageFilterButton = online && (currentTabId == LibraryTabId.SONGS ||
                                             currentTabId == LibraryTabId.ALBUMS ||
                                             currentTabId == LibraryTabId.ARTISTS ||
                                             currentTabId == LibraryTabId.FOLDERS ||
-                                            currentTabId == LibraryTabId.LIKED,
+                                            currentTabId == LibraryTabId.LIKED),
                                     currentStorageFilter = playerUiState.currentStorageFilter,
                                     onStorageFilterClick = { playerViewModel.toggleStorageFilter() }
                                 )
@@ -1279,6 +1295,12 @@ fun LibraryScreen(
                         // Slim inline sync indicator. Automatic startup syncs use this
                         // instead of pulling the list down, and manual refreshes hand off
                         // to it when the worker takes longer than the pull gesture window.
+                        if (!online) Text(
+                            text = stringResource(R.string.local_library_offline_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                        )
                         LibraryInlineSyncIndicator(
                             visible = inlineSyncVisible && !isLibraryContentEmpty,
                             syncManager = syncManager
@@ -1456,7 +1478,7 @@ fun LibraryScreen(
                                             }
                                         }
                                     }
-                                    if (!isFoldersTab) {
+                                    if (!isFoldersTab && online) {
                                         Spacer(modifier = Modifier.height(12.dp))
                                         Text(
                                             text = stringResource(R.string.presentation_batch_d_cloud_sources_heading),
@@ -1735,6 +1757,12 @@ fun LibraryScreen(
         onSetupAiClick = {
             navController.navigateSafely(Screen.SettingsCategory.createRoute("ai"))
         }
+    )
+
+    com.aro.music.presentation.components.LocalMusicImportPrompt(
+        showImportChoices = showLocalImportChoices,
+        onDismissChoices = { showLocalImportChoices = false },
+        onImportPlaylist = { m3uImportLauncher.launch("audio/x-mpegurl") }
     )
 
     com.aro.music.presentation.components.PlaylistImportDialog(
@@ -3417,73 +3445,13 @@ fun AlbumGridItemRedesigned(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun ArtistListItem(artist: Artist, onClick: () -> Unit, isLoading: Boolean = false) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (isLoading) {
-                // Skeleton loading state
-                ShimmerBox(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    ShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth(0.3f)
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (!artist.effectiveImageUrl.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(artist.effectiveImageUrl)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = artist.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.rounded_artist_24),
-                            contentDescription = stringResource(R.string.presentation_batch_d_cd_artist),
-                            modifier = Modifier.padding(8.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(artist.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(formatSongCount(artist.songCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
+fun ArtistListItem(
+    artist: Artist,
+    onClick: () -> Unit,
+    isLoading: Boolean = false,
+    fallbackArtwork: String? = null
+) {
+    ArtistLibraryItem(artist, onClick, isLoading, isCard = false, fallbackArtwork = fallbackArtwork)
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)

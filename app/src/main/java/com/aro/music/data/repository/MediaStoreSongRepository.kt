@@ -30,10 +30,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * MediaStoreSongRepository — local MediaStore scanning is disabled.
- * All methods return empty results or delegate to the Room DB (which is
- * populated exclusively by the streaming / cloud sync layers).
- * Kept for Hilt injection-graph compatibility.
+ * Room-backed song queries. Phone storage is read only by the separately
+ * confirmed LocalMusicImportWorker; queries do not trigger MediaStore scans.
+ * Room can contain explicitly imported local songs and saved cloud tracks.
  */
 @Singleton
 class MediaStoreSongRepository @Inject constructor(
@@ -64,7 +63,7 @@ class MediaStoreSongRepository @Inject constructor(
         maxSize = 250
     )
 
-    // getSongs() — DB-only (streaming/cloud songs stored in DB by JioSaavnRepository)
+    // Legacy non-paging methods are unused; unified library reads come from MusicRepositoryImpl.
     override fun getSongs(): Flow<List<Song>> = flowOf(emptyList())
 
     override fun getSongsByAlbum(albumId: Long): Flow<List<Song>> = flowOf(emptyList())

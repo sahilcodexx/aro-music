@@ -1,0 +1,21 @@
+<resources>
+    <string name="local_import_title" translatable="false">Import music</string>
+    <string name="local_import_choose_source" translatable="false">Choose what to add to your library.</string>
+    <string name="local_import_from_phone" translatable="false">Local music from this phone</string>
+    <string name="local_import_playlist_file" translatable="false">Playlist file (M3U)</string>
+    <string name="local_import_confirm_title" translatable="false">Import local music?</string>
+    <string name="local_import_confirm_body" translatable="false">Aro will read the music indexed on this phone and add its details to your library. Your audio files stay on your phone. Existing songs, playlists, favorites, and edits are kept. Nothing is imported automatically; choose Import again to add new files. Folder exclusions and the minimum song duration still apply.</string>
+    <string name="local_import_confirm" translatable="false">Import</string>
+    <string name="local_import_cancel" translatable="false">Cancel</string>
+    <string name="local_import_permission_denied" translatable="false">Audio access was not granted. Local music was not imported. You can try again from Library → Import or allow audio access in Android settings.</string>
+    <string name="local_import_done_title" translatable="false">Local import finished</string>
+    <string name="local_import_done_body" translatable="false">Added %1$d new songs. Your library contains %2$d local songs. Already imported files are kept without duplicates. If no songs were found, check your folder exclusions and minimum song duration.</string>
+    <string name="local_import_done" translatable="false">Done</string>
+    <string name="local_import_failed_title" translatable="false">Local import could not finish</string>
+    <string name="local_import_failed_body" translatable="false">Check audio permission and that your music is available on this phone, then try again. Your existing library was kept.</string>
+    <string name="local_import_retry" translatable="false">Try again</string>
+    <string name="local_import_progress_title" translatable="false">Importing local music</string>
+    <string name="local_import_progress_body" translatable="false">Found %1$d songs so far. You can keep browsing while Aro finishes.</string>
+    <string name="local_import_background" translatable="false">Keep browsing</string>
+    <string name="local_library_offline_hint" translatable="false">Offline · Showing local music. Cloud and Spotify content returns when you are online.</string>
+</resources>
