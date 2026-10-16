@@ -8,6 +8,12 @@ Aro stores music metadata, playlists, favorites, listening history, settings, ar
 
 Android backup is enabled. Backup rules exclude named provider preference stores, Spotify session DataStore, and settings DataStore because they can contain credentials. Do not assume every cache or third-party WebView/TDLib file is excluded; a complete account-storage audit remains a release task. Exported backups and logs can contain personal library information and should be handled carefully.
 
+## Unreleased phone import and playlist artwork
+
+The current source restores an explicit **Library → Import** phone-music flow. A confirmation precedes Android audio permission and a separate background worker reads MediaStore metadata only after that choice. Audio files remain on the device; imports store metadata and content references in Room. Repeat imports preserve existing edits, favorites, and playlists. The worker does not upload audio. Audio permission is no longer required to complete onboarding. These changes have not yet been built or published in an APK.
+
+Selecting a custom playlist cover copies that image into Aro's internal files. Spotify cover overrides are stored locally and do not change the Spotify account's playlists. Offline library filtering changes visibility and retains cached service data; reconnecting restores visibility.
+
 ## Connected services
 
 YouTube/YouTube Music receives catalog and playback requests. Spotify receives sign-in and catalog/playlist requests; Aro stores a session cookie in private app preferences and matches Spotify metadata to YouTube for playback. Spotify handles credentials on its own sign-in page; Aro has no separate device-email chooser.

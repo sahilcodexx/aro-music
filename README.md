@@ -4,6 +4,8 @@ Your library, your playlists, and a home feed shaped by what you listen to.
 
 Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.2** is the current phone release, published without the GitHub prerelease flag at the maintainer’s request. Component licensing remains unresolved; broader device and provider verification is incomplete.
 
+Unreleased changes add playlist and artist cards/list rows with artwork, song counts, and a layout toggle beside Library sorting. Both default to cards and save independent layout choices. The Aro logo and Settings both open beta details. Home song labels use compact spacing, and playlist details use a full-width artwork header. Unavailable Google Drive connection options are hidden. Welcome/setup now use compact scrollable pages, explicit layout choices, and a final selection summary while retaining the bottom forward/progress panel. Artist images fall back to available song artwork. These changes are not in the published 1.0.2 APK.
+
 ## What you can do
 
 - Play local music and organize songs, artists, albums, favorites, and playlists.
@@ -27,7 +29,7 @@ Release builds use `com.aro.music`; development builds use `com.aro.music.debug`
 
 ## Getting started
 
-1. Grant audio access if you want Aro to scan music stored on your phone. Your local collection appears in Library.
+1. In the unreleased source, choose **Library → Import → Local music from this phone**, confirm, and grant Android audio access to populate your local collection. This restored opt-in import flow is not included in the linked 1.0.2 APK.
 2. Use Search to find online songs, albums, artists, and playlists. Start a song or radio queue from its results.
 3. Connect Spotify through Aro's account flow to browse your playlists and liked songs. Aro opens Spotify's sign-in page and verifies the session after you log in.
 4. Use Library's **Import** action with a supported YouTube or Spotify playlist link to create a local playlist copy. Unavailable or unmatched songs may be omitted from the playable copy.
@@ -43,6 +45,8 @@ These features are included in 1.0.2; see the changelog and validation record fo
 A remote playlist's source count can differ from its playable local count. Spotify songs must find a usable YouTube match, and removed or region-restricted items may not play. Large uncached imports can take longer than cached reopening; see [Spotify loading behavior](SPOTIFY_INTEGRATION.md).
 
 Release assets provide smaller ARM64 and ARMv7 APKs alongside universal. Choose universal when unsure; these are standalone installers with the same features. See [release preparation and APK choices](RELEASE.md).
+
+The working source includes an unreleased playlist cover header, custom-artwork selection, palette-colored card/sheet surfaces, connected-provider discovery, and restored opt-in phone-music import. It shows local and saved cloud/Spotify content online, then switches Library to local content offline and restores remote visibility after reconnecting. These UI changes are **not included in the published 1.0.2 APK**. Android builds and device checks are deferred while this design batch is in progress; see the Unreleased changelog.
 
 ## Build from source
 

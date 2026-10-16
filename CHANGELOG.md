@@ -1,5 +1,28 @@
 # Aro changelog
 
+## Unreleased
+
+- Home shelves keep each song title and artist together without reserving a second title line. Equalizer band sliders wait for vertical drag intent so horizontal swipes can reach the pager; page indicators are tappable and page count follows the number of bands. Playlist details use full-width artwork with title/count over a readability fade. Google Drive is hidden from new connection options while unavailable; existing stored account data is retained. These changes are source-only.
+
+- Welcome and setup pages now share a scrollable, left-aligned layout with restrained typography, tonal panels, and explicit radio choices. Notification and navigation previews replace decorative collages; completion summarizes the selected theme and navigation. The bottom progress/forward panel and permission gates are unchanged. This redesign has not been built or visually verified.
+
+- Playlist cards use compact title/count spacing and stronger tonal contrast; artist cards use the same surface level. Home’s Aro logo/name opens beta details, also available in Settings. These refinements have not been rebuilt.
+
+- Playlists now offer matching tonal artwork cards and list rows, controlled by a layout icon beside sorting. Playlist and artist layouts each default to cards and retain independent saved choices across restarts.
+
+- Artists support a saved card/list layout choice, circular artwork, names and song counts. Missing artist artwork falls back to a song cover, then the artist icon. The layout toggle joins filter and sort with small inner corners and fully rounded outside ends.
+
+- Home displays Aro instead of the beta badge. The cloud-services sheet includes Spotify, shows its connection state, and opens linked Spotify playlists. Accounts keeps the remaining unconnected providers visible below linked services, with an accurate remaining-service count.
+- Library Import offers phone music or an M3U playlist file. Phone music requires confirmation, then Android audio permission; a separate background worker imports metadata without modifying audio files, replacing existing edits, or deleting cloud/library rows. Onboarding no longer requires audio permission or scans phone storage.
+- Online Library includes local and saved remote content. Offline Library filters songs, albums, artists, favorites, folders, and default playlist visibility to local content without deleting caches or changing the saved online filter. When imported songs exist, offline startup or an offline Home/Search visit opens Library once per offline session. Reconnecting restores remote library content; cloud maintenance is not newly enqueued while offline.
+
+- Lyrics Synced/Static modes share one inset, rounded two-segment control matching the player’s shuffle/repeat/favorite group, with active selection and accessibility state preserved.
+
+- Playlist details now have a scrollable cover header with artwork-derived colors. An existing playlist cover takes priority; when absent or unavailable, the first song's artwork is used.
+- Playlist options include **Change artwork**, with a system image picker and **Use first song art** reset. Custom images are copied into Aro's private storage. Spotify overrides are local to Aro and persist across playlist reloads.
+- Cards, Library tab tiles, settings groups, and sheets use shared tonal surface levels from the active artwork/system palette instead of unrelated neutral dark panels. Foreground colors are chosen for contrast across those levels.
+- These changes are unreleased. An earlier development snapshot was installed separately and passed 255 unit tests. Later spacing, contrast, and beta-details refinements are source-only; full lint was stopped and device database checks remain pending. No production release or browser preview is included.
+
 ## 1.0.2 — 2026-10-16
 
 - Release preparation now stages clearly named smaller ARM64/ARMv7 standalone APKs alongside universal, with a download-choice table and checksums.
