@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
-/** Mirrors the actual shelf dimensions, including font scaling and two title lines. */
+/** Mirrors the actual shelf dimensions, with compact metadata spacing and font scaling. */
 @Composable
 fun HomeSongShelfPlaceholder(title: String, label: String?, loading: Boolean, emptyMessage: String) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -29,9 +29,10 @@ fun HomeSongShelfPlaceholder(title: String, label: String?, loading: Boolean, em
                         else Spacer(Modifier.size(144.dp))
                         Spacer(Modifier.height(6.dp))
                         Box {
-                            Text("Song title", style = MaterialTheme.typography.titleSmall, minLines = 2, maxLines = 2, color = Color.Transparent)
+                            Text("Song title", style = MaterialTheme.typography.titleSmall, maxLines = 2, color = Color.Transparent)
                             if (loading) ShimmerBox(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(6.dp)))
                         }
+                        Spacer(Modifier.height(2.dp))
                         Box {
                             Text("Artist", style = MaterialTheme.typography.bodySmall, maxLines = 1, color = Color.Transparent)
                             if (loading) ShimmerBox(Modifier.width(90.dp).height(10.dp).clip(RoundedCornerShape(6.dp)))
