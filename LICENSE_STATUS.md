@@ -13,3 +13,5 @@ See the [GNU GPL FAQ on incompatible libraries](https://www.gnu.org/licenses/gpl
 The maintainer explicitly authorized publishing the development APK candidate in the existing GitHub repository despite this unresolved status. That instruction does not alter the original licenses or grant rights from their authors. Original notices remain intact. Public redistribution and store shipping still require compatible distribution rights; do not claim that this development prerelease resolves licensing.
 
 On 2026-10-16, the maintainer explicitly requested publishing 1.0.2 without GitHub’s prerelease flag. That authorization does not provide permission from the original rights holders or resolve the component-license conflict above. The original notices and this unresolved status remain intact.
+
+The 1.0.3 branding update replaces app and website artwork with supplied Aro assets. Visible UI inspiration copy does not replace the source-adaptation record in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); the licensing conflict above remains unresolved.

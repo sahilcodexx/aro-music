@@ -4,7 +4,7 @@ Your library, your playlists, and a home feed shaped by what you listen to.
 
 Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.2** is the current phone release, published without the GitHub prerelease flag at the maintainer’s request. Component licensing remains unresolved; broader device and provider verification is incomplete.
 
-Unreleased changes add playlist and artist cards/list rows with artwork, song counts, and a layout toggle beside Library sorting. Both default to cards and save independent layout choices. The Aro logo and Settings both open beta details. Home song labels use compact spacing, and playlist details use a full-width artwork header. Unavailable Google Drive connection options are hidden. Welcome/setup now use compact scrollable pages, explicit layout choices, and a final selection summary while retaining the bottom forward/progress panel. Artist images fall back to available song artwork. These changes are not in the published 1.0.2 APK.
+The 1.0.3 candidate adds persistent playlist/artist card and list layouts, editable artwork headers, palette-based surfaces, explicit phone-music import, offline local-library behavior, and refreshed illustrated setup pages with the original forward bar. Settings → Appearance → App icon offers eight Aro icons, defaulting to White; the monochrome and notification marks also use Aro artwork. AI provider integration and generation are removed. These changes are not in the published 1.0.2 APK; see the [candidate build](https://github.com/sahilcodexx/aro-music/actions/workflows/phone-release.yml) and [validation record](RELEASE_CHECKLIST.md).
 
 ## What you can do
 
@@ -46,7 +46,7 @@ A remote playlist's source count can differ from its playable local count. Spoti
 
 Release assets provide smaller ARM64 and ARMv7 APKs alongside universal. Choose universal when unsure; these are standalone installers with the same features. See [release preparation and APK choices](RELEASE.md).
 
-The working source includes an unreleased playlist cover header, custom-artwork selection, palette-colored card/sheet surfaces, connected-provider discovery, and restored opt-in phone-music import. It shows local and saved cloud/Spotify content online, then switches Library to local content offline and restores remote visibility after reconnecting. These UI changes are **not included in the published 1.0.2 APK**. Android builds and device checks are deferred while this design batch is in progress; see the Unreleased changelog.
+The working source includes an unreleased playlist cover header, custom-artwork selection, palette-colored card/sheet surfaces, connected-provider discovery, and restored opt-in phone-music import. It shows local and saved cloud/Spotify content online, then switches Library to local content offline and restores remote visibility after reconnecting. These UI changes are **not included in the published 1.0.2 APK**. See the Unreleased changelog and release checklist for candidate build and validation status.
 
 ## Build from source
 
@@ -81,14 +81,14 @@ The `web/` folder contains a responsive Next.js app website with real Aro screen
 
 Spotify uses one in-app web sign-in page and a stored session cookie. Aro does not offer a device-email picker or browser OAuth flow. Sessions may expire and require reconnecting; see [Spotify behavior and limitations](SPOTIFY_INTEGRATION.md). Aro does not stream Spotify's licensed audio.
 
-Library metadata, preferences, listening history, and playlist caches are stored on your device. Connecting a service sends requests to that service. Optional AI features use the provider you configure. Do not include passwords, cookies, signing material, or private account information in issue reports.
+Library metadata, preferences, listening history, and playlist caches are stored on your device. Connecting a service sends requests to that service. Unreleased source removes AI provider integration and generation features; the published 1.0.2 APK predates this removal. Do not include passwords, cookies, signing material, or private account information in issue reports.
 
 ## License and release status
 
-The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included [InnerTubeX](innertubex/LICENSE) and Meld-derived code have GPLv3 obligations. Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved. The maintainer authorized publication, including the regular 1.0.2 GitHub release, while compatible distribution rights remain undocumented; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
+The existing [root license](LICENSE) is a restrictive license attributed to Theo Vilardo. Included components have GPLv3 obligations; see [source notices](THIRD_PARTY_NOTICES.md). Aro cannot currently claim one resolved GPLv3 license for the combined app. Original notices are preserved. The maintainer authorized publication, including the regular 1.0.2 GitHub release, while compatible distribution rights remain undocumented; see [LICENSE_STATUS.md](LICENSE_STATUS.md). Changing branding does not change those rights.
 
 ## Credits
 
-Aro's UI is inspired by and derived from [PixelPlay](https://github.com/theovilardo/PixelPlay); credit belongs to its authors and contributors. Music discovery and queue integration draw on [Meld](https://github.com/FrancescoGrazioso/Meld) and the Meld project supplied locally during development. [InnerTubeX](https://github.com/MetrolistGroup/innertubex) supplies YouTube Music protocol and playback tools; its GPL license and adapted sources are included in `innertubex/`.
+Aro’s UI is inspired by [PixelPlay](https://github.com/theovilardo/PixelPlay). Thanks to its authors and contributors. [InnerTubeX](https://github.com/MetrolistGroup/innertubex) supplies YouTube Music protocol and playback tools. Source provenance, adapted components, and applicable notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); original copyrights and licenses remain applicable.
 
 Aro uses YouTube/YouTube Music and Spotify as external services, with additional integrations for Telegram/TDLib, Subsonic/Navidrome, Jellyfin, NetEase Music, and QQ Music. Service names and artwork belong to their respective owners; this app is not affiliated with those services. Thanks also to AndroidX, Jetpack Compose, Media3, Kotlin, Ktor, Coil, Room, Hilt, QuickJS, and the other open-source dependencies whose notices and licenses remain applicable.
