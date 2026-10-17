@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+// Legacy schema compatibility only; no active AI integration reads or writes this table.
 @Dao
 interface AiUsageDao {
     @Query("SELECT * FROM ai_usage")

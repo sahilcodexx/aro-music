@@ -77,13 +77,6 @@ enum class BackupSection(
         description = "Your custom equalizer presets and audio profiles.",
         iconRes = R.drawable.rounded_surround_sound_24,
         sinceVersion = 3
-    ),
-    AI_USAGE_LOGS(
-        key = "ai_usage_logs",
-        label = "AI Activity Logs",
-        description = "History of AI requests and token consumption.",
-        iconRes = R.drawable.rounded_monitoring_24,
-        sinceVersion = 4
     );
 
     companion object {

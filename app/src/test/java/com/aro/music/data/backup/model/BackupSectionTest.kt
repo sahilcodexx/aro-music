@@ -42,13 +42,23 @@ class BackupSectionTest {
     }
 
     @Test
+    fun `retired AI backup section is skipped while library sections remain available`() {
+        val manifestKeys = listOf("playlists", "ai_usage_logs", "favorites", "global_settings")
+        assertEquals(
+            setOf(BackupSection.PLAYLISTS, BackupSection.FAVORITES, BackupSection.GLOBAL_SETTINGS),
+            manifestKeys.mapNotNull { BackupSection.fromKey(it) }.toSet()
+        )
+        assertNull(BackupSection.fromKey("ai_usage_logs"))
+    }
+
+    @Test
     fun `defaultSelection contains all sections`() {
         assertEquals(BackupSection.entries.toSet(), BackupSection.defaultSelection)
     }
 
     @Test
-    fun `there are exactly 12 backup sections`() {
-        assertEquals(12, BackupSection.entries.size)
+    fun `there are exactly 11 supported backup sections`() {
+        assertEquals(11, BackupSection.entries.size)
     }
 
     @Test
