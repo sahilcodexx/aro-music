@@ -2,26 +2,33 @@
 <resources>
     <string name="setup_design_welcome_title" translatable="false">Welcome to Aro</string>
     <string name="setup_design_welcome_body" translatable="false">Set up your appearance, library, and playback controls.</string>
-    <string name="setup_design_look_title" translatable="false">Choose your layout</string>
-    <string name="setup_design_look_body" translatable="false">Pick a theme and the navigation that feels right for you.</string>
-    <string name="setup_design_library_title" translatable="false">Bring your music</string>
-    <string name="setup_design_library_body" translatable="false">Restore an Aro backup now. Import phone music or connect an account later.</string>
-    <string name="setup_design_playback_title" translatable="false">Set up playback</string>
-    <string name="setup_design_playback_body" translatable="false">Choose access for playback controls, timers, and background listening.</string>
-    <string name="setup_design_change_later" translatable="false">You can change these choices in Settings.</string>
+    <string name="setup_design_welcome_tagline" translatable="false">Your high-fidelity personal music player with dynamic themes and complete privacy.</string>
+    <string name="setup_design_look_title" translatable="false">Expressive Design</string>
+    <string name="setup_design_look_body" translatable="false">Dynamic Material You themes reacting to album artwork and personalized controls.</string>
+    <string name="setup_design_library_title" translatable="false">Unified Music Library</string>
+    <string name="setup_design_library_body" translatable="false">High-resolution local audio files and cloud streaming together in one place.</string>
+    <string name="setup_design_playback_title" translatable="false">Private &amp; Offline</string>
+    <string name="setup_design_playback_body" translatable="false">Offline-first, no mandatory accounts, no telemetry. 100% focused on your music.</string>
+    <string name="setup_design_change_later" translatable="false">Quick setup · You can customize everything later in Settings.</string>
     <string name="setup_design_preview" translatable="false">Layout preview</string>
     <string name="setup_design_controls_preview" translatable="false">Notification preview</string>
     <string name="setup_design_now_playing" translatable="false">Now playing</string>
+    <string name="setup_design_sample_track" translatable="false">Midnight City</string>
+    <string name="setup_design_sample_artist" translatable="false">Aro Music</string>
     <string name="setup_design_compact_title" translatable="false">Compact menu</string>
+    <string name="setup_design_compact_body" translatable="false">A minimal floating pill that opens a clean drawer of library tabs.</string>
     <string name="setup_design_tabs_title" translatable="false">Visible tabs</string>
+    <string name="setup_design_tabs_body" translatable="false">Traditional horizontal tab row at the top for quick swipe switching.</string>
     <string name="setup_design_floating_title" translatable="false">Floating bar</string>
+    <string name="setup_design_floating_body" translatable="false">Modern floating pill with curved corners and edge margins.</string>
     <string name="setup_design_full_width_title" translatable="false">Full-width bar</string>
-    <string name="setup_design_timer_title" translatable="false">Sleep timer</string>
-    <string name="setup_design_timer_body" translatable="false">Allow Android to run the timer at the requested time. You can skip this permission for now.</string>
-    <string name="setup_design_backup_title" translatable="false">Review before restoring</string>
-    <string name="setup_design_backup_body" translatable="false">Choose an Aro backup file, then review the sections to restore. You can also start without a backup.</string>
-    <string name="setup_design_background_title" translatable="false">Listening with the screen off</string>
-    <string name="setup_design_background_body" translatable="false">If Android interrupts playback in the background, allow Aro to run without battery restrictions. This step is optional.</string>
+    <string name="setup_design_full_width_body" translatable="false">Classic edge-to-edge dock anchored to the bottom of the screen.</string>
+    <string name="setup_design_timer_title" translatable="false">Exact Timer Precision</string>
+    <string name="setup_design_timer_body" translatable="false">Allows Aro to wake up precisely on the minute to pause playback and save battery.</string>
+    <string name="setup_design_backup_title" translatable="false">Restore from Backup</string>
+    <string name="setup_design_backup_body" translatable="false">Choose an Aro backup file (.aro or .json) to restore playlists, history, and settings.</string>
+    <string name="setup_design_background_title" translatable="false">Uninterrupted Listening</string>
+    <string name="setup_design_background_body" translatable="false">Prevents Android from stopping your audio playback while the screen is locked or in deep sleep.</string>
     <string name="setup_design_finish_import" translatable="false">To add phone music, open Library → Songs → Import. Nothing is scanned until you confirm.</string>
     <string name="setup_design_home" translatable="false">Home</string>
     <string name="setup_design_search" translatable="false">Search</string>
