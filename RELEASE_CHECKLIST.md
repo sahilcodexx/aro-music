@@ -2,6 +2,8 @@
 
 ## 1.0.3 candidate — 2026-10-17
 
+- First signed CI attempt [39057065369](https://github.com/sahilcodexx/aro-music/actions/runs/39057065369) failed release lint on one `StringFormatInvalid` error: setup copy contained a literal `100%`. Marked that resource `formatted="false"`; its no-argument `stringResource` usage and AAPT2 compilation were checked. The baseline and visible wording are unchanged. The Metaspace expiry warning was not the failing task. Signed artifacts/shrinking were not completed by that attempt; the corrected main commit needs a fresh workflow dispatch.
+
 - Version name/code: **1.0.3 / 20** in Gradle properties and app fallback metadata. The merged debug manifest confirms this version and separate `com.aro.music.debug` launcher aliases. Production signing configuration and the original license are unchanged.
 - Website ESLint and Next.js production build passed. Static XML/resource checks verify all eight aliases, ten padded adaptive definitions, a themed monochrome silhouette inside the circular safe region, filled notification masks, and replacement of inherited in-app monochrome paths. Website artwork matches the supplied White Aro logo.
 - All **256 debug unit tests passed**, with zero failures, errors, or skipped tests. Full debug lint was still running when the preparation commits were finalized; it is not claimed as passed here. Signed release tests, full release lint, R8/shrinking, APK/AAB builds, signatures, and native alignment are delegated to the manually dispatched `phone-release.yml` workflow on the final commit. No new signed artifacts or device validation are claimed here.

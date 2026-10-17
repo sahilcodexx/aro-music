@@ -8,7 +8,7 @@
     <string name="setup_design_library_title" translatable="false">Unified Music Library</string>
     <string name="setup_design_library_body" translatable="false">High-resolution local audio files and cloud streaming together in one place.</string>
     <string name="setup_design_playback_title" translatable="false">Private &amp; Offline</string>
-    <string name="setup_design_playback_body" translatable="false">Offline-first, no mandatory accounts, no telemetry. 100% focused on your music.</string>
+    <string name="setup_design_playback_body" translatable="false" formatted="false">Offline-first, no mandatory accounts, no telemetry. 100% focused on your music.</string>
     <string name="setup_design_change_later" translatable="false">Quick setup · You can customize everything later in Settings.</string>
     <string name="setup_design_preview" translatable="false">Layout preview</string>
     <string name="setup_design_controls_preview" translatable="false">Notification preview</string>
