@@ -131,7 +131,7 @@ class WatchTransferForegroundService : Service() {
         val isOngoing = activeTransfers.isNotEmpty()
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.monochrome_player)
+            .setSmallIcon(R.drawable.ic_aro_notification)
             .setContentTitle(title)
             .setContentText(contentText)
             .setContentIntent(createOpenAppPendingIntent())

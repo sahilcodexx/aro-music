@@ -300,7 +300,7 @@ class MediaFileHttpServerService : Service() {
             val notification = androidx.core.app.NotificationCompat.Builder(this, channelId)
                 .setContentTitle(getString(R.string.cast_server_notification_title))
                 .setContentText(getString(R.string.cast_server_notification_text))
-                .setSmallIcon(android.R.drawable.ic_menu_upload) // Placeholder, ideally use app icon
+                .setSmallIcon(com.aro.music.R.drawable.ic_aro_notification)
                 .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
                 .build()
 

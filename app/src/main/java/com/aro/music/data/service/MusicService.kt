@@ -1055,7 +1055,7 @@ class MusicService : MediaLibraryService() {
             .build()
 
         val localOnlyProvider = LocalOnlyMediaNotificationProvider(this).also {
-            it.setSmallIcon(R.drawable.monochrome_player)
+            it.setSmallIcon(R.drawable.ic_aro_notification)
         }
         setMediaNotificationProvider(localOnlyProvider)
         serviceScope.launch {
@@ -1190,7 +1190,7 @@ class MusicService : MediaLibraryService() {
             this,
             AroApplication.NOTIFICATION_CHANNEL_ID
         )
-            .setSmallIcon(R.drawable.monochrome_player)
+            .setSmallIcon(R.drawable.ic_aro_notification)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(getString(R.string.service_processing_action))
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
