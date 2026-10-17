@@ -117,6 +117,11 @@ class AroApplication : Application(), ImageLoaderFactory, Configuration.Provider
             notificationManager.createNotificationChannel(channel)
         }
 
+        startupScope.launch {
+            androidx.work.WorkManager.getInstance(this@AroApplication)
+                .cancelAllWorkByTag("ai_generation_worker")
+        }
+
         ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycleObserver)
 
         startupScope.launch {

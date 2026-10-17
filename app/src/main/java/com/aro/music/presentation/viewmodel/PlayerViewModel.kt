@@ -40,7 +40,6 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.aro.music.R
 import com.aro.music.data.EotStateHolder
-import com.aro.music.data.ai.SongMetadata
 import com.aro.music.data.database.AlbumArtThemeDao
 import com.aro.music.data.innertube.InnerTubeIds
 import com.aro.music.data.media.CoverArtUpdate
@@ -59,7 +58,6 @@ import com.aro.music.data.preferences.CarouselStyle
 import com.aro.music.data.preferences.LibraryNavigationMode
 import com.aro.music.data.preferences.NavBarStyle
 import com.aro.music.data.preferences.FullPlayerLoadingTweaks
-import com.aro.music.data.preferences.AiPreferencesRepository
 import com.aro.music.data.preferences.AlbumArtPaletteStyle
 import com.aro.music.data.preferences.ThemePreferencesRepository
 import com.aro.music.data.preferences.UserPreferencesRepository
@@ -174,13 +172,6 @@ private data class SortOptionsSnapshot(
     val favoriteSort: SortOption,
 )
 
-private data class AiUiSnapshot(
-    val showAiPlaylistSheet: Boolean,
-    val isGeneratingAiPlaylist: Boolean,
-    val aiStatus: String?,
-    val aiError: String?,
-    val isGeneratingAiMetadata: Boolean,
-)
 
 private data class PreparedPlaybackQueue(
     val mediaItems: List<MediaItem>,
@@ -221,7 +212,6 @@ class PlayerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val musicRepository: MusicRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val aiPreferencesRepository: AiPreferencesRepository,
     private val themePreferencesRepository: ThemePreferencesRepository,
     private val albumArtThemeDao: AlbumArtThemeDao,
     val syncManager: SyncManager, // Inyectar SyncManager
@@ -242,7 +232,6 @@ class PlayerViewModel @Inject constructor(
     private val connectivityStateHolder: ConnectivityStateHolder,
     private val sleepTimerStateHolder: SleepTimerStateHolder,
     private val searchStateHolder: SearchStateHolder,
-    private val aiStateHolder: AiStateHolder,
     private val libraryStateHolder: LibraryStateHolder,
     private val folderNavigationStateHolder: FolderNavigationStateHolder,
     private val libraryTabsStateHolder: LibraryTabsStateHolder,
@@ -313,7 +302,6 @@ class PlayerViewModel @Inject constructor(
             }
         }
     }
-
 
 
     private val _playlistPickerStorageFilter = MutableStateFlow(com.aro.music.data.model.StorageFilter.OFFLINE)
@@ -403,14 +391,14 @@ class PlayerViewModel @Inject constructor(
         // Check if it matches, ignoring query params for comparison
         val currentUriClean = currentSong?.albumArtUriString?.substringBefore('?')
         val updatedUriClean = updatedArtUri.substringBefore('?')
-        
+
         if (currentUriClean == updatedUriClean) {
             Timber.d("PlayerViewModel: Embedded art updated for current song, forcing refresh")
-            
+
             // 1. Invalidate Coil cache for the BASE uri (without params)
             // This ensures next time we load it without params, it's fresh too.
             val baseUri = currentUriClean
-            
+
             // Remove from Memory Cache
             context.imageLoader.memoryCache?.keys?.forEach { key ->
                 if (key.toString().contains(baseUri)) {
@@ -422,7 +410,7 @@ class PlayerViewModel @Inject constructor(
 
             // 2. Extract Colors (using base URI)
             themeStateHolder.extractAndGenerateColorScheme(updatedArtUri.toUri(), updatedArtUri, isPreload = false)
-            
+
             // 3. FORCE UI REFRESH by updating the URI with a version timestamp
             // This forces SmartImage to see a "new" model and reload.
             // We keep the quality param if it exists, or add a version param.
@@ -431,9 +419,9 @@ class PlayerViewModel @Inject constructor(
             } else {
                 "$updatedArtUri?v=${System.currentTimeMillis()}"
             }
-            
+
             val updatedSong = currentSong.copy(albumArtUriString = newUri)
-            
+
             // Update State
             playbackStateHolder.updateStablePlayerState { state ->
                 state.copy(currentSong = updatedSong)
@@ -468,16 +456,6 @@ class PlayerViewModel @Inject constructor(
 
     val playerContentExpansionFraction = Animatable(0f)
 
-    // AI Ecosystem: States delegated to AiStateHolder for centralized management
-    val showAiPlaylistSheet: StateFlow<Boolean> = aiStateHolder.showAiPlaylistSheet
-    val isGeneratingAiPlaylist: StateFlow<Boolean> = aiStateHolder.isGeneratingAiPlaylist
-    val aiSuccess: StateFlow<Boolean> = aiStateHolder.aiSuccess
-    val aiStatus: StateFlow<String?> = aiStateHolder.aiStatus
-    val aiError: StateFlow<String?> = aiStateHolder.aiError
-
-    // AI Metadata Generation States
-    val isGeneratingAiMetadata: StateFlow<Boolean> = aiStateHolder.isGeneratingMetadata
-    val aiMetadataSuccess: StateFlow<Boolean> = aiStateHolder.aiMetadataSuccess
 
     private val _selectedSongForInfo = MutableStateFlow<Song?>(null)
     val selectedSongForInfo: StateFlow<Song?> = _selectedSongForInfo.asStateFlow()
@@ -524,50 +502,6 @@ class PlayerViewModel @Inject constructor(
             initialValue = CarouselStyle.NO_PEEK
         )
 
-    val hasActiveAiProviderApiKey: StateFlow<Boolean> = combine(
-        aiPreferencesRepository.aiProvider,
-        aiPreferencesRepository.geminiApiKey,
-        aiPreferencesRepository.deepseekApiKey,
-        aiPreferencesRepository.groqApiKey,
-        aiPreferencesRepository.mistralApiKey,
-        aiPreferencesRepository.nvidiaApiKey,
-        aiPreferencesRepository.kimiApiKey,
-        aiPreferencesRepository.glmApiKey,
-        aiPreferencesRepository.openaiApiKey
-    ) { values ->
-        val provider = values[0]
-        val gemini = values[1]
-        val deepseek = values[2]
-        val groq = values[3]
-        val mistral = values[4]
-        val nvidia = values[5]
-        val kimi = values[6]
-        val glm = values[7]
-        val openai = values[8]
-        when (provider) {
-            "DEEPSEEK" -> deepseek.isNotBlank()
-            "GROQ" -> groq.isNotBlank()
-            "MISTRAL" -> mistral.isNotBlank()
-            "NVIDIA" -> nvidia.isNotBlank()
-            "KIMI" -> kimi.isNotBlank()
-            "GLM" -> glm.isNotBlank()
-            "OPENAI" -> openai.isNotBlank()
-            else -> gemini.isNotBlank()
-        }
-    }.distinctUntilChanged()
-        .stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
-
-    val hasGeminiApiKey: StateFlow<Boolean> = aiPreferencesRepository.geminiApiKey
-        .map { it.isNotBlank() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
 
     val fullPlayerLoadingTweaks: StateFlow<FullPlayerLoadingTweaks> = userPreferencesRepository.fullPlayerLoadingTweaksFlow
         .stateIn(
@@ -648,7 +582,6 @@ class PlayerViewModel @Inject constructor(
         )
 
 
-
     private val _isInitialThemePreloadComplete = MutableStateFlow(false)
 
     val isEndOfTrackTimerActive: StateFlow<Boolean> = sleepTimerStateHolder.isEndOfTrackTimerActive
@@ -660,7 +593,6 @@ class PlayerViewModel @Inject constructor(
     val lyricsSearchUiState: StateFlow<LyricsSearchUiState> = lyricsStateHolder.searchUiState
 
     private var bufferingDebounceJob: Job? = null
-
 
 
     // Toast Events
@@ -695,11 +627,11 @@ class PlayerViewModel @Inject constructor(
     val artistNavigationRequests = _artistNavigationRequests.asSharedFlow()
     private val _searchNavDoubleTapEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val searchNavDoubleTapEvents = _searchNavDoubleTapEvents.asSharedFlow()
-    
+
     // New event for scrolling to a specific index in the songs list
     private val _scrollToIndexEvent = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     val scrollToIndexEvent = _scrollToIndexEvent.asSharedFlow()
-    
+
     private var albumNavigationJob: Job? = null
     private var artistNavigationJob: Job? = null
     private var fullQueuePlaybackJob: Job? = null
@@ -711,7 +643,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val sortOption = playerUiState.value.currentSongSortOption
-                
+
                 // Logic must match effectiveStorageFilter in LibraryStateHolder
                 val baseFilter = playerUiState.value.currentStorageFilter
                 val hideLocal = playerUiState.value.hideLocalMedia
@@ -904,7 +836,6 @@ class PlayerViewModel @Inject constructor(
     val bluetoothName: StateFlow<String?> = connectivityStateHolder.bluetoothName
     val bluetoothAudioDeviceStates: StateFlow<List<BluetoothAudioDeviceState>> = connectivityStateHolder.bluetoothAudioDeviceStates
     val bluetoothAudioDevices: StateFlow<List<String>> = connectivityStateHolder.bluetoothAudioDevices
-
 
 
     // Connectivity is now managed by ConnectivityStateHolder
@@ -1468,7 +1399,6 @@ class PlayerViewModel @Inject constructor(
     }
 
 
-
     private fun updateDailyMix() {
         // Delegate to DailyMixStateHolder
         dailyMixStateHolder.updateDailyMix(
@@ -1478,7 +1408,7 @@ class PlayerViewModel @Inject constructor(
 
     fun shuffleAllSongs(queueName: String = "All Songs (Shuffled)") {
         Log.d("ShuffleDebug", "shuffleAllSongs called.")
-        
+
         // Load random songs from DB instead of materializing the entire library
         viewModelScope.launch {
             val randomSongs = musicRepository.getRandomSongs(limit = 500)
@@ -1691,7 +1621,6 @@ class PlayerViewModel @Inject constructor(
             castStateHolder.setCastPlayer(CastPlayer(currentSession, context.contentResolver))
             castStateHolder.setRemotePlaybackActive(true)
         }
-
 
 
         viewModelScope.launch {
@@ -1941,39 +1870,6 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        // Initialize AiStateHolder
-        aiStateHolder.initialize(
-            scope = viewModelScope,
-            allSongsProvider = { musicRepository.getAllSongsOnce() },
-            favoriteSongIdsProvider = { favoriteSongIds.value },
-            toastEmitter = { msg -> viewModelScope.launch { _toastEvents.emit(msg) } },
-            playSongsCallback = { songs, startSong, queueName -> playSongs(songs, startSong, queueName) },
-            openPlayerSheetCallback = { _isSheetVisible.value = true }
-        )
-
-        // Collect AiStateHolder flows
-        viewModelScope.launch {
-            combine(
-                aiStateHolder.showAiPlaylistSheet,
-                aiStateHolder.isGeneratingAiPlaylist,
-                aiStateHolder.aiStatus,
-                aiStateHolder.aiError,
-                aiStateHolder.isGeneratingMetadata,
-            ) { show, generating, status, error, generatingMetadata ->
-                AiUiSnapshot(
-                    showAiPlaylistSheet = show,
-                    isGeneratingAiPlaylist = generating,
-                    aiStatus = status,
-                    aiError = error,
-                    isGeneratingAiMetadata = generatingMetadata
-                )
-            }.collect { snapshot ->
-                _playerUiState.update {
-                    it.copy(isGeneratingAiMetadata = snapshot.isGeneratingAiMetadata)
-                }
-            }
-        }
-
         // Initialize LibraryStateHolder
         libraryStateHolder.initialize(viewModelScope)
 
@@ -2063,7 +1959,6 @@ class PlayerViewModel @Inject constructor(
                 }
             }
         )
-
 
 
         viewModelScope.launch {
@@ -2465,7 +2360,7 @@ class PlayerViewModel @Inject constructor(
         artistNavigationJob = viewModelScope.launch {
             var resolvedId = artistId
             val currentSong = playbackStateHolder.stablePlayerState.value.currentSong
-            
+
             if (resolvedId == -1L && currentSong != null) {
                 val idFromName = musicRepository.getArtistIdByName(currentSong.artist)
                 if (idFromName != null) {
@@ -2563,11 +2458,11 @@ class PlayerViewModel @Inject constructor(
         lastQueueUpdateJob = viewModelScope.launch {
             // Debounce slightly to handle rapid-fire timeline events
             delay(100)
-            
+
             val timeline = currentMediaController.currentTimeline
             val mediaItems = mutableListOf<MediaItem>()
             val window = Timeline.Window()
-            
+
             // Collect MediaItems on Main thread (inside coroutine)
             for (i in 0 until count) {
                 mediaItems.add(timeline.getWindow(i, window).mediaItem)
@@ -2575,7 +2470,7 @@ class PlayerViewModel @Inject constructor(
             }
 
             val allSongsById = libraryStateHolder.allSongsById.value
-            
+
             val queue = withContext(Dispatchers.Default) {
                 mediaItems.mapNotNull { mediaItem ->
                     resolveSongFromMediaItem(mediaItem, allSongsById)
@@ -2917,7 +2812,7 @@ class PlayerViewModel @Inject constructor(
 
                     mediaItem?.let { transitionedItem ->
                         val song = resolveSongFromMediaItem(transitionedItem)
-                        
+
                         // Offline check for Telegram songs
                         if (song?.contentUriString?.startsWith("telegram:") == true) {
                             ensureTelegramPlaybackObserversStarted()
@@ -3071,7 +2966,7 @@ class PlayerViewModel @Inject constructor(
                 if (dualPlayerEngine.isTransitionRunning()) return
 
                 transitionSchedulerJob?.cancel()
-                
+
                 // Only refresh full queue on structural changes or source updates (metadata)
                 if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED ||
                     reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
@@ -3106,7 +3001,7 @@ class PlayerViewModel @Inject constructor(
                 ensureTelegramPlaybackObserversStarted()
                 val isOnline = connectivityStateHolder.isOnline.value
                 val fileId = validStartSong.telegramFileId
-                
+
                 Timber.d("Offline Check: fileId=$fileId, contentUri=${validStartSong.contentUriString}, isOnline=$isOnline")
 
                 if (!isOnline) {
@@ -3214,7 +3109,7 @@ class PlayerViewModel @Inject constructor(
 
     fun playSongsShuffled(
         songsToPlay: List<Song>,
-        queueName: String = "None", 
+        queueName: String = "None",
         playlistId: String? = null,
         startAtZero: Boolean = false
     ) {
@@ -3344,7 +3239,6 @@ class PlayerViewModel @Inject constructor(
             startIndex = startIndex
         )
     }
-
 
 
     private suspend fun internalPlaySongs(songsToPlay: List<Song>, startSong: Song, queueName: String = "None", playlistId: String? = null) {
@@ -4417,49 +4311,6 @@ class PlayerViewModel @Inject constructor(
         searchStateHolder.clearSearchHistory()
     }
 
-    // --- AI Playlist Generation ---
-
-    // --- AI Playlist Generation ---
-
-    fun showAiPlaylistSheet() {
-        aiStateHolder.showAiPlaylistSheet()
-    }
-
-    fun dismissAiPlaylistSheet() {
-        aiStateHolder.dismissAiPlaylistSheet()
-    }
-
-    fun clearAiPlaylistError() {
-        aiStateHolder.clearAiPlaylistError()
-    }
-
-    fun generateAiPlaylist(
-        prompt: String,
-        minLength: Int,
-        maxLength: Int,
-        saveAsPlaylist: Boolean = false,
-        playlistName: String? = null
-    ) {
-        aiStateHolder.generateAiPlaylist(
-            prompt = prompt,
-            minLength = minLength,
-            maxLength = maxLength,
-            saveAsPlaylist = saveAsPlaylist,
-            playlistName = playlistName
-        )
-    }
-
-    fun regenerateDailyMixWithPrompt(prompt: String) {
-        aiStateHolder.regenerateDailyMixWithPrompt(prompt)
-    }
-
-    fun retryLastPlaylistGeneration() {
-        aiStateHolder.retryLastPlaylistGeneration()
-    }
-
-    fun retryLastMetadataGeneration() {
-        aiStateHolder.retryLastMetadataGeneration()
-    }
 
     fun clearQueueExceptCurrent() {
         mediaController?.let { controller ->
@@ -4494,7 +4345,6 @@ class PlayerViewModel @Inject constructor(
     }
 
 
-
     override fun onCleared() {
         mediaControllerPlaybackListener?.let { listener ->
             mediaController?.removeListener(listener)
@@ -4511,7 +4361,6 @@ class PlayerViewModel @Inject constructor(
         castTransferStateHolder.onCleared()
         castStateHolder.onCleared()
         searchStateHolder.onCleared()
-        aiStateHolder.onCleared()
         libraryStateHolder.onCleared()
         sleepTimerStateHolder.onCleared()
         connectivityStateHolder.onCleared()
@@ -4797,7 +4646,7 @@ class PlayerViewModel @Inject constructor(
 
                 lrcFile.writeText(lrcContent, Charsets.UTF_8)
                 _toastEvents.emit(context.getString(R.string.lyrics_saved_successfully))
-                
+
                 // If it was the current song, we might want to refresh the lyrics in state if it migrated from remote to local
                 if (playbackStateHolder.stablePlayerState.value.currentSong?.id == song.id) {
                     loadLyricsForCurrentSong()
@@ -4940,9 +4789,6 @@ class PlayerViewModel @Inject constructor(
         }.getOrDefault(false)
     }
 
-    suspend fun generateAiMetadata(song: Song, fields: List<String>): Result<SongMetadata> {
-        return aiStateHolder.generateAiMetadata(song, fields)
-    }
 
     private fun updateSongInStates(
         updatedSong: Song,

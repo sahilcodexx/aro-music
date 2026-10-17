@@ -22,8 +22,6 @@ import com.aro.music.data.database.EngagementDao
 import com.aro.music.data.database.FavoritesDao
 import com.aro.music.data.database.GDriveDao
 import com.aro.music.data.database.LyricsDao
-import com.aro.music.data.database.AiCacheDao
-import com.aro.music.data.database.AiUsageDao
 import com.aro.music.data.database.LocalPlaylistDao
 import com.aro.music.data.database.MusicDao
 import com.aro.music.data.database.AroDatabase
@@ -244,17 +242,7 @@ object AppModule {
     fun provideNavidromeDao(database: AroDatabase): com.aro.music.data.database.NavidromeDao {
         return database.navidromeDao()
     }
-    
-    @Singleton
-    @Provides
-    fun provideAiCacheDao(database: AroDatabase): AiCacheDao {
-        return database.aiCacheDao()
-    }
 
-    @Provides
-    fun provideAiUsageDao(database: AroDatabase): AiUsageDao {
-        return database.aiUsageDao()
-    }
 
     @Singleton
     @Provides
@@ -431,14 +419,14 @@ object AppModule {
                 HttpLoggingInterceptor.Level.NONE
             }
         )
-        
+
         // Connection pool with optimized connections for better performance
         val connectionPool = okhttp3.ConnectionPool(
             maxIdleConnections = 5,
             keepAliveDuration = 30,
             timeUnit = java.util.concurrent.TimeUnit.SECONDS
         )
-        
+
         return OkHttpClient.Builder()
             .connectionPool(connectionPool)
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -467,14 +455,14 @@ object AppModule {
     fun provideFastOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor()
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS)
-        
+
         // Connection pool to reuse connections for better performance
         val connectionPool = okhttp3.ConnectionPool(
             maxIdleConnections = 5,
             keepAliveDuration = 30,
             timeUnit = java.util.concurrent.TimeUnit.SECONDS
         )
-        
+
         // Use Cloudflare and Google DNS to avoid potential DNS issues
         val dns = okhttp3.Dns { hostname ->
             try {

@@ -33,7 +33,6 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
 import com.aro.music.data.preferences.TelegramTopicDisplayMode
-import com.aro.music.data.ai.AiPlaylistGenerator
 import com.aro.music.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -60,9 +59,6 @@ data class PlaylistUiState(
     val playlistSongsOrderMode: PlaylistSongsOrderMode = PlaylistSongsOrderMode.Sorted(SortOption.SongTitleAZ),
     val playlistOrderModes: Map<String, PlaylistSongsOrderMode> = emptyMap(),
 
-    // AI Generation State
-    val isAiGenerating: Boolean = false,
-    val aiGenerationError: String? = null
 )
 
 sealed class PlaylistSongsOrderMode {
@@ -82,7 +78,6 @@ class PlaylistViewModel @Inject constructor(
     private val playlistPreferencesRepository: PlaylistPreferencesRepository,
     private val musicRepository: MusicRepository,
     private val dailyMixManager: DailyMixManager,
-    private val aiPlaylistGenerator: AiPlaylistGenerator,
     private val m3uManager: M3uManager,
     private val spotifyRepository: com.aro.music.spotify.SpotifyRepository,
     private val artworkPreferences: com.aro.music.data.preferences.PlaylistArtworkPreferences,
@@ -747,7 +742,7 @@ class PlaylistViewModel @Inject constructor(
                 // So if coverImageUri is the existing path, we ignore crop params.
                 savedCoverPath = null // If explicit null passed, we remove it.
             }
-            // Logic correction: 
+            // Logic correction:
             // If the UI passes the EXISTING file path, implies NO CHANGE to image.
             // If the UI passes a NEW content URI, implies NEW IMAGE (and we use crop params).
             // If the UI passes NULL, implies REMOVE IMAGE.
@@ -1056,54 +1051,6 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    fun generateAiPlaylist(prompt: String, minLength: Int = 10, maxLength: Int = 50) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isAiGenerating = true, aiGenerationError = null) }
-
-            try {
-                val allSongs = withContext(Dispatchers.IO) {
-                    musicRepository.getAllSongsOnce()
-                }
-
-                // Call AiPlaylistGenerator
-                val result = aiPlaylistGenerator.generate(
-                    userPrompt = prompt,
-                    allSongs = allSongs,
-                    minLength = minLength,
-                    maxLength = maxLength
-                )
-
-                result.onSuccess { selectedSongs ->
-                    // Create Playlist
-                    val playlistName = "AI: $prompt".take(50)
-
-                    playlistPreferencesRepository.createPlaylist(
-                        name = playlistName,
-                        songIds = selectedSongs.map { it.id },
-                        isAiGenerated = true,
-                        source = "AI" // Mark as AI source
-                    )
-
-                    _uiState.update { it.copy(isAiGenerating = false) }
-                    _playlistCreationEvent.emit(true)
-                }.onFailure { e ->
-                    val errorMessage = if (e.message?.contains("API Key") == true) {
-                        context.getString(R.string.ai_playlist_gemini_key_required)
-                    } else {
-                        e.message ?: context.getString(R.string.error_unknown)
-                    }
-                    _uiState.update { it.copy(isAiGenerating = false, aiGenerationError = errorMessage) }
-                }
-
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isAiGenerating = false, aiGenerationError = e.message) }
-            }
-        }
-    }
-
-    fun clearAiError() {
-        _uiState.update { it.copy(aiGenerationError = null) }
-    }
 
     /**
      * Delete multiple playlists in batch
