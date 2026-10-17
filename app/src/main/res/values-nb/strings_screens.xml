@@ -231,8 +231,8 @@
     <string name="qq_collected_playlists">Innsamlede spillelister</string>
     <string name="cd_user_avatar">Brukeravatar</string>
     <string name="toast_playlist_created">Spilleliste opprettet</string>
-    <string name="toast_set_ai_provider_api_key_first">Sett opp AI API-nøkkel først</string>
-    <string name="toast_set_gemini_api_key_first">Sett opp Gemini API-nøkkel først</string>
+
+
     <string name="toast_added_to_queue">Lagt i kø</string>
     <string name="toast_playing_next">Spilles som neste</string>
     <string name="error_share_song_format">Kunne ikke dele sang: %1$s</string>

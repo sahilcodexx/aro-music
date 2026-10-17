@@ -43,10 +43,10 @@
     <string name="action_rename">Umbenennen</string>
 
     <!-- AI metadata sheet -->
-    <string name="ai_metadata_headline_success">Perfekt getaggt!</string>
-    <string name="ai_metadata_headline_default">KI-Metadaten</string>
-    <string name="ai_metadata_subtitle_generating">Daily Mix wird analysiert…</string>
-    <string name="ai_metadata_subtitle_review">Generierte Details prüfen und anpassen</string>
+
+
+
+
     <string name="song_field_title">Titel</string>
     <string name="song_field_artist">Künstler</string>
     <string name="song_field_album">Album</string>
@@ -60,7 +60,7 @@
     <string name="edit_song_got_it">Verstanden</string>
     <string name="cd_info_icon">Information</string>
     <string name="edit_song_toolbar_title">Song bearbeiten</string>
-    <string name="cd_use_gemini_ai">Gemini AI verwenden</string>
+
     <string name="cd_show_metadata_info">Info anzeigen</string>
     <string name="song_field_track_number">Titelnummer</string>
     <string name="song_field_disc_number">Disc-Nummer</string>

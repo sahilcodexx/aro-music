@@ -46,92 +46,70 @@
     <string name="presentation_batch_e_create_playlist_subtitle">Pilih alur pembuatan.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manual</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Desain sampul, ikon, bentuk, dan pilih lagu sendiri.</string>
-    <string name="presentation_batch_e_creation_mode_ai">Dengan AI</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_enabled">Hasilkan playlist yang dikurasi dengan kontrol lanjutan.</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_disabled">Memerlukan API key Gemini yang dikonfigurasi di pengaturan.</string>
+
+
+
     <string name="presentation_batch_e_setup_api_key">Siapkan API key</string>
 
     <!-- AI playlist lab -->
-    <string name="presentation_batch_e_ai_playlist_lab_title">Lab Playlist AI</string>
-    <string name="presentation_batch_e_ai_reset">Reset</string>
-    <string name="presentation_batch_e_ai_generating">Menghasilkan…</string>
-    <string name="presentation_batch_e_ai_generate">Hasilkan</string>
-    <string name="presentation_batch_e_ai_section_intent">Tujuan</string>
-    <string name="presentation_batch_e_ai_playlist_name_optional">Nama playlist (opsional)</string>
-    <string name="presentation_batch_e_ai_feel_label">Seperti apa suasana playlist ini?</string>
-    <string name="presentation_batch_e_ai_feel_placeholder">Contoh: berkendara saat matahari terbenam dengan synth hangat</string>
-    <string name="presentation_batch_e_ai_section_direction">Arahan</string>
-    <string name="presentation_batch_e_ai_mood_label">Suasana Hati</string>
-    <string name="presentation_batch_e_ai_activity_label">Aktivitas</string>
-    <string name="presentation_batch_e_ai_era_label">Era</string>
-    <string name="presentation_batch_e_ai_section_curation">Mesin kurasi</string>
-    <string name="presentation_batch_e_ai_energy_label">Energi</string>
-    <string name="presentation_batch_e_ai_energy_description">Mengontrol intensitas dan tempo lagu. 1 = tenang/lambat, 5 = energi tinggi/cepat.</string>
-    <string name="presentation_batch_e_ai_discovery_label">Penemuan</string>
-    <string name="presentation_batch_e_ai_discovery_description">Mengontrol seberapa familiar pilihannya. 1 = favorit yang paling sering diputar, 5 = lagu jarang diputar.</string>
-    <string name="presentation_batch_e_ai_min_songs">Lagu min</string>
-    <string name="presentation_batch_e_ai_max_songs">Lagu maks</string>
-    <string name="presentation_batch_e_ai_section_filters">Filter</string>
-    <string name="presentation_batch_e_ai_prioritize_genres">Prioritaskan genre (opsional)</string>
-    <string name="presentation_batch_e_ai_prioritize_genres_placeholder">misal. synthwave, indie pop</string>
-    <string name="presentation_batch_e_ai_avoid_genres">Hindari genre (opsional)</string>
-    <string name="presentation_batch_e_ai_avoid_genres_placeholder">misal. metal, hard trap</string>
-    <string name="presentation_batch_e_ai_preferred_language">Bahasa pilihan (opsional)</string>
-    <string name="presentation_batch_e_ai_preferred_language_placeholder">misal. Inggris, Spanyol, instrumental</string>
-    <string name="presentation_batch_e_ai_prioritize_favorites">Prioritaskan favorit</string>
-    <string name="presentation_batch_e_ai_avoid_explicit">Hindari lirik eksplisit</string>
-    <string name="presentation_batch_e_ai_section_prompt_preview">Pratinjau prompt</string>
-    <string name="presentation_batch_e_ai_prompt_preview_empty">Prompt akhir Anda akan muncul di sini setelah Anda menambahkan preferensi.</string>
-    <string name="presentation_batch_e_ai_hero_title">Kurasi dengan presisi</string>
-    <string name="presentation_batch_e_ai_hero_subtitle">Tentukan suasana hati, aktivitas, batasan, dan kedalaman.</string>
-    <string name="presentation_batch_e_ai_hero_library_note">AI hanya akan menggunakan lagu dari pustaka lokal Anda.</string>
-    <string name="presentation_batch_e_ai_error_add_instruction">Tambahkan setidaknya satu instruksi untuk AI.</string>
-    <string name="presentation_batch_e_ai_error_song_range">Atur rentang lagu yang valid.</string>
-    <string name="presentation_batch_e_ai_level_out_of_five">%1$d/5</string>
-    <string name="presentation_batch_e_ai_custom_chip">Kustom…</string>
-    <string name="presentation_batch_e_ai_enter_custom_title">Masukkan nilai kustom</string>
-    <string name="presentation_batch_e_ai_enter_custom_label">Masukkan nilai kustom Anda</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- AI prompt assembly (sent to model; localized for consistency with UI) -->
-    <string name="presentation_batch_e_ai_era_any">Era apa pun</string>
-    <string name="presentation_batch_e_ai_prompt_core_request">Permintaan utama: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_mood">Target suasana hati: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_activity">Konteks aktivitas: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_era">Fokus era: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_genres">Prioritaskan genre: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_genres">Hindari genre: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_preferred_language">Bahasa pilihan: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_energy">Target tingkat energi: %1$d/5.</string>
-    <string name="presentation_batch_e_ai_prompt_discovery">Target penemuan: %1$d/5 di mana 1 adalah familiar dan 5 adalah lagu jarang diputar.</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_favorites">Prioritaskan lagu yang mendekati favorit pendengar jika memungkinkan.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_explicit">Hindari lirik eksplisit jika ada alternatif.</string>
-    <string name="presentation_batch_e_ai_prompt_smooth_transitions">Jaga transisi tetap mulus dan hindari pengelompokan artis yang berulang.</string>
 
-    <string-array name="presentation_batch_e_ai_mood_options">
-        <item>Santai</item>
-        <item>Energik</item>
-        <item>Bahagia</item>
-        <item>Gelap</item>
-        <item>Romantis</item>
-        <item>Melankolis</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_activity_options">
-        <item>Olahraga</item>
-        <item>Fokus</item>
-        <item>Perjalanan jauh</item>
-        <item>Pesta</item>
-        <item>Belajar</item>
-        <item>Larut malam</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_era_options">
-        <item>@string/presentation_batch_e_ai_era_any</item>
-        <item>70-an</item>
-        <item>80-an</item>
-        <item>90-an</item>
-        <item>2000-an</item>
-        <item>2010-an</item>
-        <item>2020-an</item>
-    </string-array>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- ReorderPresetsSheet -->
     <string name="presentation_batch_e_reset_presets_title">Reset preset</string>

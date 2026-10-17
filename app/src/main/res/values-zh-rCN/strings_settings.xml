@@ -14,8 +14,8 @@
     <string name="settings_category_playback_subtitle">音频行为、淡入淡出和后台播放</string>
     <string name="settings_category_behavior_title">交互</string>
     <string name="settings_category_behavior_subtitle">手势、触感反馈和导航行为</string>
-    <string name="settings_category_ai_title">AI 集成（β）</string>
-    <string name="settings_category_ai_subtitle">AI 服务、API 密钥和模型设置</string>
+
+
     <string name="settings_category_backup_title">备份与恢复</string>
     <string name="settings_category_backup_subtitle">导出并恢复你的个人应用数据</string>
     <string name="settings_category_developer_title">开发者选项</string>
@@ -172,33 +172,33 @@
     <string name="setcat_haptic_feedback_subtitle">启用整个应用中的振动反馈。</string>
 
     <!-- AI -->
-    <string name="setcat_ai_provider_section">AI 服务提供商</string>
-    <string name="setcat_ai_provider_label">提供商</string>
-    <string name="setcat_ai_provider_desc">选择你的 AI 服务提供商</string>
-    <string name="setcat_safe_token_title">安全 Token 模式</string>
-    <string name="setcat_safe_token_on">开启 —— 更快、更省钱。仅向 AI 发送最少数据（约 1K tokens）。</string>
-    <string name="setcat_safe_token_off">关闭 —— 更深上下文。发送完整收听画像（约 8K tokens）以获得更丰富的结果。</string>
+
+
+
+
+
+
     <string name="setcat_credentials">凭证</string>
-    <string name="setcat_ai_api_key_title">%1$s API 密钥</string>
-    <string name="setcat_ai_api_key_subtitle">从 %1$s 获取</string>
-    <string name="setcat_ai_source_gemini">Google AI Studio (aistudio.google.com)</string>
-    <string name="setcat_ai_source_deepseek">DeepSeek Platform (api.deepseek.com)</string>
-    <string name="setcat_ai_source_groq">Groq Console (console.groq.com)</string>
-    <string name="setcat_ai_source_mistral">Mistral AI Platform (console.mistral.ai)</string>
-    <string name="setcat_ai_source_nvidia">NVIDIA Build (build.nvidia.com)</string>
-    <string name="setcat_ai_source_kimi">Moonshot AI Platform (platform.moonshot.cn)</string>
-    <string name="setcat_ai_source_glm">Zhipu AI Open Platform (bigmodel.cn)</string>
-    <string name="setcat_ai_source_openai">OpenAI Platform (platform.openai.com)</string>
+
+
+
+
+
+
+
+
+
+
     <string name="setcat_model_selection">模型选择</string>
     <string name="setcat_loading_models">正在加载可用模型………</string>
-    <string name="setcat_ai_model_label">AI 模型</string>
-    <string name="setcat_ai_model_desc">选择一个模型。</string>
+
+
     <string name="setcat_prompt_behavior">提示词行为</string>
-    <string name="setcat_system_prompt_title">系统提示词</string>
-    <string name="setcat_system_prompt_subtitle">自定义 AI 的行为方式。</string>
-    <string name="setcat_ai_usage_report">AI 使用报告</string>
+
+
+
     <string name="setcat_total_consumption_title">总消耗</string>
-    <string name="setcat_ai_usage_tokens_subtitle">%1$s tokens 跟踪\n提示词：%2$s | 输出：%3$s | 思考：%4$s</string>
+
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">创建备份</string>
@@ -277,8 +277,8 @@
     <string name="setcat_regenerating">重新生成中……</string>
     <string name="setcat_choose_song">选择歌曲</string>
 
-    <string name="setcat_ai_clear_logs">清除日志</string>
-    <string name="setcat_ai_activity_log_title">AI 活动日志（%1$d）</string>
+
+
     <string name="cd_show">显示</string>
     <string name="cd_hide">隐藏</string>
     <string name="setcat_select_export">选择并导出</string>

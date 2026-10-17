@@ -14,8 +14,8 @@
     <string name="settings_category_playback_subtitle">Audio, Crossfade und Hintergrundwiedergabe</string>
     <string name="settings_category_behavior_title">Verhalten</string>
     <string name="settings_category_behavior_subtitle">Gesten, Haptik und Navigation</string>
-    <string name="settings_category_ai_title">KI-Integration (β)</string>
-    <string name="settings_category_ai_subtitle">Anbieter, API Keys und Modelle</string>
+
+
     <string name="settings_category_backup_title">Backup &amp; Wiederherstellen</string>
     <string name="settings_category_backup_subtitle">App-Daten exportieren und importieren</string>
     <string name="settings_category_developer_title">Entwickleroptionen</string>
@@ -172,33 +172,33 @@
     <string name="setcat_haptic_feedback_subtitle">Vibrieren bei Interaktionen in der gesamten App.</string>
 
     <!-- AI -->
-    <string name="setcat_ai_provider_section">KI-Anbieter</string>
-    <string name="setcat_ai_provider_label">Anbieter</string>
-    <string name="setcat_ai_provider_desc">KI-Dienst auswählen</string>
-    <string name="setcat_safe_token_title">Safe Token-Modus</string>
-    <string name="setcat_safe_token_on">AN – Schnell &amp; günstig. Nur minimale Daten (~1K Tokens) werden gesendet.</string>
-    <string name="setcat_safe_token_off">AUS – Mehr Kontext. Das vollständige Hörprofil (~8K Tokens) für bessere Ergebnisse.</string>
+
+
+
+
+
+
     <string name="setcat_credentials">Zugangsdaten</string>
-    <string name="setcat_ai_api_key_title">%1$s API Key</string>
-    <string name="setcat_ai_api_key_subtitle">Erhältlich bei %1$s</string>
-    <string name="setcat_ai_source_gemini">Google AI Studio (aistudio.google.com)</string>
-    <string name="setcat_ai_source_deepseek">DeepSeek Platform (api.deepseek.com)</string>
-    <string name="setcat_ai_source_groq">Groq Console (console.groq.com)</string>
-    <string name="setcat_ai_source_mistral">Mistral AI Platform (console.mistral.ai)</string>
-    <string name="setcat_ai_source_nvidia">NVIDIA Build (build.nvidia.com)</string>
-    <string name="setcat_ai_source_kimi">Moonshot AI Platform (platform.moonshot.cn)</string>
-    <string name="setcat_ai_source_glm">Zhipu AI Open Platform (bigmodel.cn)</string>
-    <string name="setcat_ai_source_openai">OpenAI Platform (platform.openai.com)</string>
+
+
+
+
+
+
+
+
+
+
     <string name="setcat_model_selection">Modell</string>
     <string name="setcat_loading_models">Modelle werden geladen…</string>
-    <string name="setcat_ai_model_label">KI-Modell</string>
-    <string name="setcat_ai_model_desc">Aktives Modell auswählen.</string>
+
+
     <string name="setcat_prompt_behavior">Prompt</string>
-    <string name="setcat_system_prompt_title">System-Prompt</string>
-    <string name="setcat_system_prompt_subtitle">KI-Verhalten nach eigenen Vorstellungen anpassen.</string>
-    <string name="setcat_ai_usage_report">Nutzungsbericht</string>
+
+
+
     <string name="setcat_total_consumption_title">Token-Verbrauch gesamt</string>
-    <string name="setcat_ai_usage_tokens_subtitle">%1$s Tokens\nPrompt: %2$s | Ausgabe: %3$s | Denken: %4$s</string>
+
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">Backup erstellen</string>

@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">둘 다</string>
     <string name="presentation_batch_d_cloud_sources_heading">클라우드</string>
     <string name="presentation_batch_d_cloud_only">클라우드 전용</string>
-    <string name="presentation_batch_d_generating_ai_metadata">AI로 메타데이터 생성 중…</string>
+
     <string name="presentation_batch_d_max_albums_selection">최대 %1$d개의 앨범을 선택할 수 있습니다</string>
     <string name="presentation_batch_d_folder_name_fallback">폴더</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">메뉴 확장</string>

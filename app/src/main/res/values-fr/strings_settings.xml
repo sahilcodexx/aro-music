@@ -14,8 +14,8 @@
     <string name="settings_category_playback_subtitle">Comportement audio, fondu enchaîné et lecture en arrière-plan</string>
     <string name="settings_category_behavior_title">Comportement</string>
     <string name="settings_category_behavior_subtitle">Gestes, retour haptique et comportement de navigation</string>
-    <string name="settings_category_ai_title">Intégration IA (β)</string>
-    <string name="settings_category_ai_subtitle">Fournisseurs d\'IA, clés API et paramètres du modèle</string>
+
+
     <string name="settings_category_backup_title">Sauvegarde et restauration</string>
     <string name="settings_category_backup_subtitle">Exporter et récupérer vos données personnelles de l\'application</string>
     <string name="settings_category_developer_title">Options développeur</string>
@@ -169,33 +169,33 @@
     <string name="setcat_haptic_feedback_subtitle">Activer le retour par vibration dans toute l\'application.</string>
 
     <!-- AI -->
-    <string name="setcat_ai_provider_section">Fournisseur d\'IA</string>
-    <string name="setcat_ai_provider_label">Fournisseur</string>
-    <string name="setcat_ai_provider_desc">Choisissez votre fournisseur d\'IA</string>
-    <string name="setcat_safe_token_title">Mode Token Sécurisé</string>
-    <string name="setcat_safe_token_on">ON — Rapide et économique. Envoie un minimum de données (~1K tokens) à l\'IA.</string>
-    <string name="setcat_safe_token_off">OFF — Contexte profond. Envoie le profil d\'écoute complet (~8K tokens) pour des résultats plus riches.</string>
+
+
+
+
+
+
     <string name="setcat_credentials">Identifiants</string>
-    <string name="setcat_ai_api_key_title">Clé API %1$s</string>
-    <string name="setcat_ai_api_key_subtitle">Obtenir de %1$s</string>
-    <string name="setcat_ai_source_gemini">Google AI Studio (aistudio.google.com)</string>
-    <string name="setcat_ai_source_deepseek">DeepSeek Platform (api.deepseek.com)</string>
-    <string name="setcat_ai_source_groq">Groq Console (console.groq.com)</string>
-    <string name="setcat_ai_source_mistral">Mistral AI Platform (console.mistral.ai)</string>
-    <string name="setcat_ai_source_nvidia">NVIDIA Build (build.nvidia.com)</string>
-    <string name="setcat_ai_source_kimi">Moonshot AI Platform (platform.moonshot.cn)</string>
-    <string name="setcat_ai_source_glm">Zhipu AI Open Platform (bigmodel.cn)</string>
-    <string name="setcat_ai_source_openai">OpenAI Platform (platform.openai.com)</string>
+
+
+
+
+
+
+
+
+
+
     <string name="setcat_model_selection">Sélection du modèle</string>
     <string name="setcat_loading_models">Chargement des modèles disponibles…</string>
-    <string name="setcat_ai_model_label">Modèle d\'IA</string>
-    <string name="setcat_ai_model_desc">Sélectionnez un modèle.</string>
+
+
     <string name="setcat_prompt_behavior">Comportement de l\'invite</string>
-    <string name="setcat_system_prompt_title">Invite système</string>
-    <string name="setcat_system_prompt_subtitle">Personnaliser le comportement de l\'IA.</string>
-    <string name="setcat_ai_usage_report">Rapport d\'utilisation IA</string>
+
+
+
     <string name="setcat_total_consumption_title">Consommation totale</string>
-    <string name="setcat_ai_usage_tokens_subtitle">Suivi de %1$s tokens\nInvite : %2$s | Sortie : %3$s | Pensée : %4$s</string>
+
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">Créer une sauvegarde</string>
@@ -274,8 +274,8 @@
     <string name="setcat_regenerating">Régénération…</string>
     <string name="setcat_choose_song">Choisir une chanson</string>
 
-    <string name="setcat_ai_clear_logs">Effacer les journaux</string>
-    <string name="setcat_ai_activity_log_title">Journal d\'activité IA (%1$d)</string>
+
+
     <string name="cd_show">Afficher</string>
     <string name="cd_hide">Masquer</string>
     <string name="setcat_select_export">Sélectionner et exporter</string>

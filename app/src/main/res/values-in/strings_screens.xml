@@ -234,8 +234,8 @@
     <string name="qq_collected_playlists">Playlist yang dikumpulkan</string>
     <string name="cd_user_avatar">Avatar pengguna</string>
     <string name="toast_playlist_created">Playlist berhasil dibuat</string>
-    <string name="toast_set_ai_provider_api_key_first">Atur API key penyedia AI Anda terlebih dahulu</string>
-    <string name="toast_set_gemini_api_key_first">Atur API key Gemini Anda terlebih dahulu</string>
+
+
     <string name="toast_added_to_queue">Ditambahkan ke antrean</string>
     <string name="toast_playing_next">Diputar berikutnya</string>
     <string name="error_share_song_format">Tidak dapat membagikan lagu: %1$s</string>

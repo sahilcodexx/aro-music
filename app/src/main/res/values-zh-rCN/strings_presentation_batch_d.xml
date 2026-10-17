@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">两者都显示</string>
     <string name="presentation_batch_d_cloud_sources_heading">云端</string>
     <string name="presentation_batch_d_cloud_only">仅云端</string>
-    <string name="presentation_batch_d_generating_ai_metadata">正在使用 AI 生成元数据……</string>
+
     <string name="presentation_batch_d_max_albums_selection">你最多可以选择 %1$d 张专辑</string>
     <string name="presentation_batch_d_folder_name_fallback">文件夹</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">展开菜单</string>

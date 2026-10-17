@@ -35,22 +35,22 @@
     <string name="song_picker_load_more">Muat lebih banyak</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">AI</string>
-    <string name="ai_playlist_headline_perfect">Perfectly Curated</string>
-    <string name="ai_playlist_headline_daily_mix">Daily Mix</string>
-    <string name="ai_playlist_subtitle_journey_ready">Perjalanan sonik Anda sudah siap</string>
-    <string name="ai_playlist_subtitle_generator">Generator Playlist AI</string>
-    <string name="ai_playlist_description">Jelaskan getaran, suasana hati, atau aktivitas dan biarkan AI menciptakan playlist yang sempurna dari pustaka Anda.</string>
-    <string name="ai_playlist_section_size">Ukuran playlist</string>
-    <string name="ai_playlist_min_songs">Lagu min</string>
-    <string name="ai_playlist_max_songs">Lagu maks</string>
-    <string name="ai_playlist_prompt_placeholder">misal. Getaran malam santai, energi latihan yang ceria…</string>
-    <string name="ai_playlist_tap_to_retry">Ketuk untuk Mencoba Lagi</string>
-    <string name="ai_playlist_status_default">Perjalanan sonik disintesis!</string>
-    <string name="ai_playlist_generating">Menghasilkan…</string>
-    <string name="ai_playlist_ready_to_play">Siap Diputar</string>
-    <string name="ai_playlist_generate">Hasilkan Playlist</string>
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">Belum ada lagu</string>
     <string name="lib_empty_songs_all_subtitle">Tambahkan musik ke perangkat Anda atau sinkronkan sumber cloud untuk mulai mendengarkan.</string>

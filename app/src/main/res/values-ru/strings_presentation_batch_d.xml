@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">И то, и другое</string>
     <string name="presentation_batch_d_cloud_sources_heading">Облако</string>
     <string name="presentation_batch_d_cloud_only">Только облако</string>
-    <string name="presentation_batch_d_generating_ai_metadata">Генерация метаданных ИИ…</string>
+
     <string name="presentation_batch_d_max_albums_selection">Вы можете выбрать до %1$d альбомов</string>
     <string name="presentation_batch_d_folder_name_fallback">Папка</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">Развернуть меню</string>

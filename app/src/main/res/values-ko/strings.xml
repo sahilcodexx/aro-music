@@ -83,14 +83,14 @@
     <string name="playlist_not_found">플레이리스트를 찾을 수 없습니다.</string>
     <string name="disc_number_header">디스크 %d</string>
 
-    <string name="ai_error_api_key">설정에서 선택한 AI 제공업체에 대한 유효한 API 키를 구성해 주세요.</string>
-    <string name="ai_error_generic">AI 오류: %s</string>
-    <string name="ai_error_quota">선택한 AI 제공업체가 계정에 크레딧이나 사용 가능한 할당량이 없어 요청을 거부했습니다.</string>
-    <string name="ai_error_model_unavailable">선택한 AI 모델을 더 이상 사용할 수 없습니다. Aro가 지원되는 모델로 자동 전환을 시도했습니다.</string>
-    <string name="ai_no_songs_found">AI가 프롬프트에 맞는 노래를 찾지 못했습니다.</string>
-    <string name="ai_prompt_empty">데일리 믹스에 대한 아이디어를 작성해 보세요</string>
-    <string name="ai_daily_mix_updated">AI로 데일리 믹스가 업데이트되었습니다</string>
-    <string name="ai_no_songs_for_mix">AI가 이 믹스에 맞는 노래를 찾지 못했습니다</string>
+
+
+
+
+
+
+
+
 
     <string name="shortcut_shuffle_short">셔플</string>
     <string name="shortcut_shuffle_long">모든 노래 셔플</string>
@@ -125,7 +125,7 @@
     <string name="playlist_none_to_export">내보낼 플레이리스트가 없습니다</string>
     <string name="playlist_export_failed">내보내기 실패: %1$s</string>
     <string name="playlist_export_folder_display">Music/Aro Exports</string>
-    <string name="ai_playlist_gemini_key_required">설정에서 Gemini API 키를 구성해 주세요.</string>
+
     <string name="error_unknown">알 수 없는 오류</string>
 
     <!-- Watch transfer foreground service -->

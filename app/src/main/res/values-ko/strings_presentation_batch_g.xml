@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">유선 오디오</string>
     <string name="device_capabilities_output_digital">디지털 출력</string>
     <string name="device_capabilities_output_other">기타 출력</string>
-    <string name="presentation_batch_g_ai_token_input">입력</string>
-    <string name="presentation_batch_g_ai_token_output">출력</string>
-    <string name="presentation_batch_g_ai_token_thought">생각</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s: %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">MM월 dd일, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">멀티 아티스트 파싱</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">문자 구분 기호</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">현재: %1$s</string>

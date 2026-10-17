@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">Audio filaire</string>
     <string name="device_capabilities_output_digital">Sortie numérique</string>
     <string name="device_capabilities_output_other">Autre sortie</string>
-    <string name="presentation_batch_g_ai_token_input">Entrée</string>
-    <string name="presentation_batch_g_ai_token_output">Sortie</string>
-    <string name="presentation_batch_g_ai_token_thought">Réflexion</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s : %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">dd MMM, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">Analyse multi-artistes</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Délimiteurs de caractères</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Actuel : %1$s</string>

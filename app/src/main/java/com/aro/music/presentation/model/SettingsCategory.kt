@@ -43,12 +43,6 @@ enum class SettingsCategory(
         subtitleRes = R.string.settings_category_behavior_subtitle,
         iconRes = R.drawable.rounded_touch_app_24
     ),
-    AI_INTEGRATION(
-        id = "ai",
-        titleRes = R.string.settings_category_ai_title,
-        subtitleRes = R.string.settings_category_ai_subtitle,
-        iconRes = R.drawable.gemini_ai
-    ),
     BACKUP_RESTORE(
         id = "backup_restore",
         titleRes = R.string.settings_category_backup_title,

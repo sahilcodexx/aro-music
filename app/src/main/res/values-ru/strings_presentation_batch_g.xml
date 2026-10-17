@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">Проводное аудио</string>
     <string name="device_capabilities_output_digital">Цифровой выход</string>
     <string name="device_capabilities_output_other">Другой выход</string>
-    <string name="presentation_batch_g_ai_token_input">Вход</string>
-    <string name="presentation_batch_g_ai_token_output">Выход</string>
-    <string name="presentation_batch_g_ai_token_thought">Мысли</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s: %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">dd MMM, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">Парсинг нескольких артистов</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Символы-разделители</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Текущие: %1$s</string>

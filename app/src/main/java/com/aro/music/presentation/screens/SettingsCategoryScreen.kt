@@ -2,7 +2,6 @@ package com.aro.music.presentation.screens
 
 import com.aro.music.presentation.navigation.navigateSafely
 import com.aro.music.presentation.components.BackupModuleSelectionDialog
-import com.aro.music.data.preferences.AiPreferencesRepository
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -189,13 +188,9 @@ fun SettingsCategoryScreen(
 ) {
     val category = SettingsCategory.fromId(categoryId) ?: return
     val context = LocalContext.current
-    
+
     // State Collection (Duplicated from SettingsScreen for now to ensure functionality)
     val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val currentAiApiKey by settingsViewModel.currentAiApiKey.collectAsStateWithLifecycle()
-    val currentAiModel by settingsViewModel.currentAiModel.collectAsStateWithLifecycle()
-    val currentAiSystemPrompt by settingsViewModel.currentAiSystemPrompt.collectAsStateWithLifecycle()
-    val aiProvider by settingsViewModel.aiProvider.collectAsStateWithLifecycle()
     val currentPath by settingsViewModel.currentPath.collectAsStateWithLifecycle()
     val directoryChildren by settingsViewModel.currentDirectoryChildren.collectAsStateWithLifecycle()
     val availableStorages by settingsViewModel.availableStorages.collectAsStateWithLifecycle()
@@ -281,31 +276,23 @@ fun SettingsCategoryScreen(
         }
     }
 
-    // Auto-load models when entering the AI settings page or when provider/key changes
-    LaunchedEffect(category, aiProvider) {
-        if (category == SettingsCategory.AI_INTEGRATION) {
-            // Small delay to let StateFlows settle after navigation
-            kotlinx.coroutines.delay(200)
-            settingsViewModel.loadModelsForCurrentProvider()
-        }
-    }
 
     // TopBar Animations (identical to SettingsScreen)
     // TopBar Animations (identical to SettingsScreen)
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
-    
+
     val categoryTitle = stringResource(category.titleRes)
     val isLongTitle = categoryTitle.length > 13
-    
+
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
     val maxTopBarHeight = if (isLongTitle) 200.dp else 180.dp //for 2 lines use 220 and make text use \n
 
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
-    
+
     val titleMaxLines = if (isLongTitle) 2 else 1
 
     val topBarHeight = remember(maxTopBarHeightPx) { Animatable(maxTopBarHeightPx) }
@@ -370,7 +357,7 @@ fun SettingsCategoryScreen(
             Modifier.nestedScroll(nestedScrollConnection).fillMaxSize()
     ) {
         val currentTopBarHeightDp = with(density) { topBarHeight.value.toDp() }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
@@ -470,6 +457,7 @@ fun SettingsCategoryScreen(
                                     onSelectionChanged = { settingsViewModel.setAppThemeMode(it) },
                                     leadingIcon = { Icon(Icons.Outlined.LightMode, null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
+                                AppIconSetting()
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_smooth_corners_title),
                                     subtitle = stringResource(R.string.setcat_smooth_corners_subtitle),
@@ -781,227 +769,6 @@ fun SettingsCategoryScreen(
                                 )
                             }
                         }
-                        SettingsCategory.AI_INTEGRATION -> {
-                            // AI Provider Selection
-                            SettingsSubsection(title = stringResource(R.string.setcat_ai_provider_section)) {
-                                ThemeSelectorItem(
-                                    label = stringResource(R.string.setcat_ai_provider_label),
-                                    description = stringResource(R.string.setcat_ai_provider_desc),
-                                    options = com.aro.music.data.ai.provider.AiProvider.entries.associate { it.name to it.displayName },
-                                    selectedKey = aiProvider,
-                                    onSelectionChanged = { settingsViewModel.onAiProviderChange(it) },
-                                    leadingIcon = { Icon(Icons.Rounded.Science, null, tint = MaterialTheme.colorScheme.secondary) }
-                                )
-                                SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_safe_token_title),
-                                    subtitle = if (uiState.isSafeTokenLimitEnabled) {
-                                        stringResource(R.string.setcat_safe_token_on)
-                                    } else {
-                                        stringResource(R.string.setcat_safe_token_off)
-                                    },
-                                    checked = uiState.isSafeTokenLimitEnabled,
-                                    onCheckedChange = { settingsViewModel.setSafeTokenLimitEnabled(it) },
-                                    leadingIcon = {
-                                        Icon(
-                                            painterResource(R.drawable.rounded_monitoring_24),
-                                            null,
-                                            tint = if (uiState.isSafeTokenLimitEnabled) MaterialTheme.colorScheme.primary
-                                                   else MaterialTheme.colorScheme.tertiary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                )
-                            }
-                            
-                            // Consolidated API Key Section
-                            SettingsSubsection(title = stringResource(R.string.setcat_credentials)) {
-                                val provider = com.aro.music.data.ai.provider.AiProvider.fromString(aiProvider)
-                                val sourceLabel = when(provider) {
-                                    com.aro.music.data.ai.provider.AiProvider.GEMINI -> stringResource(R.string.setcat_ai_source_gemini)
-                                    com.aro.music.data.ai.provider.AiProvider.DEEPSEEK -> stringResource(R.string.setcat_ai_source_deepseek)
-                                    com.aro.music.data.ai.provider.AiProvider.GROQ -> stringResource(R.string.setcat_ai_source_groq)
-                                    com.aro.music.data.ai.provider.AiProvider.MISTRAL -> stringResource(R.string.setcat_ai_source_mistral)
-                                    com.aro.music.data.ai.provider.AiProvider.NVIDIA -> stringResource(R.string.setcat_ai_source_nvidia)
-                                    com.aro.music.data.ai.provider.AiProvider.KIMI -> stringResource(R.string.setcat_ai_source_kimi)
-                                    com.aro.music.data.ai.provider.AiProvider.GLM -> stringResource(R.string.setcat_ai_source_glm)
-                                    com.aro.music.data.ai.provider.AiProvider.OPENAI -> stringResource(R.string.setcat_ai_source_openai)
-                                    com.aro.music.data.ai.provider.AiProvider.OPENROUTER -> "OpenRouter (openrouter.ai)"
-                                }
-                                
-                                AiApiKeyItem(
-                                    apiKey = currentAiApiKey,
-                                    onApiKeySave = { settingsViewModel.onAiApiKeyChange(it) },
-                                    title = stringResource(R.string.setcat_ai_api_key_title, provider.displayName),
-                                    subtitle = stringResource(R.string.setcat_ai_api_key_subtitle, sourceLabel)
-                                )
-                            }
-
-                            // Model Selection Section
-                            if (currentAiApiKey.isNotBlank()) {
-                                SettingsSubsection(title = stringResource(R.string.setcat_model_selection)) {
-                                    if (uiState.isLoadingModels) {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.surfaceContainer,
-                                            shape = RoundedCornerShape(10.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(16.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(24.dp),
-                                                    strokeWidth = 2.dp
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.setcat_loading_models),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                    } else if (uiState.modelsFetchError != null) {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.errorContainer,
-                                            shape = RoundedCornerShape(10.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = uiState.modelsFetchError ?: stringResource(R.string.models_fetch_failed),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                                modifier = Modifier.padding(16.dp)
-                                            )
-                                        }
-                                    } else if (uiState.availableModels.isNotEmpty()) {
-                                        ThemeSelectorItem(
-                                            label = stringResource(R.string.setcat_ai_model_label),
-                                            description = stringResource(R.string.setcat_ai_model_desc),
-                                            options = uiState.availableModels.associate { it.name to it.displayName },
-                                            selectedKey = currentAiModel.ifEmpty { uiState.availableModels.firstOrNull()?.name ?: "" },
-                                            onSelectionChanged = { settingsViewModel.onAiModelChange(it) },
-                                            leadingIcon = { Icon(Icons.Rounded.Science, null, tint = MaterialTheme.colorScheme.secondary) }
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Prompt Behavior Section
-                            SettingsSubsection(
-                                title = stringResource(R.string.setcat_prompt_behavior),
-                                addBottomSpace = false
-                            ) {
-                                AiSystemPromptItem(
-                                    systemPrompt = currentAiSystemPrompt,
-                                    defaultPrompt = com.aro.music.data.preferences.AiPreferencesRepository.DEFAULT_SYSTEM_PROMPT,
-                                    onSystemPromptSave = { settingsViewModel.onAiSystemPromptChange(it) },
-                                    onReset = { settingsViewModel.resetAiSystemPrompt() },
-                                    title = stringResource(R.string.setcat_system_prompt_title),
-                                    subtitle = stringResource(R.string.setcat_system_prompt_subtitle)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            SettingsSubsection(title = stringResource(R.string.setcat_ai_usage_report)) {
-                                val recentAiUsage by settingsViewModel.recentAiUsage.collectAsStateWithLifecycle()
-                                val totalPromptTokens by settingsViewModel.totalPromptTokens.collectAsStateWithLifecycle()
-                                val totalOutputTokens by settingsViewModel.totalOutputTokens.collectAsStateWithLifecycle()
-                                val totalThoughtTokens by settingsViewModel.totalThoughtTokens.collectAsStateWithLifecycle()
-
-                                val totalTokens = totalPromptTokens + totalOutputTokens + totalThoughtTokens
-                                val totalTokStr = String.format(Locale.US, "%,d", totalTokens)
-                                val promptTokStr = String.format(Locale.US, "%,d", totalPromptTokens)
-                                val outputTokStr = String.format(Locale.US, "%,d", totalOutputTokens)
-                                val thoughtTokStr = String.format(Locale.US, "%,d", totalThoughtTokens)
-
-                                ActionSettingsItem(
-                                    title = stringResource(R.string.setcat_total_consumption_title),
-                                    subtitle = stringResource(
-                                        R.string.setcat_ai_usage_tokens_subtitle,
-                                        totalTokStr,
-                                        promptTokStr,
-                                        outputTokStr,
-                                        thoughtTokStr
-                                    ),
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.rounded_monitoring_24),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.tertiary
-                                        )
-                                    },
-                                    primaryActionLabel = stringResource(R.string.setcat_ai_clear_logs),
-                                    onPrimaryAction = { settingsViewModel.clearAiUsageData() }
-                                )
-
-                                if (recentAiUsage.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    var expanded by remember { mutableStateOf(false) }
-                                    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
-                                    
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { expanded = !expanded },
-                                        color = Color.Transparent
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.rounded_monitoring_24),
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                                Text(
-                                                    text = stringResource(R.string.setcat_ai_activity_log_title, recentAiUsage.size),
-                                                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = GoogleSansRounded),
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-                                            Icon(
-                                                imageVector = Icons.Rounded.ExpandMore,
-                                                contentDescription = if (expanded) stringResource(R.string.cd_hide) else stringResource(R.string.cd_show),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.rotate(rotation)
-                                            )
-                                        }
-                                    }
-
-                                    AnimatedVisibility(
-                                        visible = expanded,
-                                        enter = expandVertically() + fadeIn(),
-                                        exit = shrinkVertically() + fadeOut()
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 8.dp, bottom = 8.dp)
-                                        ) {
-                                            val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
-                                            val groupedUsage = recentAiUsage.groupBy { 
-                                                dateFormat.format(Date(it.timestamp)) 
-                                            }
-
-                                            groupedUsage.forEach { (date, items) ->
-                                                AiUsageDateHeader(date = date)
-                                                items.forEach { usage ->
-                                                    AiUsageLogItem(usage = usage)
-                                                }
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         SettingsCategory.BACKUP_RESTORE -> {
                             if (!uiState.backupInfoDismissed) {
                                 BackupInfoNoticeCard(
@@ -1140,7 +907,7 @@ fun SettingsCategoryScreen(
             kotlinx.coroutines.delay(com.aro.music.presentation.navigation.TRANSITION_DURATION.toLong())
             isTransitioning = false
         }
-        
+
         if (isTransitioning) {
             Box(modifier = Modifier
                 .fillMaxSize()
@@ -1348,7 +1115,7 @@ fun SettingsCategoryScreen(
             }
         )
     }
-    
+
      // Dialogs logic (copied)
     if (showClearLyricsDialog) {
         AlertDialog(
@@ -1361,27 +1128,27 @@ fun SettingsCategoryScreen(
         )
     }
 
-    
+
     if (showRebuildDatabaseWarning) {
         AlertDialog(
             icon = { Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.error) },
             title = { Text(stringResource(R.string.dialog_rebuild_database_title)) },
             text = { Text(stringResource(R.string.dialog_rebuild_database_message)) },
             onDismissRequest = { showRebuildDatabaseWarning = false },
-            confirmButton = { 
+            confirmButton = {
                 TextButton(
-                    onClick = { 
+                    onClick = {
                         showRebuildDatabaseWarning = false
                         refreshRequested = true
                         syncRequestObservedRunning = false
                         syncIndicatorLabel = context.getString(R.string.sync_indicator_rebuilding)
                         Toast.makeText(context, context.getString(R.string.toast_rebuilding_database), Toast.LENGTH_SHORT).show()
-                        settingsViewModel.rebuildDatabase() 
+                        settingsViewModel.rebuildDatabase()
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { 
-                    Text(stringResource(R.string.rebuild)) 
-                } 
+                ) {
+                    Text(stringResource(R.string.rebuild))
+                }
             },
             dismissButton = { TextButton(onClick = { showRebuildDatabaseWarning = false }) { Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis) } }
         )

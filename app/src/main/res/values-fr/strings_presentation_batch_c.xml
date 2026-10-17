@@ -34,19 +34,19 @@
     <string name="song_picker_load_more">Charger plus</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">IA</string>
-    <string name="ai_playlist_headline_perfect">Sélection parfaite</string>
-    <string name="ai_playlist_headline_daily_mix">Mix du jour</string>
-    <string name="ai_playlist_subtitle_journey_ready">Votre voyage sonore est prêt</string>
-    <string name="ai_playlist_subtitle_generator">Générateur de playlist IA</string>
-    <string name="ai_playlist_description">Décrivez l\'ambiance, l\'humeur ou l\'activité et laissez l\'IA composer la playlist parfaite depuis votre bibliothèque.</string>
-    <string name="ai_playlist_section_size">Taille de la playlist</string>
-    <string name="ai_playlist_min_songs">Titres min</string>
-    <string name="ai_playlist_max_songs">Titres max</string>
-    <string name="ai_playlist_prompt_placeholder">ex. : Ambiance détente du soir, énergie entraînante pour le sport…</string>
-    <string name="ai_playlist_tap_to_retry">Appuyez pour réessayer</string>
-    <string name="ai_playlist_status_default">Voyage sonore synthétisé !</string>
-    <string name="ai_playlist_generating">Génération en cours…</string>
-    <string name="ai_playlist_ready_to_play">Prêt à écouter</string>
-    <string name="ai_playlist_generate">Générer la playlist</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </resources>

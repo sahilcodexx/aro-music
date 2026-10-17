@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">Entrambi</string>
     <string name="presentation_batch_d_cloud_sources_heading">Cloud</string>
     <string name="presentation_batch_d_cloud_only">Solo cloud</string>
-    <string name="presentation_batch_d_generating_ai_metadata">Generazione metadati con AI…</string>
+
     <string name="presentation_batch_d_max_albums_selection">Puoi selezionare fino a %1$d album</string>
     <string name="presentation_batch_d_folder_name_fallback">Cartella</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">Espandi menu</string>

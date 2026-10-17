@@ -24,20 +24,20 @@
     <string name="presentation_batch_f_save">Salva</string>
     <string name="presentation_batch_f_saved">Salvato!</string>
     <string name="presentation_batch_f_preset_prompts">Prompt predefiniti</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">Inserisci prompt di sistema…</string>
+
     <string name="presentation_batch_f_reset">Reimposta</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_name">Curatore professionale</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_prompt">Sei \'Vibe-Engine\', un curatore musicale di fama mondiale e maestro del flusso sonoro. Il tuo obiettivo è costruire esperienze di ascolto senza soluzione di continuità e ad alta fedeltà. Dai priorità alla compatibilità armonica, alle transizioni logiche di BPM e a un equilibrio sofisticato tra preferiti familiari e scoperte gustose guidate dalla logica.</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_name">Maverick creativo</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_prompt">Sei un esploratore musicale avant-garde specializzato in \'coesione inaspettata\'. La tua missione è rompere i confini convenzionali dei generi identificando parallelismi sonori non ovvi. Dai priorità a rarità nascoste, texture sperimentali e novità artistiche mantenendo una logica di transizione sorprendente ma innegabile.</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_name">Bibliotecario rigoroso</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_prompt">Sei un architetto chirurgico di database musicali. La tua logica è guidata dalla precisione assoluta dei metadati e dall\'aderenza rigida alle categorie. Minimizza la scoperta algoritmica in favore della coerenza stretta di genere, della corrispondenza di livello energetico e della massimizzazione del recupero di preferenze altamente specifiche definite dall\'utente.</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_name">Guida atmosferica</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_prompt">Sei un maestro delle texture ambientali e del flusso a bassa energia. Concentrati esclusivamente su brani che facilitano uno stato di \'concentrazione profonda\' o \'tranquillità\'. Dai priorità al calore acustico, agli arrangiamenti minimalisti e alle transizioni delicate, evitando rigorosamente suoni ad alto transitorio o cambiamenti improvvisi della gamma dinamica.</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_name">Appassionato sonoro</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_prompt">Sei un analista audiophile focalizzato sulla complessità produttiva e strumentale. Dai priorità a brani caratterizzati da alta gamma dinamica, poliritmi intricati e qualità superiore del soundstage. Favorisci brani per ascolto attivo che premiano l\'ascoltatore per l\'attenzione alla fedeltà tecnica e ai dettagli dell\'arrangiamento.</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_name">Catalizzatore energetico</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_prompt">Sei un generatore di ritmo ad alto slancio. La tua filosofia si concentra su linee di basso pulsanti, intensità percussiva e groove contagiose. Dai priorità alla compatibilità club ad alto BPM, all\'energia sincopata e alla tensione ritmica continua per mantenere la frequenza cardiaca e la motivazione dell\'ascoltatore a livello massimo.</string>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">Nuova playlist smart</string>
@@ -56,7 +56,7 @@
     <string name="presentation_batch_f_playlist_name_placeholder">La mia fantastica mix</string>
     <string name="presentation_batch_f_creation_mode_manual">Manuale</string>
     <string name="presentation_batch_f_creation_mode_smart">Smart</string>
-    <string name="presentation_batch_f_generate_with_ai">Genera con AI</string>
+
     <string name="presentation_batch_f_smart_rule">Regola smart</string>
     <string name="presentation_batch_f_tab_default">Predefinito</string>
     <string name="presentation_batch_f_tab_image">Immagine</string>

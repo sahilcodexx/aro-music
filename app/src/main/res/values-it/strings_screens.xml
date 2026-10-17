@@ -231,8 +231,8 @@
     <string name="qq_collected_playlists">Playlist raccolte</string>
     <string name="cd_user_avatar">Avatar utente</string>
     <string name="toast_playlist_created">Playlist creata con successo</string>
-    <string name="toast_set_ai_provider_api_key_first">Imposta prima la chiave API del tuo provider AI</string>
-    <string name="toast_set_gemini_api_key_first">Imposta prima la tua chiave API Gemini</string>
+
+
     <string name="toast_added_to_queue">Aggiunto alla coda</string>
     <string name="toast_playing_next">Riproduzione dopo</string>
     <string name="error_share_song_format">Impossibile condividere il brano: %1$s</string>

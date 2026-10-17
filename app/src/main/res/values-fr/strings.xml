@@ -79,14 +79,14 @@
     <string name="playlist_not_found">Liste de lecture non trouvée.</string>
     <string name="disc_number_header">Disque %d</string>
 
-    <string name="ai_error_api_key">Veuillez configurer une clé API valide pour le fournisseur d\'IA sélectionné dans les Paramètres.</string>
-    <string name="ai_error_generic">Erreur IA : %s</string>
-    <string name="ai_error_quota">Le fournisseur d\'IA sélectionné a rejeté la demande car le compte n\'a plus de crédits ou a dépassé son quota.</string>
-    <string name="ai_error_model_unavailable">Le modèle d\'IA sélectionné n\'est plus disponible. Aro a essayé de passer automatiquement à un modèle pris en charge.</string>
-    <string name="ai_no_songs_found">L\'IA n\'a trouvé aucune chanson pour votre demande.</string>
-    <string name="ai_prompt_empty">Écrivez une idée pour votre Daily Mix</string>
-    <string name="ai_daily_mix_updated">Daily Mix mis à jour avec l\'IA</string>
-    <string name="ai_no_songs_for_mix">L\'IA n\'a trouvé aucune chanson pour ce mix</string>
+
+
+
+
+
+
+
+
 
     <string name="shortcut_shuffle_short">Aléatoire</string>
     <string name="shortcut_shuffle_long">Lire toutes les chansons en mode aléatoire</string>
@@ -121,7 +121,7 @@
     <string name="playlist_none_to_export">Aucune liste de lecture à exporter</string>
     <string name="playlist_export_failed">Échec de l\'exportation : %1$s</string>
     <string name="playlist_export_folder_display">Musique/Exportations Aro</string>
-    <string name="ai_playlist_gemini_key_required">Veuillez configurer votre clé API Gemini dans les Paramètres.</string>
+
     <string name="error_unknown">Erreur inconnue</string>
 
     <!-- Watch transfer foreground service -->

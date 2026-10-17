@@ -267,9 +267,9 @@ fun ThemeSelectorItem(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
+
                     Spacer(modifier = Modifier.height(10.dp))
-                    
+
                     // Selected Value Badge
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -302,7 +302,7 @@ fun ThemeSelectorItem(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 LazyColumn(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
@@ -313,7 +313,7 @@ fun ThemeSelectorItem(
                         val isSelected = key == selectedKey
                         val containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer
                         val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                        
+
                         Surface(
                             onClick = {
                                 onSelectionChanged(key)
@@ -336,7 +336,7 @@ fun ThemeSelectorItem(
                                     color = contentColor,
                                     modifier = Modifier.weight(1f)
                                 )
-                                
+
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Rounded.Check,
@@ -460,7 +460,7 @@ fun RefreshLibraryItem(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Full Rescan button
             FilledTonalButton(
                     onClick = onFullSync,
@@ -481,9 +481,9 @@ fun RefreshLibraryItem(
                     Text(stringResource(R.string.presentation_batch_f_full_rescan))
                 }
             }
-             
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Rebuild Database button - full width, destructive action
             OutlinedButton(
                     onClick = onRebuild,
@@ -709,192 +709,6 @@ fun ActionSettingsItem(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(secondaryActionLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AiApiKeyItem(
-    apiKey: String,
-    onApiKeySave: (String) -> Unit,
-    title: String,
-    subtitle: String
-) {
-    var localApiKey by remember(apiKey) { mutableStateOf(apiKey) }
-    val hasChanges = localApiKey != apiKey
-    var showSaved by remember { mutableStateOf(false) }
-
-    LaunchedEffect(showSaved) {
-        if (showSaved) {
-            kotlinx.coroutines.delay(2000)
-            showSaved = false
-        }
-    }
-
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = localApiKey,
-                onValueChange = { localApiKey = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.presentation_batch_f_enter_api_key)) },
-                singleLine = true,
-                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FilledTonalButton(
-                    onClick = {
-                        onApiKeySave(localApiKey)
-                        showSaved = true
-                    },
-                    enabled = hasChanges
-                ) {
-                    Text(stringResource(R.string.presentation_batch_f_save), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                if (showSaved) {
-                    Text(
-                        text = stringResource(R.string.presentation_batch_f_saved),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AiSystemPromptItem(
-    systemPrompt: String,
-    defaultPrompt: String,
-    onSystemPromptSave: (String) -> Unit,
-    onReset: () -> Unit,
-    title: String,
-    subtitle: String
-) {
-    var localPrompt by remember(systemPrompt) { mutableStateOf(systemPrompt) }
-    val hasChanges = localPrompt != systemPrompt
-    val isDefault = systemPrompt == defaultPrompt
-    var showSaved by remember { mutableStateOf(false) }
-    val presets = listOf(
-        stringResource(R.string.presentation_batch_f_ai_preset_professional_curator_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_professional_curator_prompt),
-        stringResource(R.string.presentation_batch_f_ai_preset_creative_maverick_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_creative_maverick_prompt),
-        stringResource(R.string.presentation_batch_f_ai_preset_strict_librarian_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_strict_librarian_prompt),
-        stringResource(R.string.presentation_batch_f_ai_preset_atmospheric_guide_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_atmospheric_guide_prompt),
-        stringResource(R.string.presentation_batch_f_ai_preset_sonic_enthusiast_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_sonic_enthusiast_prompt),
-        stringResource(R.string.presentation_batch_f_ai_preset_energy_catalyst_name) to
-            stringResource(R.string.presentation_batch_f_ai_preset_energy_catalyst_prompt)
-    )
-
-    LaunchedEffect(showSaved) {
-        if (showSaved) {
-            kotlinx.coroutines.delay(2000)
-            showSaved = false
-        }
-    }
-
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.presentation_batch_f_preset_prompts),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                presets.forEach { preset ->
-                    OutlinedButton(
-                        onClick = { 
-                            localPrompt = preset.second
-                        },
-                        modifier = Modifier.wrapContentWidth()
-                    ) {
-                        Text(text = preset.first, maxLines = 1)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = localPrompt,
-                onValueChange = { localPrompt = it },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 200.dp),
-                placeholder = { Text(stringResource(R.string.presentation_batch_f_enter_system_prompt_placeholder)) },
-                minLines = 3,
-                maxLines = 6
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FilledTonalButton(
-                    onClick = {
-                        onSystemPromptSave(localPrompt)
-                        showSaved = true
-                    },
-                    enabled = hasChanges
-                ) {
-                    Text(stringResource(R.string.presentation_batch_f_save), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                if (!isDefault) {
-                    OutlinedButton(onClick = {
-                        onReset()
-                    }) {
-                        Text(stringResource(R.string.presentation_batch_f_reset), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-                if (showSaved) {
-                    Text(
-                        text = stringResource(R.string.presentation_batch_f_saved),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
                 }
             }
         }

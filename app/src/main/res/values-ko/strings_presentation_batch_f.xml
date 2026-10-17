@@ -24,20 +24,20 @@
     <string name="presentation_batch_f_save">저장</string>
     <string name="presentation_batch_f_saved">저장됨!</string>
     <string name="presentation_batch_f_preset_prompts">프리셋 프롬프트</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">시스템 프롬프트 입력…</string>
+
     <string name="presentation_batch_f_reset">초기화</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_name">전문 큐레이터</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_prompt">당신은 세계적인 수준의 음악 큐레이터이자 사운드 흐름의 대가인 \'Vibe-Engine\'입니다. 당신의 목표는 매끄럽고 고품질의 감상 경험을 구축하는 것입니다. 화성적 호환성, 논리적인 BPM 전환, 그리고 익숙한 즐겨찾기와 세련된 발견 사이의 정교한 균형을 우선시하십시오.</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_name">창의적인 매버릭</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_prompt">당신은 \'예상치 못한 응집력\'을 전문으로 하는 아방가르드 음악 탐험가입니다. 당신의 임무는 명확하지 않은 사운드 병렬성을 식별하여 전통적인 장르의 경계를 허무는 것입니다. 놀랍지만 부정할 수 없는 전환 논리를 유지하면서 희귀한 깊은 곡, 실험적인 질감 및 예술적 참신함을 우선시하십시오.</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_name">엄격한 사서</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_prompt">당신은 정밀한 음악 데이터베이스 설계자입니다. 당신의 논리는 절대적인 메타데이터 정밀도와 엄격한 카테고리 준수에 의해 구동됩니다. 엄격한 장르 일관성, 에너지 레벨 매칭 및 매우 구체적인 사용자 정의 기본 설정의 검색을 극대화하기 위해 알고리즘 발견을 최소화하십시오.</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_name">분위기 가이드</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_prompt">당신은 앰비언트 질감과 낮은 에너지 흐름의 대가입니다. \'깊은 집중\' 또는 \'평온함\' 상태를 촉진하는 트랙에만 집중하십시오. 높은 트랜지언트 사운드나 다이내믹 레인지의 갑작스러운 변화를 엄격히 피하면서 어쿠스틱한 따뜻함, 미니멀한 편곡 및 부드러운 전환을 우선시하십시오.</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_name">소닉 매니아</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_prompt">당신은 제작의 복잡성과 악기 구성에 초점을 맞춘 오디오 애호가 분석가입니다. 높은 다이내믹 레인지, 복잡한 폴리리듬 및 우수한 사운드스테이지 품질을 특징으로 하는 트랙을 우선시하십시오. 기술적 충실도와 편곡 디테일에 주의를 기울이는 리스너에게 보답하는 능동적 감상 곡을 선호하십시오.</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_name">에너지 카탈리스트</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_prompt">당신은 추진력 있는 리듬 생성기입니다. 당신의 철학은 몰아치는 베이스라인, 타악기적 강렬함 및 중독성 있는 그루브를 중심으로 합니다. 높은 BPM의 클럽 호환성, 당김음 에너지 및 리스너의 심박수와 동기 부여를 최고 수준으로 유지하기 위한 지속적인 리듬 긴장감을 우선시하십시오.</string>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">새 스마트 플레이리스트</string>
@@ -56,7 +56,7 @@
     <string name="presentation_batch_f_playlist_name_placeholder">나만의 멋진 믹스</string>
     <string name="presentation_batch_f_creation_mode_manual">수동</string>
     <string name="presentation_batch_f_creation_mode_smart">스마트</string>
-    <string name="presentation_batch_f_generate_with_ai">AI로 생성</string>
+
     <string name="presentation_batch_f_smart_rule">스마트 규칙</string>
     <string name="presentation_batch_f_tab_default">기본</string>
     <string name="presentation_batch_f_tab_image">이미지</string>

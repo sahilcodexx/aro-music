@@ -34,21 +34,21 @@
     <string name="song_picker_load_more">加载更多</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">AI</string>
-    <string name="ai_playlist_headline_perfect">精准策划</string>
-    <string name="ai_playlist_headline_daily_mix">每日合辑</string>
-    <string name="ai_playlist_subtitle_journey_ready">你的声音旅程已准备就绪</string>
-    <string name="ai_playlist_subtitle_generator">AI 播放列表生成器</string>
-    <string name="ai_playlist_description">描述你想要的氛围、情绪或活动，让 AI 从你的媒体库中为你策划理想的播放列表。</string>
-    <string name="ai_playlist_section_size">播放列表大小</string>
-    <string name="ai_playlist_min_songs">最少歌曲数</string>
-    <string name="ai_playlist_max_songs">最多歌曲数</string>
-    <string name="ai_playlist_prompt_placeholder">例如：轻松的夜晚氛围、充满活力的健身节奏……</string>
-    <string name="ai_playlist_tap_to_retry">点击重试</string>
-    <string name="ai_playlist_status_default">声音旅程已生成！</string>
-    <string name="ai_playlist_generating">生成中……</string>
-    <string name="ai_playlist_ready_to_play">可立即播放</string>
-    <string name="ai_playlist_generate">生成播放列表</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">暂无歌曲</string>

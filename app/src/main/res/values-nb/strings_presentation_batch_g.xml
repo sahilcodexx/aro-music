@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">Kablet lyd</string>
     <string name="device_capabilities_output_digital">Digital utgang</string>
     <string name="device_capabilities_output_other">Annen utgang</string>
-    <string name="presentation_batch_g_ai_token_input">Inndata</string>
-    <string name="presentation_batch_g_ai_token_output">Utdata</string>
-    <string name="presentation_batch_g_ai_token_thought">Tanke</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s: %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">dd. MMM, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">Multi-artist parsing</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Tegn-separatorer</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Gjeldende: %1$s</string>

@@ -24,20 +24,20 @@
     <string name="presentation_batch_f_save">Сохранить</string>
     <string name="presentation_batch_f_saved">Сохранено!</string>
     <string name="presentation_batch_f_preset_prompts">Пресеты запросов</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">Введите системный запрос…</string>
+
     <string name="presentation_batch_f_reset">Сброс</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_name">Профессиональный куратор</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_prompt">Вы — «Vibe-Engine», музыкальный куратор мирового уровня и мастер звукового потока. Ваша цель — создавать безупречные музыкальные впечатления. Отдавайте приоритет гармонической совместимости, логичным переходам BPM и изысканному балансу между знакомыми хитами и качественными новинками.</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_name">Творческий новатор</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_prompt">Вы — авангардный музыкальный исследователь, специализирующийся на «неожиданной сплоченности». Ваша миссия — разрушать привычные границы жанров, находя неочевидные звуковые параллели. Отдавайте приоритет редким находкам, экспериментальным текстурам и художественной новизне, сохраняя при этом удивительную логику переходов.</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_name">Строгий библиотекарь</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_prompt">Вы — точный архитектор музыкальных баз данных. Ваша логика продиктована абсолютной точностью метаданных и жестким соблюдением категорий. Минимизируйте алгоритмический поиск в пользу строгого соответствия жанру, уровню энергии и максимального извлечения специфических предпочтений пользователя.</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_name">Атмосферный гид</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_prompt">Вы — мастер эмбиент-текстур и спокойного потока. Сосредоточьтесь исключительно на треках, способствующих состоянию «глубокой концентрации» или «спокойствия». Отдавайте приоритет акустическому теплу, минималистичным аранжировкам и мягким переходам, избегая резких звуков или внезапных смен динамического диапазона.</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_name">Звуковой энтузиаст</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_prompt">Вы — аналитик-аудиофил, сосредоточенный на сложности продакшена и инструментарии. Отдавайте приоритет трекам с высоким динамическим диапазоном, сложными ритмами и превосходным качеством звуковой сцены. Предпочитайте произведения для активного прослушивания, вознаграждающие слушателя за внимание к техническим деталям.</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_name">Катализатор энергии</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_prompt">Вы — генератор мощного ритма. Ваша философия сосредоточена на драйвовых басовых линиях, перкуссионной интенсивности и заразительном груве. Отдавайте приоритет клубной совместимости с высоким BPM, синкопированной энергии и непрерывному ритмическому напряжению.</string>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">Новый смарт-плейлист</string>
@@ -56,7 +56,7 @@
     <string name="presentation_batch_f_playlist_name_placeholder">Мой крутой микс</string>
     <string name="presentation_batch_f_creation_mode_manual">Вручную</string>
     <string name="presentation_batch_f_creation_mode_smart">Смарт</string>
-    <string name="presentation_batch_f_generate_with_ai">Создать через ИИ</string>
+
     <string name="presentation_batch_f_smart_rule">Смарт-правило</string>
     <string name="presentation_batch_f_tab_default">Стандарт</string>
     <string name="presentation_batch_f_tab_image">Картинка</string>

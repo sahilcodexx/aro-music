@@ -43,10 +43,10 @@
     <string name="action_rename">重命名</string>
 
     <!-- AI metadata sheet -->
-    <string name="ai_metadata_headline_success">标签已完美整理！</string>
-    <string name="ai_metadata_headline_default">AI 元数据</string>
-    <string name="ai_metadata_subtitle_generating">正在参考每日合辑指南……</string>
-    <string name="ai_metadata_subtitle_review">检查并完善生成的详细信息</string>
+
+
+
+
     <string name="song_field_title">标题</string>
     <string name="song_field_artist">艺术家</string>
     <string name="song_field_album">专辑</string>
@@ -60,7 +60,7 @@
     <string name="edit_song_got_it">知道了</string>
     <string name="cd_info_icon">信息</string>
     <string name="edit_song_toolbar_title">编辑歌曲</string>
-    <string name="cd_use_gemini_ai">使用 Gemini AI</string>
+
     <string name="cd_show_metadata_info">显示信息</string>
     <string name="song_field_track_number">曲目编号</string>
     <string name="song_field_disc_number">碟片编号</string>

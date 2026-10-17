@@ -83,14 +83,14 @@
     <string name="playlist_not_found">未找到播放列表。</string>
     <string name="disc_number_header">碟片 %d</string>
 
-    <string name="ai_error_api_key">请在“设置”中为所选 AI 提供商配置有效的 API 密钥。</string>
-    <string name="ai_error_generic">AI 错误：%s</string>
-    <string name="ai_error_quota">所选 AI 提供商拒绝了该请求，因为账户没有余额或可用配额。</string>
-    <string name="ai_error_model_unavailable">所选 AI 模型已不可用。Aro 已尝试自动切换到受支持的模型。</string>
-    <string name="ai_no_songs_found">AI 没有根据你的提示找到任何歌曲。</string>
-    <string name="ai_prompt_empty">为你的每日合辑写一个想法</string>
-    <string name="ai_daily_mix_updated">已使用 AI 更新每日合辑</string>
-    <string name="ai_no_songs_for_mix">AI 没有为这个合辑找到歌曲</string>
+
+
+
+
+
+
+
+
 
     <string name="shortcut_shuffle_short">随机播放</string>
     <string name="shortcut_shuffle_long">随机播放全部歌曲</string>
@@ -125,7 +125,7 @@
     <string name="playlist_none_to_export">没有可导出的播放列表</string>
     <string name="playlist_export_failed">导出失败：%1$s</string>
     <string name="playlist_export_folder_display">Music/Aro Exports</string>
-    <string name="ai_playlist_gemini_key_required">请在“设置”中配置你的 Gemini API 密钥。</string>
+
     <string name="error_unknown">未知错误</string>
 
     <!-- Watch transfer foreground service -->

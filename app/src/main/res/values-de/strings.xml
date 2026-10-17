@@ -83,14 +83,14 @@
     <string name="playlist_not_found">Playlist nicht gefunden.</string>
     <string name="disc_number_header">Disc %d</string>
 
-    <string name="ai_error_api_key">Gültigen API Key für den gewählten KI-Anbieter in den Einstellungen eintragen.</string>
-    <string name="ai_error_generic">KI-Fehler: %s</string>
-    <string name="ai_error_quota">Der KI-Anbieter hat die Anfrage abgelehnt – kein Guthaben oder Kontingent erschöpft.</string>
-    <string name="ai_error_model_unavailable">Das gewählte KI-Modell ist nicht mehr verfügbar. Aro hat automatisch gewechselt.</string>
-    <string name="ai_no_songs_found">KI konnte keine passenden Songs finden.</string>
-    <string name="ai_prompt_empty">Beschreibe deinen Daily Mix…</string>
-    <string name="ai_daily_mix_updated">Daily Mix mit KI aktualisiert</string>
-    <string name="ai_no_songs_for_mix">KI konnte keine Songs für diesen Mix finden</string>
+
+
+
+
+
+
+
+
 
     <string name="shortcut_shuffle_short">Shuffle</string>
     <string name="shortcut_shuffle_long">Alle Songs mischen</string>
@@ -125,7 +125,7 @@
     <string name="playlist_none_to_export">Keine Playlists zum Exportieren</string>
     <string name="playlist_export_failed">Export fehlgeschlagen: %1$s</string>
     <string name="playlist_export_folder_display">Musik/Aro Exporte</string>
-    <string name="ai_playlist_gemini_key_required">Gemini API Key in den Einstellungen eintragen.</string>
+
     <string name="error_unknown">Unbekannter Fehler</string>
 
     <!-- Watch transfer foreground service -->

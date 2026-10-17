@@ -45,92 +45,70 @@
     <string name="presentation_batch_e_create_playlist_subtitle">选择创建方式。</string>
     <string name="presentation_batch_e_creation_mode_manual">手动</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">自行设计封面、图标、形状，并挑选歌曲。</string>
-    <string name="presentation_batch_e_creation_mode_ai">使用 AI</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_enabled">借助高级控制生成精心策划的播放列表。</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_disabled">需要先在设置中配置 Gemini API 密钥。</string>
+
+
+
     <string name="presentation_batch_e_setup_api_key">设置 API 密钥</string>
 
     <!-- AI playlist lab -->
-    <string name="presentation_batch_e_ai_playlist_lab_title">AI 播放列表实验室</string>
-    <string name="presentation_batch_e_ai_reset">重置</string>
-    <string name="presentation_batch_e_ai_generating">生成中……</string>
-    <string name="presentation_batch_e_ai_generate">生成</string>
-    <string name="presentation_batch_e_ai_section_intent">意图</string>
-    <string name="presentation_batch_e_ai_playlist_name_optional">播放列表名称（可选）</string>
-    <string name="presentation_batch_e_ai_feel_label">你希望这个播放列表带来怎样的感觉？</string>
-    <string name="presentation_batch_e_ai_feel_placeholder">例如：带着温暖合成器音色的日落兜风</string>
-    <string name="presentation_batch_e_ai_section_direction">方向</string>
-    <string name="presentation_batch_e_ai_mood_label">情绪</string>
-    <string name="presentation_batch_e_ai_activity_label">活动</string>
-    <string name="presentation_batch_e_ai_era_label">年代</string>
-    <string name="presentation_batch_e_ai_section_curation">策划引擎</string>
-    <string name="presentation_batch_e_ai_energy_label">能量感</string>
-    <string name="presentation_batch_e_ai_energy_description">控制歌曲的强度和节奏。1 = 平静/缓慢，5 = 高能量/快速。</string>
-    <string name="presentation_batch_e_ai_discovery_label">探索度</string>
-    <string name="presentation_batch_e_ai_discovery_description">控制推荐内容的熟悉程度。1 = 你最常播放的最爱，5 = 很少播放的冷门佳作。</string>
-    <string name="presentation_batch_e_ai_min_songs">最少歌曲数</string>
-    <string name="presentation_batch_e_ai_max_songs">最多歌曲数</string>
-    <string name="presentation_batch_e_ai_section_filters">筛选条件</string>
-    <string name="presentation_batch_e_ai_prioritize_genres">优先流派（可选）</string>
-    <string name="presentation_batch_e_ai_prioritize_genres_placeholder">例如：synthwave、indie pop</string>
-    <string name="presentation_batch_e_ai_avoid_genres">避免流派（可选）</string>
-    <string name="presentation_batch_e_ai_avoid_genres_placeholder">例如：metal、hard trap</string>
-    <string name="presentation_batch_e_ai_preferred_language">偏好语言（可选）</string>
-    <string name="presentation_batch_e_ai_preferred_language_placeholder">例如：英语、西班牙语、纯音乐</string>
-    <string name="presentation_batch_e_ai_prioritize_favorites">优先收藏歌曲</string>
-    <string name="presentation_batch_e_ai_avoid_explicit">避免露骨歌词</string>
-    <string name="presentation_batch_e_ai_section_prompt_preview">提示词预览</string>
-    <string name="presentation_batch_e_ai_prompt_preview_empty">添加偏好后，最终提示词会显示在这里。</string>
-    <string name="presentation_batch_e_ai_hero_title">精准策划</string>
-    <string name="presentation_batch_e_ai_hero_subtitle">定义情绪、活动、限制条件与探索深度。</string>
-    <string name="presentation_batch_e_ai_hero_library_note">AI 只会使用你本地媒体库中的歌曲。</string>
-    <string name="presentation_batch_e_ai_error_add_instruction">请至少为 AI 添加一条指令。</string>
-    <string name="presentation_batch_e_ai_error_song_range">请设置有效的歌曲范围。</string>
-    <string name="presentation_batch_e_ai_level_out_of_five">%1$d/5</string>
-    <string name="presentation_batch_e_ai_custom_chip">自定义……</string>
-    <string name="presentation_batch_e_ai_enter_custom_title">输入自定义值</string>
-    <string name="presentation_batch_e_ai_enter_custom_label">输入你的自定义值</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- AI prompt assembly (sent to model; localized for consistency with UI) -->
-    <string name="presentation_batch_e_ai_era_any">不限年代</string>
-    <string name="presentation_batch_e_ai_prompt_core_request">核心需求：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_mood">情绪目标：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_activity">活动场景：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_era">年代侧重：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_genres">优先流派：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_genres">避免流派：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_preferred_language">偏好语言：%1$s。</string>
-    <string name="presentation_batch_e_ai_prompt_energy">能量目标：%1$d/5。</string>
-    <string name="presentation_batch_e_ai_prompt_discovery">探索目标：%1$d/5，其中 1 表示熟悉内容，5 表示冷门佳作。</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_favorites">在可能的情况下，优先选择更接近听众收藏偏好的歌曲。</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_explicit">在有替代选项时尽量避免露骨歌词。</string>
-    <string name="presentation_batch_e_ai_prompt_smooth_transitions">保持过渡自然流畅，避免同一艺术家过于密集地重复出现。</string>
 
-    <string-array name="presentation_batch_e_ai_mood_options">
-        <item>轻松</item>
-        <item>活力</item>
-        <item>愉快</item>
-        <item>暗黑</item>
-        <item>浪漫</item>
-        <item>忧郁</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_activity_options">
-        <item>健身</item>
-        <item>专注</item>
-        <item>公路旅行</item>
-        <item>派对</item>
-        <item>学习</item>
-        <item>深夜</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_era_options">
-        <item>@string/presentation_batch_e_ai_era_any</item>
-        <item>70 年代</item>
-        <item>80 年代</item>
-        <item>90 年代</item>
-        <item>2000 年代</item>
-        <item>2010 年代</item>
-        <item>2020 年代</item>
-    </string-array>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- ReorderPresetsSheet -->
     <string name="presentation_batch_e_reset_presets_title">重置预设</string>

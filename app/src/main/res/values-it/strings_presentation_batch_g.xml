@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">Audio cablato</string>
     <string name="device_capabilities_output_digital">Uscita digitale</string>
     <string name="device_capabilities_output_other">Altra uscita</string>
-    <string name="presentation_batch_g_ai_token_input">Input</string>
-    <string name="presentation_batch_g_ai_token_output">Output</string>
-    <string name="presentation_batch_g_ai_token_thought">Pensiero</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s: %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">dd MMM, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">Parsing multi-artista</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Delimitatori carattere</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Attuali: %1$s</string>

@@ -34,22 +34,22 @@
     <string name="song_picker_load_more">Last inn mer</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">AI</string>
-    <string name="ai_playlist_headline_perfect">Perfekt kuratert</string>
-    <string name="ai_playlist_headline_daily_mix">Daily Mix</string>
-    <string name="ai_playlist_subtitle_journey_ready">Din lydreise er klar</string>
-    <string name="ai_playlist_subtitle_generator">AI-spillelistegenerator</string>
-    <string name="ai_playlist_description">Beskriv stemningen eller aktiviteten, og la AI kuratere den perfekte spillelisten fra biblioteket ditt.</string>
-    <string name="ai_playlist_section_size">Størrelse på spilleliste</string>
-    <string name="ai_playlist_min_songs">Min. antall sanger</string>
-    <string name="ai_playlist_max_songs">Maks. antall sanger</string>
-    <string name="ai_playlist_prompt_placeholder">f.eks. Rolig kveldsstemning, treningsenergi…</string>
-    <string name="ai_playlist_tap_to_retry">Trykk for å prøve på nytt</string>
-    <string name="ai_playlist_status_default">Lydreise ferdigstilt!</string>
-    <string name="ai_playlist_generating">Genererer…</string>
-    <string name="ai_playlist_ready_to_play">Klar til avspilling</string>
-    <string name="ai_playlist_generate">Generer spilleliste</string>
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">Ingen sanger ennå</string>
     <string name="lib_empty_songs_all_subtitle">Legg til musikk på enheten din eller synkroniser en skykilde for å begynne å lytte.</string>

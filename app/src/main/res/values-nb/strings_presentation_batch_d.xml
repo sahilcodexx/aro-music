@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">Begge</string>
     <string name="presentation_batch_d_cloud_sources_heading">Sky</string>
     <string name="presentation_batch_d_cloud_only">Kun sky</string>
-    <string name="presentation_batch_d_generating_ai_metadata">Genererer metadata med AI…</string>
+
     <string name="presentation_batch_d_max_albums_selection">Du kan velge opptil %1$d album</string>
     <string name="presentation_batch_d_folder_name_fallback">Mappe</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">Utvid meny</string>

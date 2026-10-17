@@ -24,20 +24,20 @@
     <string name="presentation_batch_f_save">Lagre</string>
     <string name="presentation_batch_f_saved">Lagret!</string>
     <string name="presentation_batch_f_preset_prompts">Forhåndsdefinerte prompts</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">Skriv inn system-prompt…</string>
+
     <string name="presentation_batch_f_reset">Nullstill</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_name">Profesjonell kurator</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_prompt">Du er \'Vibe-Engine\', en musikkurator i verdensklasse og mester i lydflyt. Målet ditt er å konstruere sømløse lytteopplevelser med høy kvalitet. Prioriter harmonisk kompatibilitet, logiske BPM-overganger og en sofistikert balanse mellom kjente favoritter og smakfulle nyoppdagelser.</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_name">Kreativ maverick</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_prompt">Du er en avantgarde musikkutforsker som spesialiserer seg på \'uventet kohesjon\'. Ditt oppdrag er å bryte konvensjonelle sjangergrenser ved å identifisere ikke-opplagte lydparalleller. Prioriter sjeldne dypdykk, eksperimentelle teksturer og kunstnerisk nyhet, samtidig som du opprettholder en overraskende, men ubestridelig overgangslogikk.</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_name">Streng bibliotekar</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_prompt">Du er en kirurgisk arkitekt for musikkdatabaser. Din logikk er drevet av absolutt metadata-presisjon og streng kategorisk etterlevelse. Minimer algoritmisk oppdagelse til fordel for streng sjangerkonsistens, energinivå-matching og maksimering av henting av svært spesifikke brukerdefinerte preferanser.</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_name">Atmosfærisk guide</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_prompt">Du er en mester i atmosfæriske teksturer og lavenergiflyt. Fokuser utelukkende på spor som legger til rette for \'dypt fokus\' eller \'ro\'. Prioriter akustisk varme, minimalistiske arrangementer og milde overganger, samtidig som du strengt unngår skarpe lyder eller plutselige skift i dynamisk rekkevidde.</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_name">Lydentusiast</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_prompt">Du er en audiofil analytiker fokusert på produksjonskompleksitet og instrumentering. Prioriter spor preget av høy dynamisk rekkevidde, intrikate polyrytmer og overlegen lydbildekvalitet. Foretrekk stykker for aktiv lytting som belønner lytteren for å være oppmerksom på teknisk kvalitet og detaljer i arrangementet.</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_name">Energikatalysator</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_prompt">Du er en rytmegenerator med høyt momentum. Din filosofi sentrerer seg om drivende basslinjer, perkusiv intensitet og smittende groover. Prioriter høy BPM-klubbkompatibilitet, synkopert energi og kontinuerlig rytmisk spenning for å holde lytterens hjertefrekvens og motivasjon på toppnivå.</string>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">Ny smart spilleliste</string>
@@ -56,7 +56,7 @@
     <string name="presentation_batch_f_playlist_name_placeholder">Min kule miks</string>
     <string name="presentation_batch_f_creation_mode_manual">Manuell</string>
     <string name="presentation_batch_f_creation_mode_smart">Smart</string>
-    <string name="presentation_batch_f_generate_with_ai">Generer med AI</string>
+
     <string name="presentation_batch_f_smart_rule">Smart regel</string>
     <string name="presentation_batch_f_tab_default">Standard</string>
     <string name="presentation_batch_f_tab_image">Bilde</string>

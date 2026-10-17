@@ -241,8 +241,8 @@
     <string name="qq_collected_playlists">已收藏的播放列表</string>
     <string name="cd_user_avatar">用户头像</string>
     <string name="toast_playlist_created">播放列表创建成功</string>
-    <string name="toast_set_ai_provider_api_key_first">请先设置 AI 服务提供商的 API 密钥</string>
-    <string name="toast_set_gemini_api_key_first">请先设置 Gemini API 密钥</string>
+
+
     <string name="toast_added_to_queue">已加入队列</string>
     <string name="toast_playing_next">下一首播放</string>
     <string name="error_share_song_format">无法分享歌曲：%1$s</string>

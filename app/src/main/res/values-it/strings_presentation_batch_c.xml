@@ -34,22 +34,22 @@
     <string name="song_picker_load_more">Carica altri</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">AI</string>
-    <string name="ai_playlist_headline_perfect">Perfettamente curata</string>
-    <string name="ai_playlist_headline_daily_mix">Daily Mix</string>
-    <string name="ai_playlist_subtitle_journey_ready">Il tuo viaggio sonoro è pronto</string>
-    <string name="ai_playlist_subtitle_generator">Generatore playlist AI</string>
-    <string name="ai_playlist_description">Descrivi l\'atmosfera, l\'umore o l\'attività e lascia che l\'AI curi la playlist perfetta dalla tua libreria.</string>
-    <string name="ai_playlist_section_size">Dimensione playlist</string>
-    <string name="ai_playlist_min_songs">Brani min</string>
-    <string name="ai_playlist_max_songs">Brani max</string>
-    <string name="ai_playlist_prompt_placeholder">es. Vibe serata rilassante, energia allenamento vivace…</string>
-    <string name="ai_playlist_tap_to_retry">Tocca per riprovare</string>
-    <string name="ai_playlist_status_default">Viaggio sonoro sintetizzato!</string>
-    <string name="ai_playlist_generating">Generazione in corso…</string>
-    <string name="ai_playlist_ready_to_play">Pronta per la riproduzione</string>
-    <string name="ai_playlist_generate">Genera playlist</string>
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">Ancora nessun brano</string>
     <string name="lib_empty_songs_all_subtitle">Aggiungi musica al tuo dispositivo o sincronizza una sorgente cloud per iniziare ad ascoltare.</string>

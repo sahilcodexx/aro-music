@@ -22,7 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">Keduanya</string>
     <string name="presentation_batch_d_cloud_sources_heading">Cloud</string>
     <string name="presentation_batch_d_cloud_only">Hanya Cloud</string>
-    <string name="presentation_batch_d_generating_ai_metadata">Menghasilkan metadata dengan AI…</string>
+
     <string name="presentation_batch_d_max_albums_selection">Anda dapat memilih hingga %1$d album</string>
     <string name="presentation_batch_d_folder_name_fallback">Folder</string>
     <string name="presentation_batch_d_expand_tab_menu_cd">Perluas menu</string>

@@ -163,11 +163,11 @@
     <string name="device_capabilities_output_wired">Audio kabel</string>
     <string name="device_capabilities_output_digital">Output digital</string>
     <string name="device_capabilities_output_other">Output lainnya</string>
-    <string name="presentation_batch_g_ai_token_input">Input</string>
-    <string name="presentation_batch_g_ai_token_output">Output</string>
-    <string name="presentation_batch_g_ai_token_thought">Pemikiran</string>
-    <string name="presentation_batch_g_ai_token_count">%1$s: %2$s</string>
-    <string name="presentation_batch_g_ai_usage_date_pattern">dd MMM, HH:mm</string>
+
+
+
+
+
     <string name="presentation_batch_g_artist_section_multi_parsing">Penguraian Multi-Artis</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Pemisah Karakter</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Saat ini: %1$s</string>

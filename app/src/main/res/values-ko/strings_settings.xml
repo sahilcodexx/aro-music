@@ -14,8 +14,8 @@
     <string name="settings_category_playback_subtitle">오디오 동작, 크로스페이드 및 백그라운드 재생</string>
     <string name="settings_category_behavior_title">동작</string>
     <string name="settings_category_behavior_subtitle">제스처, 햅틱 및 내비게이션 동작</string>
-    <string name="settings_category_ai_title">AI 연동 (β)</string>
-    <string name="settings_category_ai_subtitle">AI 제공업체, API 키 및 모델 설정</string>
+
+
     <string name="settings_category_backup_title">백업 및 복구</string>
     <string name="settings_category_backup_subtitle">개인 앱 데이터 내보내기 및 복구</string>
     <string name="settings_category_developer_title">개발자 옵션</string>
@@ -172,33 +172,33 @@
     <string name="setcat_haptic_feedback_subtitle">앱 전반에서 진동 피드백을 활성화합니다.</string>
 
     <!-- AI -->
-    <string name="setcat_ai_provider_section">AI 제공업체</string>
-    <string name="setcat_ai_provider_label">제공업체</string>
-    <string name="setcat_ai_provider_desc">AI 제공업체를 선택하세요</string>
-    <string name="setcat_safe_token_title">안전 토큰 모드</string>
-    <string name="setcat_safe_token_on">켜짐 — 빠르고 저렴함. AI에 최소한의 데이터(~1K 토큰)를 보냅니다.</string>
-    <string name="setcat_safe_token_off">꺼짐 — 깊은 문맥. 더 풍부한 결과를 위해 전체 청취 프로필(~8K 토큰)을 보냅니다.</string>
+
+
+
+
+
+
     <string name="setcat_credentials">인증 정보</string>
-    <string name="setcat_ai_api_key_title">%1$s API 키</string>
-    <string name="setcat_ai_api_key_subtitle">%1$s에서 가져오기</string>
-    <string name="setcat_ai_source_gemini">Google AI Studio (aistudio.google.com)</string>
-    <string name="setcat_ai_source_deepseek">DeepSeek Platform (api.deepseek.com)</string>
-    <string name="setcat_ai_source_groq">Groq Console (console.groq.com)</string>
-    <string name="setcat_ai_source_mistral">Mistral AI Platform (console.mistral.ai)</string>
-    <string name="setcat_ai_source_nvidia">NVIDIA Build (build.nvidia.com)</string>
-    <string name="setcat_ai_source_kimi">Moonshot AI Platform (platform.moonshot.cn)</string>
-    <string name="setcat_ai_source_glm">Zhipu AI Open Platform (bigmodel.cn)</string>
-    <string name="setcat_ai_source_openai">OpenAI Platform (platform.openai.com)</string>
+
+
+
+
+
+
+
+
+
+
     <string name="setcat_model_selection">모델 선택</string>
     <string name="setcat_loading_models">사용 가능한 모델 로드 중…</string>
-    <string name="setcat_ai_model_label">AI 모델</string>
-    <string name="setcat_ai_model_desc">모델을 선택하세요.</string>
+
+
     <string name="setcat_prompt_behavior">프롬프트 동작</string>
-    <string name="setcat_system_prompt_title">시스템 프롬프트</string>
-    <string name="setcat_system_prompt_subtitle">AI의 동작 방식을 사용자 지정합니다.</string>
-    <string name="setcat_ai_usage_report">AI 사용 보고서</string>
+
+
+
     <string name="setcat_total_consumption_title">총 소비량</string>
-    <string name="setcat_ai_usage_tokens_subtitle">%1$s 토큰 추적\n프롬프트: %2$s | 출력: %3$s | 생각: %4$s</string>
+
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">백업 생성</string>
@@ -277,8 +277,8 @@
     <string name="setcat_regenerating">재생성 중…</string>
     <string name="setcat_choose_song">곡 선택</string>
 
-    <string name="setcat_ai_clear_logs">로그 지우기</string>
-    <string name="setcat_ai_activity_log_title">AI 활동 로그 (%1$d)</string>
+
+
     <string name="cd_show">표시</string>
     <string name="cd_hide">숨기기</string>
     <string name="setcat_select_export">선택 및 내보내기</string>

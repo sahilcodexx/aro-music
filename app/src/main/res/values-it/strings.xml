@@ -78,14 +78,14 @@
     <string name="play_playback">Riproduci</string>
     <string name="playlist_not_found">Playlist non trovata.</string>
 
-    <string name="ai_error_api_key">Configura una chiave API valida per il provider IA selezionato nelle Impostazioni.</string>
-    <string name="ai_error_generic">Errore IA: %s</string>
-    <string name="ai_error_quota">Il provider IA selezionato ha rifiutato la richiesta perché l\'account non ha più crediti o ha superato la quota.</string>
-    <string name="ai_error_model_unavailable">Il modello IA selezionato non è più disponibile. Aro ha provato a passare automaticamente a un modello supportato.</string>
-    <string name="ai_no_songs_found">L\'IA non ha trovato nessun brano per la tua richiesta.</string>
-    <string name="ai_prompt_empty">Scrivi un\'idea per il tuo Daily Mix</string>
-    <string name="ai_daily_mix_updated">Daily Mix aggiornato con l\'IA</string>
-    <string name="ai_no_songs_for_mix">L\'IA non ha trovato nessun brano per questo mix</string>
+
+
+
+
+
+
+
+
 
     <string name="shortcut_shuffle_short">Casuale</string>
     <string name="shortcut_shuffle_long">Riproduci tutti i brani in modalità casuale</string>
@@ -120,7 +120,7 @@
     <string name="playlist_none_to_export">Nessuna playlist da esportare</string>
     <string name="playlist_export_failed">Esportazione fallita: %1$s</string>
     <string name="playlist_export_folder_display">Musica/Esportazioni Aro</string>
-    <string name="ai_playlist_gemini_key_required">Configura la tua chiave API Gemini nelle Impostazioni.</string>
+
     <string name="error_unknown">Errore sconosciuto</string>
 
     <!-- Watch transfer foreground service -->

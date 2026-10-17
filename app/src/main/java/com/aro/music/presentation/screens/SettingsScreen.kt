@@ -141,7 +141,7 @@ fun SettingsScreen(
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
-    val maxTopBarHeight = 180.dp 
+    val maxTopBarHeight = 180.dp
 
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
@@ -232,7 +232,7 @@ fun SettingsScreen(
                 val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
                 ExpressiveSettingsGroup {
                     val mainCategories = SettingsCategory.entries.filter {
-                        it != SettingsCategory.ABOUT && 
+                        it != SettingsCategory.ABOUT &&
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
@@ -434,7 +434,7 @@ fun ExpressiveCategoryItem(
         onClick = onClick,
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth().height(88.dp) 
+        modifier = Modifier.fillMaxWidth().height(88.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -464,9 +464,9 @@ fun ExpressiveCategoryItem(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(category.titleRes),
@@ -484,9 +484,9 @@ fun ExpressiveCategoryItem(
                     maxLines = 2
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
 //            // Chevron or indicator
 //             Box(
 //                contentAlignment = Alignment.Center,
@@ -529,16 +529,15 @@ fun ExpressiveSettingsGroup(content: @Composable () -> Unit) {
 private fun getCategoryColors(category: SettingsCategory, isDark: Boolean): Pair<Color, Color> {
     return if (isDark) {
         when (category) {
-            SettingsCategory.LIBRARY -> Color(0xFF004A77) to Color(0xFFC2E7FF) 
-            SettingsCategory.APPEARANCE -> Color(0xFF7D5260) to Color(0xFFFFD8E4) 
-            SettingsCategory.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC) 
+            SettingsCategory.LIBRARY -> Color(0xFF004A77) to Color(0xFFC2E7FF)
+            SettingsCategory.APPEARANCE -> Color(0xFF7D5260) to Color(0xFFFFD8E4)
+            SettingsCategory.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC)
             SettingsCategory.BEHAVIOR -> Color(0xFF3E4C63) to Color(0xFFD7E3FF)
-            SettingsCategory.AI_INTEGRATION -> Color(0xFF004F58) to Color(0xFF88FAFF) 
             SettingsCategory.BACKUP_RESTORE -> Color(0xFF3B4869) to Color(0xFFD9E2FF)
-            SettingsCategory.DEVELOPER -> Color(0xFF324F34) to Color(0xFFCBEFD0) 
-            SettingsCategory.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC) 
+            SettingsCategory.DEVELOPER -> Color(0xFF324F34) to Color(0xFFCBEFD0)
+            SettingsCategory.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC)
             SettingsCategory.DEVICE_CAPABILITIES -> Color(0xFF004D61) to Color(0xFFACEFEE) // Custom teal/cyan mix
-            SettingsCategory.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB) 
+            SettingsCategory.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
         when (category) {
@@ -546,7 +545,6 @@ private fun getCategoryColors(category: SettingsCategory, isDark: Boolean): Pair
             SettingsCategory.APPEARANCE -> Color(0xFFFFD8E4) to Color(0xFF631835)
             SettingsCategory.PLAYBACK -> Color(0xFFFFD8EC) to Color(0xFF631B4B)
             SettingsCategory.BEHAVIOR -> Color(0xFFD7E3FF) to Color(0xFF253347)
-            SettingsCategory.AI_INTEGRATION -> Color(0xFFCCE8EA) to Color(0xFF004F58)
             SettingsCategory.BACKUP_RESTORE -> Color(0xFFD9E2FF) to Color(0xFF27304E)
             SettingsCategory.DEVELOPER -> Color(0xFFCBEFD0) to Color(0xFF042106)
             SettingsCategory.EQUALIZER -> Color(0xFFFFDEAC) to Color(0xFF281900)

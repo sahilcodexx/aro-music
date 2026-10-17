@@ -45,92 +45,70 @@
     <string name="presentation_batch_e_create_playlist_subtitle">Scegli il flusso di creazione.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manuale</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Progetta artwork, icona, forma e seleziona i brani personalmente.</string>
-    <string name="presentation_batch_e_creation_mode_ai">Con AI</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_enabled">Genera una playlist curata con controlli avanzati.</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_disabled">Richiede una chiave API Gemini configurata nelle impostazioni.</string>
+
+
+
     <string name="presentation_batch_e_setup_api_key">Configura chiave API</string>
 
     <!-- AI playlist lab -->
-    <string name="presentation_batch_e_ai_playlist_lab_title">Laboratorio playlist AI</string>
-    <string name="presentation_batch_e_ai_reset">Reimposta</string>
-    <string name="presentation_batch_e_ai_generating">Generazione in corso…</string>
-    <string name="presentation_batch_e_ai_generate">Genera</string>
-    <string name="presentation_batch_e_ai_section_intent">Intenzione</string>
-    <string name="presentation_batch_e_ai_playlist_name_optional">Nome playlist (opzionale)</string>
-    <string name="presentation_batch_e_ai_feel_label">Come dovrebbe suonare questa playlist?</string>
-    <string name="presentation_batch_e_ai_feel_placeholder">Esempio: guida al tramonto con synth caldi</string>
-    <string name="presentation_batch_e_ai_section_direction">Direzione</string>
-    <string name="presentation_batch_e_ai_mood_label">Umore</string>
-    <string name="presentation_batch_e_ai_activity_label">Attività</string>
-    <string name="presentation_batch_e_ai_era_label">Epoca</string>
-    <string name="presentation_batch_e_ai_section_curation">Motore di curazione</string>
-    <string name="presentation_batch_e_ai_energy_label">Energia</string>
-    <string name="presentation_batch_e_ai_energy_description">Controlla l\'intensità e il tempo dei brani. 1 = calmo/lento, 5 = energico/veloce.</string>
-    <string name="presentation_batch_e_ai_discovery_label">Scoperta</string>
-    <string name="presentation_batch_e_ai_discovery_description">Controlla quanto familiari sono le selezioni. 1 = i tuoi brani più ascoltati, 5 = brani rari e nascosti.</string>
-    <string name="presentation_batch_e_ai_min_songs">Brani min</string>
-    <string name="presentation_batch_e_ai_max_songs">Brani max</string>
-    <string name="presentation_batch_e_ai_section_filters">Filtri</string>
-    <string name="presentation_batch_e_ai_prioritize_genres">Dai priorità ai generi (opzionale)</string>
-    <string name="presentation_batch_e_ai_prioritize_genres_placeholder">es. synthwave, indie pop</string>
-    <string name="presentation_batch_e_ai_avoid_genres">Evita generi (opzionale)</string>
-    <string name="presentation_batch_e_ai_avoid_genres_placeholder">es. metal, hard trap</string>
-    <string name="presentation_batch_e_ai_preferred_language">Lingua preferita (opzionale)</string>
-    <string name="presentation_batch_e_ai_preferred_language_placeholder">es. inglese, spagnolo, strumentale</string>
-    <string name="presentation_batch_e_ai_prioritize_favorites">Dai priorità ai preferiti</string>
-    <string name="presentation_batch_e_ai_avoid_explicit">Evita testi espliciti</string>
-    <string name="presentation_batch_e_ai_section_prompt_preview">Anteprima prompt</string>
-    <string name="presentation_batch_e_ai_prompt_preview_empty">Il prompt finale apparirà qui una volta aggiunte le preferenze.</string>
-    <string name="presentation_batch_e_ai_hero_title">Cura con precisione</string>
-    <string name="presentation_batch_e_ai_hero_subtitle">Definisci umore, attività, vincoli e profondità.</string>
-    <string name="presentation_batch_e_ai_hero_library_note">L\'AI utilizzerà solo brani dalla tua libreria locale.</string>
-    <string name="presentation_batch_e_ai_error_add_instruction">Aggiungi almeno un\'istruzione per l\'AI.</string>
-    <string name="presentation_batch_e_ai_error_song_range">Imposta un intervallo valido di brani.</string>
-    <string name="presentation_batch_e_ai_level_out_of_five">%1$d/5</string>
-    <string name="presentation_batch_e_ai_custom_chip">Personalizzato…</string>
-    <string name="presentation_batch_e_ai_enter_custom_title">Inserisci valore personalizzato</string>
-    <string name="presentation_batch_e_ai_enter_custom_label">Inserisci il tuo valore personalizzato</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- AI prompt assembly (sent to model; localized for consistency with UI) -->
-    <string name="presentation_batch_e_ai_era_any">Qualsiasi epoca</string>
-    <string name="presentation_batch_e_ai_prompt_core_request">Richiesta principale: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_mood">Umore target: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_activity">Contesto attività: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_era">Focus epoca: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_genres">Dai priorità ai generi: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_genres">Evita generi: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_preferred_language">Lingua preferita: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_energy">Target livello energia: %1$d/5.</string>
-    <string name="presentation_batch_e_ai_prompt_discovery">Target scoperta: %1$d/5 dove 1 è familiare e 5 è brani nascosti.</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_favorites">Dai priorità ai brani più vicini ai preferiti dell\'ascoltatore quando possibile.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_explicit">Evita testi espliciti quando esistono alternative.</string>
-    <string name="presentation_batch_e_ai_prompt_smooth_transitions">Mantieni transizioni fluide ed evita raggruppamenti ripetitivi dello stesso artista.</string>
 
-    <string-array name="presentation_batch_e_ai_mood_options">
-        <item>Rilassato</item>
-        <item>Energico</item>
-        <item>Felice</item>
-        <item>Dark</item>
-        <item>Romantico</item>
-        <item>Malinconico</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_activity_options">
-        <item>Allenamento</item>
-        <item>Concentrazione</item>
-        <item>Viaggio on the road</item>
-        <item>Festa</item>
-        <item>Studio</item>
-        <item>Tarda notte</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_era_options">
-        <item>@string/presentation_batch_e_ai_era_any</item>
-        <item>Anni \'70</item>
-        <item>Anni \'80</item>
-        <item>Anni \'90</item>
-        <item>Anni 2000</item>
-        <item>Anni 2010</item>
-        <item>Anni 2020</item>
-    </string-array>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- ReorderPresetsSheet -->
     <string name="presentation_batch_e_reset_presets_title">Reimposta preset</string>

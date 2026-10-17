@@ -43,10 +43,10 @@
     <string name="action_rename">Endre navn</string>
 
     <!-- AI metadata sheet -->
-    <string name="ai_metadata_headline_success">Tagger oppdatert!</string>
-    <string name="ai_metadata_headline_default">AI-metadata</string>
-    <string name="ai_metadata_subtitle_generating">Konsulterer Daily Mix-guiden…</string>
-    <string name="ai_metadata_subtitle_review">Se gjennom og finjuster detaljer</string>
+
+
+
+
     <string name="song_field_title">Tittel</string>
     <string name="song_field_artist">Artist</string>
     <string name="song_field_album">Album</string>
@@ -60,7 +60,7 @@
     <string name="edit_song_got_it">Skjønner</string>
     <string name="cd_info_icon">Informasjon</string>
     <string name="edit_song_toolbar_title">Rediger sang</string>
-    <string name="cd_use_gemini_ai">Bruk Gemini AI</string>
+
     <string name="cd_show_metadata_info">Vis informasjon</string>
     <string name="song_field_track_number">Spornummer</string>
     <string name="song_field_disc_number">Disknummer</string>

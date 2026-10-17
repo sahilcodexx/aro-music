@@ -231,8 +231,8 @@
     <string name="qq_collected_playlists">Добавленные плейлисты</string>
     <string name="cd_user_avatar">Аватар пользователя</string>
     <string name="toast_playlist_created">Плейлист успешно создан</string>
-    <string name="toast_set_ai_provider_api_key_first">Сначала настройте API-ключ ИИ</string>
-    <string name="toast_set_gemini_api_key_first">Сначала настройте API-ключ Gemini</string>
+
+
     <string name="toast_added_to_queue">Добавлено в очередь</string>
     <string name="toast_playing_next">Будет сыграно следующим</string>
     <string name="error_share_song_format">Не удалось поделиться песней: %1$s</string>

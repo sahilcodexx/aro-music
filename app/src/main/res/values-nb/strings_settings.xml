@@ -14,8 +14,8 @@
     <string name="settings_category_playback_subtitle">Lydatferd, crossfade og bakgrunnsavspilling</string>
     <string name="settings_category_behavior_title">Atferd</string>
     <string name="settings_category_behavior_subtitle">Gester, haptikk og navigasjonsatferd</string>
-    <string name="settings_category_ai_title">AI-integrasjon (β)</string>
-    <string name="settings_category_ai_subtitle">AI-leverandører, API-nøkler og modellinnstillinger</string>
+
+
     <string name="settings_category_backup_title">Sikkerhetskopiering og gjenoppretting</string>
     <string name="settings_category_backup_subtitle">Eksporter og gjenopprett dine personlige app-data</string>
     <string name="settings_category_developer_title">Utvikleralternativer</string>
@@ -172,33 +172,33 @@
     <string name="setcat_haptic_feedback_subtitle">Aktiver vibrasjonstilbakemelding i appen.</string>
 
     <!-- AI -->
-    <string name="setcat_ai_provider_section">AI-leverandør</string>
-    <string name="setcat_ai_provider_label">Leverandør</string>
-    <string name="setcat_ai_provider_desc">Velg din AI-leverandør</string>
-    <string name="setcat_safe_token_title">Sikker token-modus</string>
-    <string name="setcat_safe_token_on">PÅ — Raskt &amp; billig. Sender minimalt med data (~1K tokens) til AI.</string>
-    <string name="setcat_safe_token_off">AV — Dyp kontekst. Sender full lytteprofil (~8K tokens) for rikere resultater.</string>
+
+
+
+
+
+
     <string name="setcat_credentials">Innloggingsinformasjon</string>
-    <string name="setcat_ai_api_key_title">%1$s API-nøkkel</string>
-    <string name="setcat_ai_api_key_subtitle">Hent fra %1$s</string>
-    <string name="setcat_ai_source_gemini">Google AI Studio (aistudio.google.com)</string>
-    <string name="setcat_ai_source_deepseek">DeepSeek Platform (api.deepseek.com)</string>
-    <string name="setcat_ai_source_groq">Groq Console (console.groq.com)</string>
-    <string name="setcat_ai_source_mistral">Mistral AI Platform (console.mistral.ai)</string>
-    <string name="setcat_ai_source_nvidia">NVIDIA Build (build.nvidia.com)</string>
-    <string name="setcat_ai_source_kimi">Moonshot AI Platform (platform.moonshot.cn)</string>
-    <string name="setcat_ai_source_glm">Zhipu AI Open Platform (bigmodel.cn)</string>
-    <string name="setcat_ai_source_openai">OpenAI Platform (platform.openai.com)</string>
+
+
+
+
+
+
+
+
+
+
     <string name="setcat_model_selection">Modellvalg</string>
     <string name="setcat_loading_models">Laster tilgjengelige modeller…</string>
-    <string name="setcat_ai_model_label">AI-modell</string>
-    <string name="setcat_ai_model_desc">Velg en modell.</string>
+
+
     <string name="setcat_prompt_behavior">Prompt-atferd</string>
-    <string name="setcat_system_prompt_title">System-prompt</string>
-    <string name="setcat_system_prompt_subtitle">Tilpass hvordan AI-en oppfører seg.</string>
-    <string name="setcat_ai_usage_report">AI-bruksrapport</string>
+
+
+
     <string name="setcat_total_consumption_title">Totalt forbruk</string>
-    <string name="setcat_ai_usage_tokens_subtitle">%1$s tokens sporing\nPrompt: %2$s | Output: %3$s | Tanke: %4$s</string>
+
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">Opprett sikkerhetskopi</string>
@@ -277,8 +277,8 @@
     <string name="setcat_regenerating">Regenererer…</string>
     <string name="setcat_choose_song">Velg sang</string>
 
-    <string name="setcat_ai_clear_logs">Tøm logger</string>
-    <string name="setcat_ai_activity_log_title">AI-aktivitetslogg (%1$d)</string>
+
+
     <string name="cd_show">Vis</string>
     <string name="cd_hide">Skjul</string>
     <string name="setcat_select_export">Velg og eksporter</string>

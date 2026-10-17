@@ -244,8 +244,8 @@
     <string name="qq_collected_playlists">Collected playlists</string>
     <string name="cd_user_avatar">User avatar</string>
     <string name="toast_playlist_created">Playlist created successfully</string>
-    <string name="toast_set_ai_provider_api_key_first">Set your AI provider API key first</string>
-    <string name="toast_set_gemini_api_key_first">Set your Gemini API key first</string>
+
+
     <string name="toast_added_to_queue">Added to queue</string>
     <string name="toast_playing_next">Playing next</string>
     <string name="error_share_song_format">Could not share song: %1$s</string>

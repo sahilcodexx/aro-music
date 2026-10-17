@@ -49,92 +49,70 @@
     <string name="presentation_batch_e_create_playlist_subtitle">Выберите способ создания.</string>
     <string name="presentation_batch_e_creation_mode_manual">Вручную</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Настройте обложку, иконку, форму и выберите песни сами.</string>
-    <string name="presentation_batch_e_creation_mode_ai">С помощью ИИ</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_enabled">Создайте плейлист с расширенными настройками ИИ.</string>
-    <string name="presentation_batch_e_creation_mode_ai_subtitle_disabled">Требуется API-ключ Gemini, настроенный в параметрах.</string>
+
+
+
     <string name="presentation_batch_e_setup_api_key">Настроить API-ключ</string>
 
     <!-- AI playlist lab -->
-    <string name="presentation_batch_e_ai_playlist_lab_title">Лаборатория ИИ плейлистов</string>
-    <string name="presentation_batch_e_ai_reset">Сброс</string>
-    <string name="presentation_batch_e_ai_generating">Генерация…</string>
-    <string name="presentation_batch_e_ai_generate">Создать</string>
-    <string name="presentation_batch_e_ai_section_intent">Замысел</string>
-    <string name="presentation_batch_e_ai_playlist_name_optional">Название плейлиста (опц.)</string>
-    <string name="presentation_batch_e_ai_feel_label">Каким должен быть этот плейлист?</string>
-    <string name="presentation_batch_e_ai_feel_placeholder">Напр.: поездка на закате с теплыми синтами</string>
-    <string name="presentation_batch_e_ai_section_direction">Направление</string>
-    <string name="presentation_batch_e_ai_mood_label">Настроение</string>
-    <string name="presentation_batch_e_ai_activity_label">Занятие</string>
-    <string name="presentation_batch_e_ai_era_label">Эпоха</string>
-    <string name="presentation_batch_e_ai_section_curation">Движок подбора</string>
-    <string name="presentation_batch_e_ai_energy_label">Энергия</string>
-    <string name="presentation_batch_e_ai_energy_description">Управляет интенсивностью и темпом песен. 1 = спокойно/медленно, 5 = энергично/быстро.</string>
-    <string name="presentation_batch_e_ai_discovery_label">Открытие</string>
-    <string name="presentation_batch_e_ai_discovery_description">Управляет тем, насколько знакомыми будут песни. 1 = любимые хиты, 5 = редкие находки.</string>
-    <string name="presentation_batch_e_ai_min_songs">Мин. песен</string>
-    <string name="presentation_batch_e_ai_max_songs">Макс. песен</string>
-    <string name="presentation_batch_e_ai_section_filters">Фильтры</string>
-    <string name="presentation_batch_e_ai_prioritize_genres">Приоритетные жанры (опц.)</string>
-    <string name="presentation_batch_e_ai_prioritize_genres_placeholder">напр. synthwave, indie pop</string>
-    <string name="presentation_batch_e_ai_avoid_genres">Избегать жанров (опц.)</string>
-    <string name="presentation_batch_e_ai_avoid_genres_placeholder">напр. metal, hard trap</string>
-    <string name="presentation_batch_e_ai_preferred_language">Предпочтительный язык (опц.)</string>
-    <string name="presentation_batch_e_ai_preferred_language_placeholder">напр. English, русский, инструментал</string>
-    <string name="presentation_batch_e_ai_prioritize_favorites">Приоритет избранному</string>
-    <string name="presentation_batch_e_ai_avoid_explicit">Избегать ненормативной лексики</string>
-    <string name="presentation_batch_e_ai_section_prompt_preview">Предпросмотр запроса</string>
-    <string name="presentation_batch_e_ai_prompt_preview_empty">Ваш итоговый запрос появится здесь после выбора настроек.</string>
-    <string name="presentation_batch_e_ai_hero_title">Точный подбор</string>
-    <string name="presentation_batch_e_ai_hero_subtitle">Задайте настроение, занятие, ограничения и глубину.</string>
-    <string name="presentation_batch_e_ai_hero_library_note">ИИ будет использовать только песни из вашей местной фонотеки.</string>
-    <string name="presentation_batch_e_ai_error_add_instruction">Добавьте хотя бы одну инструкцию для ИИ.</string>
-    <string name="presentation_batch_e_ai_error_song_range">Укажите корректный диапазон количества песен.</string>
-    <string name="presentation_batch_e_ai_level_out_of_five">%1$d/5</string>
-    <string name="presentation_batch_e_ai_custom_chip">Свое…</string>
-    <string name="presentation_batch_e_ai_enter_custom_title">Введите свое значение</string>
-    <string name="presentation_batch_e_ai_enter_custom_label">Ваше значение</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- AI prompt assembly (sent to model; localized for consistency with UI) -->
-    <string name="presentation_batch_e_ai_era_any">Любая эпоха</string>
-    <string name="presentation_batch_e_ai_prompt_core_request">Основной запрос: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_mood">Целевое настроение: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_activity">Контекст занятия: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_era">Эпоха: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_genres">Приоритет жанрам: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_genres">Избегать жанров: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_preferred_language">Предпочтительный язык: %1$s.</string>
-    <string name="presentation_batch_e_ai_prompt_energy">Целевой уровень энергии: %1$d/5.</string>
-    <string name="presentation_batch_e_ai_prompt_discovery">Целевой уровень открытия: %1$d/5 (1 — знакомое, 5 — редкое).</string>
-    <string name="presentation_batch_e_ai_prompt_prioritize_favorites">По возможности отдавай приоритет песням, близким к избранному слушателя.</string>
-    <string name="presentation_batch_e_ai_prompt_avoid_explicit">Избегай ненормативной лексики при наличии альтернатив.</string>
-    <string name="presentation_batch_e_ai_prompt_smooth_transitions">Делай переходы плавными и избегай повторения одного и того же артиста подряд.</string>
 
-    <string-array name="presentation_batch_e_ai_mood_options">
-        <item>Спокойное</item>
-        <item>Энергичное</item>
-        <item>Веселое</item>
-        <item>Мрачное</item>
-        <item>Романтичное</item>
-        <item>Меланхоличное</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_activity_options">
-        <item>Тренировка</item>
-        <item>Фокус</item>
-        <item>Дорога</item>
-        <item>Вечеринка</item>
-        <item>Учеба</item>
-        <item>Поздняя ночь</item>
-    </string-array>
-    <string-array name="presentation_batch_e_ai_era_options">
-        <item>@string/presentation_batch_e_ai_era_any</item>
-        <item>70-е</item>
-        <item>80-е</item>
-        <item>90-е</item>
-        <item>2000-е</item>
-        <item>2010-е</item>
-        <item>2020-е</item>
-    </string-array>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- ReorderPresetsSheet -->
     <string name="presentation_batch_e_reset_presets_title">Сбросить пресеты</string>

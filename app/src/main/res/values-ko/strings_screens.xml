@@ -231,8 +231,8 @@
     <string name="qq_collected_playlists">수집한 플레이리스트</string>
     <string name="cd_user_avatar">사용자 아바타</string>
     <string name="toast_playlist_created">플레이리스트가 생성되었습니다</string>
-    <string name="toast_set_ai_provider_api_key_first">먼저 AI 제공업체 API 키를 설정하세요</string>
-    <string name="toast_set_gemini_api_key_first">먼저 Gemini API 키를 설정하세요</string>
+
+
     <string name="toast_added_to_queue">대기열에 추가됨</string>
     <string name="toast_playing_next">다음에 재생됨</string>
     <string name="error_share_song_format">곡을 공유할 수 없습니다: %1$s</string>

@@ -34,22 +34,22 @@
     <string name="song_picker_load_more">Загрузить еще</string>
 
     <!-- AI playlist sheet -->
-    <string name="cd_ai">ИИ</string>
-    <string name="ai_playlist_headline_perfect">Идеально подобрано</string>
-    <string name="ai_playlist_headline_daily_mix">Daily Mix</string>
-    <string name="ai_playlist_subtitle_journey_ready">Ваше музыкальное путешествие готово</string>
-    <string name="ai_playlist_subtitle_generator">Генератор плейлистов ИИ</string>
-    <string name="ai_playlist_description">Опишите атмосферу, настроение или занятие, и ИИ составит идеальный плейлист из вашей фонотеки.</string>
-    <string name="ai_playlist_section_size">Размер плейлиста</string>
-    <string name="ai_playlist_min_songs">Мин. песен</string>
-    <string name="ai_playlist_max_songs">Макс. песен</string>
-    <string name="ai_playlist_prompt_placeholder">Напр., Уютный вечер, Энергия для тренировки…</string>
-    <string name="ai_playlist_tap_to_retry">Нажмите, чтобы повторить</string>
-    <string name="ai_playlist_status_default">Музыкальное путешествие синтезировано!</string>
-    <string name="ai_playlist_generating">Генерация…</string>
-    <string name="ai_playlist_ready_to_play">Готов к игре</string>
-    <string name="ai_playlist_generate">Создать плейлист</string>
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Library Empty State -->
     <string name="lib_empty_songs_all_title">Песен пока нет</string>
     <string name="lib_empty_songs_all_subtitle">Добавьте музыку на устройство или синхронизируйте облачный источник.</string>

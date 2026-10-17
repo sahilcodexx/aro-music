@@ -24,20 +24,20 @@
     <string name="presentation_batch_f_save">Speichern</string>
     <string name="presentation_batch_f_saved">Gespeichert!</string>
     <string name="presentation_batch_f_preset_prompts">Preset-Prompts</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">System-Prompt eingeben…</string>
+
     <string name="presentation_batch_f_reset">Zurücksetzen</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_name">Professioneller Kurator</string>
-    <string name="presentation_batch_f_ai_preset_professional_curator_prompt">Du bist \'Vibe-Engine\', ein Weltklasse-Musikredakteur. Dein Ziel ist es, nahtlose, hochwertige Hörerlebnisse zu schaffen. Priorisiere harmonische Kompatibilität, logische BPM-Übergänge und eine ausgewogene Balance zwischen bekannten Favoriten und geschmackvoller Entdeckung.</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_name">Kreativer Maverick</string>
-    <string name="presentation_batch_f_ai_preset_creative_maverick_prompt">Du bist ein avantgardistischer Musikentdecker, spezialisiert auf \'unerwartete Kohärenz\'. Deine Mission: konventionelle Genre-Grenzen aufbrechen und nicht offensichtliche klangliche Parallelen aufdecken. Priorisiere seltene Deep Cuts, experimentelle Texturen und künstlerische Neuheit.</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_name">Strenger Bibliothekar</string>
-    <string name="presentation_batch_f_ai_preset_strict_librarian_prompt">Du bist ein präziser Musikdatenbank-Architekt. Deine Logik basiert auf absoluter Metadaten-Genauigkeit und strikter Kategorietreue. Minimiere algorithmische Entdeckung zugunsten von Genre-Konsistenz, Energie-Matching und exakten Nutzerpräferenzen.</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_name">Atmosphärischer Guide</string>
-    <string name="presentation_batch_f_ai_preset_atmospheric_guide_prompt">Du bist ein Meister ambientartiger Texturen und ruhiger Flows. Fokussiere ausschließlich auf Titel, die Tiefenfokus oder Entspannung begünstigen. Priorisiere akustische Wärme, minimalistische Arrangements und sanfte Übergänge.</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_name">Klang-Enthusiast</string>
-    <string name="presentation_batch_f_ai_preset_sonic_enthusiast_prompt">Du bist ein Audiophiler mit Fokus auf Produktionskomplexität und Instrumentierung. Priorisiere Titel mit hoher Dynamik, komplizierten Rhythmen und überlegener Klangbühne – Stücke, die beim aufmerksamen Hören belohnen.</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_name">Energie-Katalysator</string>
-    <string name="presentation_batch_f_ai_preset_energy_catalyst_prompt">Du bist ein hochenergetischer Rhythmus-Generator. Deine Philosophie: treibende Basslines, perkussive Intensität und ansteckende Grooves. Priorisiere hohe BPM-Kompatibilität, synkopierte Energie und kontinuierliche rhythmische Spannung.</string>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">Neue Smart-Playlist</string>
@@ -56,7 +56,7 @@
     <string name="presentation_batch_f_playlist_name_placeholder">Mein toller Mix</string>
     <string name="presentation_batch_f_creation_mode_manual">Manuell</string>
     <string name="presentation_batch_f_creation_mode_smart">Smart</string>
-    <string name="presentation_batch_f_generate_with_ai">Mit KI generieren</string>
+
     <string name="presentation_batch_f_smart_rule">Smart-Regel</string>
     <string name="presentation_batch_f_tab_default">Standard</string>
     <string name="presentation_batch_f_tab_image">Bild</string>
