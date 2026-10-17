@@ -117,7 +117,7 @@ fun ArtistDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
-    
+
     // Optimization: Defer heavy list rendering until navigation transition settles
     var isTransitionFinished by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -598,9 +598,6 @@ fun ArtistDetailScreen(
                         replayGainAlbumGainDb,
                         coverArtUpdate
                     )
-                },
-                generateAiMetadata = { fields ->
-                    playerViewModel.generateAiMetadata(currentSong, fields)
                 },
                 removeFromListTrigger = removeFromListTrigger
             )

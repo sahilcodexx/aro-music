@@ -369,10 +369,10 @@ fun PlaylistItems(
                 }
                 }
         }
-        
-        val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong()) 
-            bottomBarHeight + MiniPlayerHeight + 16.dp 
-        else 
+
+        val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong())
+            bottomBarHeight + MiniPlayerHeight + 16.dp
+        else
             bottomBarHeight + 16.dp
 
         ExpressiveScrollBar(
@@ -533,15 +533,7 @@ fun PlaylistItem(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                         )
-                        if (playlist.isAiGenerated) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.gemini_ai),
-                                contentDescription = "AI Generated",
-                                tint = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+
                         if (playlist.source == "NETEASE") {
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
@@ -642,7 +634,6 @@ fun PlaylistItem(
 fun CreatePlaylistDialogRedesigned(
     onDismiss: () -> Unit,
     onCreate: (String) -> Unit,
-    onGenerateClick: () -> Unit
 ) {
     var playlistName by remember { mutableStateOf("") }
 

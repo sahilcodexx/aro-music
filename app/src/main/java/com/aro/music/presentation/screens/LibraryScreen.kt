@@ -154,7 +154,6 @@ import com.aro.music.presentation.components.MultiSelectionBottomSheet
 import com.aro.music.presentation.components.AlbumMultiSelectionOptionSheet
 import com.aro.music.presentation.components.PlaylistMultiSelectionBottomSheet
 import com.aro.music.presentation.components.PlaylistCreationTypeDialog
-import com.aro.music.presentation.components.CreateAiPlaylistDialog
 import com.aro.music.presentation.components.subcomps.SelectionActionRow
 import com.aro.music.presentation.components.subcomps.SelectionCountPill
 import com.aro.music.presentation.viewmodel.ColorSchemePair
@@ -394,7 +393,6 @@ private data class LibraryScreenPlayerProjection(
     val isSdCardAvailable: Boolean = false,
     val musicFolders: ImmutableList<MusicFolder> = persistentListOf(),
     val isLoadingLibraryCategories: Boolean = true,
-    val isGeneratingAiMetadata: Boolean = false,
     val isSyncingLibrary: Boolean = false,
     val isLoadingInitialSongs: Boolean = true,
     val hideLocalMedia: Boolean = false
@@ -416,7 +414,6 @@ private fun PlayerUiState.toLibraryScreenProjection(): LibraryScreenPlayerProjec
         isSdCardAvailable = isSdCardAvailable,
         musicFolders = musicFolders,
         isLoadingLibraryCategories = isLoadingLibraryCategories,
-        isGeneratingAiMetadata = isGeneratingAiMetadata,
         isSyncingLibrary = isSyncingLibrary,
         isLoadingInitialSongs = isLoadingInitialSongs,
         hideLocalMedia = hideLocalMedia
@@ -493,16 +490,11 @@ fun LibraryScreen(
             .map { uiState -> uiState.currentFolder != null && uiState.folderBackGestureNavigationEnabled }
             .distinctUntilChanged()
     }.collectAsStateWithLifecycle(initialValue = false)
-    val hasActiveAiProviderApiKey by playerViewModel.hasActiveAiProviderApiKey.collectAsStateWithLifecycle()
-    val isGeneratingAiPlaylist by playerViewModel.isGeneratingAiPlaylist.collectAsStateWithLifecycle()
-    val aiError by playerViewModel.aiError.collectAsStateWithLifecycle()
     var showPlaylistImportDialog by remember { mutableStateOf(false) }
     var showLocalImportChoices by remember { mutableStateOf(false) }
     val playlistImportState by playlistViewModel.importState.collectAsStateWithLifecycle()
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var showPlaylistCreationTypeDialog by remember { mutableStateOf(false) }
-    var showCreateAiPlaylistDialog by remember { mutableStateOf(false) }
-    var aiGenerationRequestedFromDialog by remember { mutableStateOf(false) }
 
     val m3uImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -540,9 +532,9 @@ fun LibraryScreen(
 
     // Multi-selection callbacks
     val onSongLongPress: (Song) -> Unit = remember(multiSelectionState, haptic) {
-        { song -> 
+        { song ->
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            multiSelectionState.toggleSelection(song) 
+            multiSelectionState.toggleSelection(song)
         }
     }
 
@@ -564,9 +556,9 @@ fun LibraryScreen(
     }
 
     val onAlbumLongPress: (Album) -> Unit = remember(toggleAlbumSelection, haptic) {
-        { album -> 
+        { album ->
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            toggleAlbumSelection(album) 
+            toggleAlbumSelection(album)
         }
     }
 
@@ -745,30 +737,7 @@ fun LibraryScreen(
         }
     }
 
-    LaunchedEffect(
-        showCreateAiPlaylistDialog,
-        aiGenerationRequestedFromDialog,
-        isGeneratingAiPlaylist,
-        aiError
-    ) {
-        if (!showCreateAiPlaylistDialog || !aiGenerationRequestedFromDialog || isGeneratingAiPlaylist) {
-            return@LaunchedEffect
-        }
 
-        if (aiError == null) {
-            showCreateAiPlaylistDialog = false
-            playerViewModel.clearAiPlaylistError()
-        }
-        aiGenerationRequestedFromDialog = false
-    }
-
-    LaunchedEffect(hasActiveAiProviderApiKey, showCreateAiPlaylistDialog) {
-        if (!hasActiveAiProviderApiKey && showCreateAiPlaylistDialog) {
-            showCreateAiPlaylistDialog = false
-            aiGenerationRequestedFromDialog = false
-            playerViewModel.clearAiPlaylistError()
-        }
-    }
     // La lógica de carga diferida (lazy loading) se mantiene.
     LaunchedEffect(Unit) {
         Trace.beginSection("LibraryScreen.InitialTabLoad")
@@ -1676,24 +1645,7 @@ fun LibraryScreen(
                         }
                     }
                 }
-                if (playerUiState.isGeneratingAiMetadata) {
-                    Surface( // Fondo semitransparente para el indicador
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                LoadingIndicator(modifier = Modifier.size(64.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(R.string.presentation_batch_d_generating_ai_metadata),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-                } else if (
+                if (
                     isLibraryContentEmpty &&
                     (
                             playerUiState.isSyncingLibrary ||
@@ -1731,7 +1683,6 @@ fun LibraryScreen(
     }
 
 
-
     PlaylistCreationTypeDialog(
         visible = showPlaylistCreationTypeDialog,
         onDismiss = { showPlaylistCreationTypeDialog = false },
@@ -1739,24 +1690,11 @@ fun LibraryScreen(
             showPlaylistCreationTypeDialog = false
             showCreatePlaylistDialog = true
         },
-        onAiSelected = {
-            if (hasActiveAiProviderApiKey) {
-                showPlaylistCreationTypeDialog = false
-                playerViewModel.clearAiPlaylistError()
-                showCreateAiPlaylistDialog = true
-            } else {
-                Toast.makeText(context, context.getString(R.string.toast_set_ai_provider_api_key_first), Toast.LENGTH_SHORT).show()
-            }
-        },
-        isAiEnabled = hasActiveAiProviderApiKey,
         onImportSelected = {
             showPlaylistCreationTypeDialog = false
             playlistViewModel.cancelPlaylistImport()
             showPlaylistImportDialog = true
         },
-        onSetupAiClick = {
-            navController.navigateSafely(Screen.SettingsCategory.createRoute("ai"))
-        }
     )
 
     com.aro.music.presentation.components.LocalMusicImportPrompt(
@@ -1782,15 +1720,6 @@ fun LibraryScreen(
     CreatePlaylistDialog(
         visible = showCreatePlaylistDialog,
         onDismiss = { showCreatePlaylistDialog = false },
-        onGenerateClick = {
-            showCreatePlaylistDialog = false
-            if (hasActiveAiProviderApiKey) {
-                playerViewModel.clearAiPlaylistError()
-                showCreateAiPlaylistDialog = true
-            } else {
-                Toast.makeText(context, context.getString(R.string.toast_set_gemini_api_key_first), Toast.LENGTH_SHORT).show()
-            }
-        },
         onCreate = { name, imageUri, color, icon, songIds, cropScale, cropPanX, cropPanY, shapeType, d1, d2, d3, d4, smartRuleKey ->
             playlistViewModel.createPlaylist(
                 name = name,
@@ -1813,26 +1742,6 @@ fun LibraryScreen(
         }
     )
 
-    CreateAiPlaylistDialog(
-        visible = showCreateAiPlaylistDialog && hasActiveAiProviderApiKey,
-        isGenerating = isGeneratingAiPlaylist,
-        error = aiError,
-        onDismiss = {
-            showCreateAiPlaylistDialog = false
-            aiGenerationRequestedFromDialog = false
-            playerViewModel.clearAiPlaylistError()
-        },
-        onGenerate = { playlistName, prompt, minLength, maxLength ->
-            aiGenerationRequestedFromDialog = true
-            playerViewModel.generateAiPlaylist(
-                prompt = prompt,
-                minLength = minLength,
-                maxLength = maxLength,
-                saveAsPlaylist = true,
-                playlistName = playlistName
-            )
-        }
-    )
 
     if (showWatchTransferDialog && activeWatchTransfer != null) {
         val currentWatchTransfer = activeWatchTransfer!!
@@ -1925,9 +1834,6 @@ fun LibraryScreen(
                         replayGainAlbumGainDb,
                         coverArtUpdate
                     )
-                },
-                generateAiMetadata = { fields ->
-                    playerViewModel.generateAiMetadata(currentSong, fields)
                 },
                 removeFromListTrigger = {},
                 songInfoViewModel = songInfoBottomSheetViewModel

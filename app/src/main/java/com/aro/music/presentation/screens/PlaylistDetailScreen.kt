@@ -3,6 +3,22 @@ package com.aro.music.presentation.screens
 import com.aro.music.presentation.navigation.navigateSafely
 import com.aro.music.presentation.navigation.navigateSafelyReplacing
 
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.LargeExtendedFloatingActionButton
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.BiasAlignment
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import com.aro.music.presentation.components.CollapsibleCommonTopBar
+import com.aro.music.utils.shapes.RoundedStarShape
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
@@ -280,60 +296,61 @@ fun PlaylistDetailScreen(
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val collapsedHeaderHeight = 64.dp + WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val minHeaderPx = with(density) { collapsedHeaderHeight.toPx() }
+    val maxHeaderPx = with(density) { 300.dp.toPx() }.coerceAtLeast(minHeaderPx)
+    var headerHeightPx by remember(minHeaderPx, maxHeaderPx) { mutableFloatStateOf(maxHeaderPx) }
+    val headerCollapse = if (maxHeaderPx > minHeaderPx)
+        1f - ((headerHeightPx - minHeaderPx) / (maxHeaderPx - minHeaderPx)).coerceIn(0f, 1f) else 1f
+    val headerScrollConnection = remember(listState, minHeaderPx, maxHeaderPx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val atTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+                if (available.y > 0f && !atTop) return Offset.Zero
+                val oldHeight = headerHeightPx
+                headerHeightPx = (oldHeight + available.y).coerceIn(minHeaderPx, maxHeaderPx)
+                return Offset(0f, headerHeightPx - oldHeight)
+            }
+        }
+    }
+
+    MaterialTheme(colorScheme = headerScheme) {
 
     Scaffold(
         modifier = Modifier
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+            .nestedScroll(headerScrollConnection),
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (listState.firstVisibleItemIndex > 0) currentPlaylist?.name ?: fallbackPlaylistName else "",
-                        fontFamily = GoogleSansRounded,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (listState.firstVisibleItemIndex == 0) headerScheme.primaryContainer else baseScheme.surface,
-                    scrolledContainerColor = baseScheme.surface
-                ),
-                navigationIcon = {
-                    FilledTonalIconButton(
-                        modifier = Modifier.padding(start = 10.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        onClick = onBackClick
-                    ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.auth_cd_back))
+            PlaylistArtworkHeader(
+                name = currentPlaylist?.name ?: fallbackPlaylistName,
+                subtitle = currentPlaylist?.let {
+                    stringResource(R.string.presentation_batch_f_status_bullet_step,
+                        formatSongCount(it.remoteSongCount ?: songsInPlaylist.size), formatTotalDuration(songsInPlaylist))
+                }.orEmpty(),
+                artwork = headerArt,
+                headerHeight = with(density) { headerHeightPx.toDp() },
+                collapseFraction = headerCollapse,
+                onBack = onBackClick,
+                onSort = { playerViewModel.showSortingSheet() },
+                onOptions = if (isFolderPlaylist) null else ({ showPlaylistOptionsSheet = true }),
+                onShuffle = {
+                    currentPlaylist?.let { playlist ->
+                        if (localReorderableSongs.isNotEmpty()) playerViewModel.playSongsShuffled(
+                            songsToPlay = localReorderableSongs, queueName = playlist.name,
+                            playlistId = playlist.id, startAtZero = true)
                     }
                 },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            playerViewModel.showSortingSheet() 
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.Sort,
-                            contentDescription = sortSongsLabel
-                        )
+                shuffleEnabled = localReorderableSongs.isNotEmpty(),
+                sortLabel = sortSongsLabel,
+                optionsLabel = moreOptionsLabel,
+                shuffleLabel = shuffleLabel,
+                onImageState = { state ->
+                    if (state is AsyncImagePainter.State.Success) headerArt?.let {
+                        playerViewModel.themeStateHolder.ensureAlbumColorScheme(it)
                     }
-                    if (!isFolderPlaylist) {
-                        FilledTonalIconButton(
-                            modifier = Modifier.padding(end = 10.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = { showPlaylistOptionsSheet = true }
-                        ) { Icon(Icons.Filled.MoreVert, moreOptionsLabel) }
-                    }
-                },
-                scrollBehavior = scrollBehavior
+                    if (state is AsyncImagePainter.State.Error && explicitCover != null && !explicitCoverFailed)
+                        explicitCoverFailed = true
+                }
             )
         }
     ) { innerPadding ->
@@ -367,24 +384,7 @@ fun PlaylistDetailScreen(
                 ) {
                     item(key = "playlist_artwork_header", contentType = "playlist_header") {
                         Column {
-                            PlaylistArtworkHeader(
-                                name = currentPlaylist.name,
-                                subtitle = stringResource(
-                                    R.string.presentation_batch_f_status_bullet_step,
-                                    formatSongCount(currentPlaylist.remoteSongCount ?: songsInPlaylist.size),
-                                    formatTotalDuration(songsInPlaylist)
-                                ),
-                                artwork = headerArt,
-                                headerColor = headerScheme.primaryContainer,
-                                onImageState = { state ->
-                                    if (state is AsyncImagePainter.State.Success) headerArt?.let {
-                                        playerViewModel.themeStateHolder.ensureAlbumColorScheme(it)
-                                    }
-                                    if (state is AsyncImagePainter.State.Error && explicitCover != null && !explicitCoverFailed) {
-                                        explicitCoverFailed = true
-                                    }
-                                }
-                            )
+
                             if (uiState.isLoading || uiState.isUpdatingArtwork) androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                             val actionButtonsHeight = 42.dp
                             val playbackControlBottomPadding = if (isFolderPlaylist) 8.dp else 6.dp
@@ -411,16 +411,7 @@ fun PlaylistDetailScreen(
                                         .weight(1f)
                                         .height(76.dp),
                                     enabled = localReorderableSongs.isNotEmpty(),
-                                    shape = AbsoluteSmoothCornerShape(
-                                        cornerRadiusTL = 60.dp,
-                                        smoothnessAsPercentTR = 60,
-                                        cornerRadiusTR = 14.dp,
-                                        smoothnessAsPercentTL = 60,
-                                        cornerRadiusBL = 60.dp,
-                                        smoothnessAsPercentBR = 60,
-                                        cornerRadiusBR = 14.dp,
-                                        smoothnessAsPercentBL = 60
-                                    )
+                                    shape = RoundedCornerShape(26.dp)
                                 ) {
                                     Icon(
                                         Icons.Rounded.PlayArrow,
@@ -430,40 +421,7 @@ fun PlaylistDetailScreen(
                                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                                     Text(playItLabel)
                                 }
-                                FilledTonalButton(
-                                    onClick = {
-                                        if (localReorderableSongs.isNotEmpty()) {
-                                            playerViewModel.playSongsShuffled(
-                                                songsToPlay = localReorderableSongs,
-                                                queueName = currentPlaylist.name,
-                                                playlistId = currentPlaylist.id,
-                                                startAtZero = true,
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(76.dp),
-                                    enabled = localReorderableSongs.isNotEmpty(),
-                                    shape = AbsoluteSmoothCornerShape(
-                                        cornerRadiusTL = 14.dp,
-                                        smoothnessAsPercentTR = 60,
-                                        cornerRadiusTR = 60.dp,
-                                        smoothnessAsPercentTL = 60,
-                                        cornerRadiusBL = 14.dp,
-                                        smoothnessAsPercentBR = 60,
-                                        cornerRadiusBR = 60.dp,
-                                        smoothnessAsPercentBL = 60
-                                    )
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.Shuffle,
-                                        contentDescription = shuffleLabel,
-                                        modifier = Modifier.size(ButtonDefaults.IconSize)
-                                    )
-                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                    Text(shuffleLabel)
-                                }
+
                             }
 
                             if (!isFolderPlaylist) {
@@ -695,6 +653,8 @@ fun PlaylistDetailScreen(
         }
     }
 
+    }
+
     if (showAddSongsSheet && currentPlaylist != null && !isFolderPlaylist) {
         SongPickerBottomSheet(
             initiallySelectedSongIds = currentPlaylist.songIds.toSet(),
@@ -786,7 +746,7 @@ fun PlaylistDetailScreen(
             }
         }
     }
-    
+
     if (showArtworkOptions && currentPlaylist != null && !isFolderPlaylist) {
         AlertDialog(
             onDismissRequest = { showArtworkOptions = false },
@@ -813,7 +773,7 @@ fun PlaylistDetailScreen(
         } catch (e: Exception) {
             PlaylistShapeType.Circle
         }
-        
+
         EditPlaylistDialog(
             visible = showEditPlaylistDialog,
             currentName = currentPlaylist.name,
@@ -956,9 +916,6 @@ fun PlaylistDetailScreen(
                         coverArtUpdate
                     )
                 },
-                generateAiMetadata = { fields ->
-                    playerViewModel.generateAiMetadata(currentSong, fields)
-                },
                 removeFromListTrigger = {
                     playlistViewModel.removeSongFromPlaylist(playlistId, currentSong.id)
                 }
@@ -1031,7 +988,7 @@ fun PlaylistDetailScreen(
                     listState.animateScrollToItem(0)
                 }
             },
-            showViewToggle = false 
+            showViewToggle = false
         )
     }
 }
@@ -1106,40 +1063,73 @@ fun RenamePlaylistDialog(currentName: String, onDismiss: () -> Unit, onRename: (
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PlaylistArtworkHeader(
     name: String,
     subtitle: String,
     artwork: String?,
-    headerColor: Color,
+    headerHeight: Dp,
+    collapseFraction: Float,
+    onBack: () -> Unit,
+    onSort: () -> Unit,
+    onOptions: (() -> Unit)?,
+    onShuffle: () -> Unit,
+    shuffleEnabled: Boolean,
+    sortLabel: String,
+    optionsLabel: String,
+    shuffleLabel: String,
     onImageState: (AsyncImagePainter.State) -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 420.dp)
-            .aspectRatio(1.15f).background(headerColor)
-    ) {
-        SmartImage(
-            model = artwork,
-            contentDescription = stringResource(R.string.playlist_cover_description, name),
-            modifier = Modifier.fillMaxSize(),
-            targetSize = Size(960, 960),
-            onState = onImageState
+    val surface = MaterialTheme.colorScheme.surface
+    val artworkAlpha = 1f - (collapseFraction * 2f).coerceIn(0f, 1f)
+    val solidAlpha = (collapseFraction * 2f).coerceIn(0f, 1f)
+    val statusTint = if (LocalAroDarkTheme.current) Color.Black.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.4f)
+    com.aro.music.ui.theme.AroStatusBarStyle(color = statusTint.compositeOver(surface))
+    Box(Modifier.fillMaxWidth().height(headerHeight).clipToBounds()) {
+        if (artworkAlpha > 0.01f) {
+            SmartImage(model = artwork, contentDescription = stringResource(R.string.playlist_cover_description, name),
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                targetSize = Size(960, 640), alpha = artworkAlpha, onState = onImageState)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
+                Color.Transparent, surface.copy(alpha = 0.30f * artworkAlpha),
+                surface.copy(alpha = 0.90f * artworkAlpha), surface
+            ))))
+        }
+        Box(Modifier.fillMaxWidth().height(80.dp).background(
+            Brush.verticalGradient(listOf(statusTint, Color.Transparent))))
+        CollapsibleCommonTopBar(
+            title = name, subtitle = subtitle, collapseFraction = collapseFraction,
+            headerHeight = headerHeight, onBackClick = onBack,
+            containerColor = surface.copy(alpha = solidAlpha),
+            collapsedTitleStartPadding = 68.dp, expandedTitleStartPadding = 24.dp,
+            collapsedTitleEndPadding = 124.dp, expandedTitleEndPadding = 136.dp,
+            containerHeightRange = 112.dp to 56.dp,
+            titleStyle = MaterialTheme.typography.headlineMedium.copy(fontFamily = GoogleSansRounded,
+                fontWeight = FontWeight.SemiBold),
+            titleScaleRange = 1f to 1f, titleFontSizeRange = 30.sp to 18.sp,
+            maxLines = if (collapseFraction < 0.5f) 2 else 1,
+            collapsedSubtitleMaxLines = 1, expandedSubtitleMaxLines = 2,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            fadeSubtitleOnCollapse = false, syncStatusBarWithContainer = false,
+            actions = {
+                FilledTonalIconButton(onClick = onSort) {
+                    Icon(Icons.AutoMirrored.Rounded.Sort, sortLabel)
+                }
+                if (onOptions != null) FilledTonalIconButton(onClick = onOptions, modifier = Modifier.padding(end = 12.dp)) {
+                    Icon(Icons.Filled.MoreVert, optionsLabel)
+                }
+            }
         )
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-            0f to Color.Transparent,
-            0.25f to Color.Black.copy(alpha = 0.1f),
-            0.5f to Color.Black.copy(alpha = 0.7f),
-            1f to Color.Black.copy(alpha = 0.95f)
-        )))
-        Column(
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(name, style = MaterialTheme.typography.headlineLarge,
-                color = Color.White, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.85f))
+        if (shuffleEnabled && artworkAlpha > 0.01f) {
+            LargeExtendedFloatingActionButton(
+                onClick = onShuffle,
+                shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
+                modifier = Modifier.align(BiasAlignment(1f, 1f - 2f * collapseFraction))
+                    .statusBarsPadding().padding(end = 16.dp)
+                    .graphicsLayer { scaleX = artworkAlpha; scaleY = artworkAlpha; alpha = artworkAlpha }
+            ) { Icon(Icons.Rounded.Shuffle, shuffleLabel) }
         }
     }
 }

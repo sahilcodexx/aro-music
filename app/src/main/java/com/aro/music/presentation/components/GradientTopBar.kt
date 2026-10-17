@@ -140,9 +140,6 @@ fun HomeGradientTopBar(
                         contentDescription = brandDescription
                     }
                 ) {
-                    Icon(painterResource(R.drawable.aro_base_monochrome), contentDescription = null,
-                        modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.size(6.dp))
                     Text(stringResource(R.string.aro_brand_name), style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold)
                 }

@@ -74,7 +74,6 @@ fun PlaylistBottomSheet(
         if (searchQuery.isBlank()) playlistUiState.playlists
         else playlistUiState.playlists.filter { it.name.contains(searchQuery, true) }
     }
-    val hasActiveAiProviderApiKey by playerViewModel.hasActiveAiProviderApiKey.collectAsStateWithLifecycle()
 
     val selectedPlaylists = remember {
         mutableStateMapOf<String, Boolean>().apply {
@@ -152,8 +151,6 @@ fun PlaylistBottomSheet(
                 )
 
 
-
-
                 LibraryActionRow(
                     modifier = Modifier.padding(
                         top = 10.dp,
@@ -202,14 +199,6 @@ fun PlaylistBottomSheet(
                             onDismiss() // Close sheet after creation + add
                             playerViewModel.sendToast("Playlist created and songs added")
                         },
-                        onGenerateClick = {
-                            showCreatePlaylistDialog = false
-                            if (hasActiveAiProviderApiKey) {
-                                playerViewModel.showAiPlaylistSheet()
-                            } else {
-                                playerViewModel.sendToast("Set your Gemini API key first")
-                            }
-                        }
                     )
                 }
             }

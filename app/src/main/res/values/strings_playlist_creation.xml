@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="playlist_creation_choice_title" translatable="false">Create playlist</string>
+    <string name="playlist_creation_choice_manual" translatable="false">Create manually</string>
+    <string name="playlist_creation_choice_import" translatable="false">Import from a link</string>
+</resources>
