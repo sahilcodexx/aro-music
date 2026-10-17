@@ -14,7 +14,7 @@ export function SiteHeader() {
       <header className="site-header">
         <nav className="container navigation" aria-label="Main navigation">
           <Link className="brand" href="/#top" aria-label="Aro Music home">
-            <Image src="/aro-icon.png" width={40} height={40} alt="" />
+            <Image src="/aro-logo-white.png" width={40} height={40} alt="" />
             <span>
               aro<span className="brand-dot">.</span>
             </span>
@@ -45,7 +45,7 @@ export function SiteFooter() {
         <div className="footer-top">
           <div className="footer-brand">
             <Link className="brand" href="/">
-              <Image src="/aro-icon.png" width={36} height={36} alt="" />
+              <Image src="/aro-logo-white.png" width={36} height={36} alt="" />
               <span>
                 aro<span className="brand-dot">.</span>
               </span>
@@ -61,13 +61,10 @@ export function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <p>
-            Built on the work of{" "}
-            <a href="https://github.com/theovilardo/PixelPlay">PixelPlay</a>,{" "}
-            <a href="https://github.com/FrancescoGrazioso/Meld">Meld</a>, and{" "}
-            <a href="https://github.com/MetrolistGroup/innertubex">
-              InnerTubeX
-            </a>
-            . Original notices apply; component licensing remains unresolved.
+            UI inspired by{" "}
+            <a href="https://github.com/theovilardo/PixelPlay">PixelPlay</a>.
+            {" "}Source adaptations and original notices are recorded in{" "}
+            <a href={`${REPO}/blob/main/THIRD_PARTY_NOTICES.md`}>project credits</a>.
           </p>
           <p>
             Service names and artwork belong to their owners. Aro is not

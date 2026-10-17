@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description:
     "Your local collection, YouTube Music discovery, Spotify playlist imports, and artwork-colored playback. Explore Aro Music for Android 11 and newer.",
   applicationName: "Aro Music",
-  icons: { icon: "/aro-icon.png", apple: "/aro-icon.png" },
+  icons: { icon: "/aro-logo-white.png", apple: "/aro-logo-white.png" },
   openGraph: {
     title: "Aro Music — Find your next repeat",
     description:

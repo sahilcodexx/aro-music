@@ -27,8 +27,9 @@ const sections: PolicySection[] = [
     body: (
       <>
         <p>
-          The current phone release is v1.0.2 for Android devices running
-          Android 11 or newer. It is published without the GitHub prerelease flag. Compatibility
+          The website links to the latest public phone release for Android 11
+          or newer. The v1.0.3 candidate is being prepared separately; a draft
+          build is not a public download. Compatibility
           varies by device, setting, and connected service; broader testing
           remains incomplete.
         </p>
@@ -69,8 +70,8 @@ const sections: PolicySection[] = [
     body: (
       <p>
         The website links to the project’s{" "}
-        <a href={`${REPO}/releases/tag/v1.0.2`}>
-          versioned GitHub release
+        <a href={`${REPO}/releases/latest`}>
+          latest public GitHub release
         </a>
         . Review the release notes and installation requirements before
         installing. Future updates must use compatible signing credentials; an
@@ -86,7 +87,7 @@ const sections: PolicySection[] = [
         <p>
           Original copyright and license notices remain applicable. The root
           license restricts redistribution and commercial publishing of
-          derivatives; included InnerTubeX and Meld-derived code have GPLv3
+          derivatives; included adapted components have GPLv3
           obligations. Compatible distribution rights for the combined app
           remain unresolved.
         </p>

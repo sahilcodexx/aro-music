@@ -4,7 +4,7 @@ import { Icon } from "./icons";
 import MusicArtwork from "./music-artwork";
 import Questions from "./questions";
 import { SiteHeader, SiteFooter } from "./site-shell";
-import { APK_URL, ARM64_APK_URL, RELEASES_URL } from "./project-links";
+import { APK_URL, BUILD_URL, CANDIDATE_VERSION, RELEASES_URL } from "./project-links";
 
 const REPO = "https://github.com/sahilcodexx/aro-music";
 
@@ -15,7 +15,7 @@ const questions = [
   ],
   [
     "Can I play music already on my phone?",
-    "Yes. Give Aro audio access and your songs appear in Library. Browse by song, artist, or album, make playlists, and play your local collection without an internet connection.",
+    "Yes. In the 1.0.3 candidate, open Library → Songs → Import and confirm phone-music import, then grant audio access. Imported songs remain available offline. Published 1.0.2 uses the earlier library setup flow.",
   ],
   [
     "How do Spotify playlists work?",
@@ -226,7 +226,7 @@ export default function Home() {
         >
           <div className="container download-panel">
             <div className="download-copy">
-              <Image src="/aro-icon.png" width={68} height={68} alt="" />
+              <Image src="/aro-logo-white.png" width={68} height={68} alt="" />
               <h2 id="download-title">
                 Make yourself
                 <br />
@@ -236,13 +236,13 @@ export default function Home() {
               <a className="button button-dark" href={APK_URL}>
                 <Icon name="download" /> Download APK
               </a>
-              <a className="text-link release-link" href={ARM64_APK_URL}>
-                Smaller APK · ARM64 phones only <Icon name="download" />
+              <a className="text-link release-link" href={BUILD_URL}>
+                v{CANDIDATE_VERSION} candidate build <Icon name="external" />
               </a>
               <a className="text-link release-link" href={RELEASES_URL}>
                 Release notes and checksums <Icon name="external" />
               </a>
-              <p className="download-meta">v1.0.2 · Android 11+ · Universal APK</p>
+              <p className="download-meta">Android 11+ · Choose universal or ARM64 on GitHub</p>
             </div>
             <div className="install-guide">
               <h3>A little help getting started</h3>
