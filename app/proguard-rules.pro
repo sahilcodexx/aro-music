@@ -238,7 +238,6 @@
 -keep class com.aro.music.data.soundcloud.** { *; }
 -keep class com.aro.music.data.network.** { *; }
 -keep class com.aro.music.data.gdrive.** { *; }
--keep class com.aro.music.data.ai.** { *; }
 -keep class com.aro.music.data.service.** { *; }
 -keepclassmembers class com.aro.music.data.model.** { *; }
 -keepclassmembers class com.aro.music.data.jiosaavn.** { *; }
