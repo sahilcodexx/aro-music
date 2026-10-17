@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_icon_title" translatable="false">App icon</string>
+    <string name="app_icon_hint" translatable="false">Choose an icon for your home screen. Your launcher may take a moment to refresh it.</string>
+    <string name="app_icon_white" translatable="false">White</string>
+    <string name="app_icon_white_black" translatable="false">White &amp; black</string>
+    <string name="app_icon_green" translatable="false">Green</string>
+    <string name="app_icon_dark_green" translatable="false">Dark green</string>
+    <string name="app_icon_pink" translatable="false">Pink</string>
+    <string name="app_icon_blue" translatable="false">Blue</string>
+    <string name="app_icon_blue_shade" translatable="false">Blue shade</string>
+    <string name="app_icon_black" translatable="false">Black</string>
+    <string name="app_icon_change_failed" translatable="false">Couldn’t change the app icon. Please try again.</string>
+</resources>
