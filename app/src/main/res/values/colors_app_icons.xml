@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="aro_icon_background_white">#FFFFFF</color>
+    <color name="aro_icon_background_white_black">#FFFFFF</color>
+    <color name="aro_icon_background_green">#16A34A</color>
+    <color name="aro_icon_background_dark_green">#276456</color>
+    <color name="aro_icon_background_pink">#DB2777</color>
+    <color name="aro_icon_background_blue">#2563EB</color>
+    <color name="aro_icon_background_blue_shade">#DDEAFF</color>
+    <color name="aro_icon_background_black">#000000</color>
+</resources>
