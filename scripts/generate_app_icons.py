@@ -33,9 +33,9 @@ for key,name in [('white','whiteoutline'),('black','blackoutline'),('color','col
  square=Image.new('RGBA',(256,256));square.alpha_composite(raw,((256-raw.width)//2,0));square.save(out/f'aro_outline_{key}.png',optimize=True)
 # The filled color artwork supplies a readable silhouette; thin outline strokes vanish at status-bar sizes.
 outline=Image.open(out/'aro_outline_color.png').convert('RGBA')
-# Full-bleed adaptive icon canvas; the mark stays within Android's 66/108 safe zone.
-mono=Image.new('RGBA',(432,432));mark=outline.resize((264,264),Image.Resampling.LANCZOS)
-mono.alpha_composite(mark,((432-264)//2,(432-264)//2));mono.save(out/'aro_icon_monochrome.png',optimize=True)
+# Fit the full silhouette inside the circular 66/108 safe zone, including its diagonal tip.
+mono=Image.new('RGBA',(432,432));mark=outline.resize((200,200),Image.Resampling.LANCZOS)
+mono.alpha_composite(mark,((432-200)//2,(432-200)//2));mono.save(out/'aro_icon_monochrome.png',optimize=True)
 for density,pixels in [('mdpi',24),('hdpi',36),('xhdpi',48),('xxhdpi',72),('xxxhdpi',96)]:
  folder=res/f'drawable-{density}';folder.mkdir(exist_ok=True)
  mark=outline.resize((round(pixels*0.92),round(pixels*0.92)),Image.Resampling.LANCZOS)

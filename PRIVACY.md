@@ -18,7 +18,7 @@ Selecting a custom playlist cover copies that image into Aro's internal files. S
 
 YouTube/YouTube Music receives catalog and playback requests. Spotify receives sign-in and catalog/playlist requests; Aro stores a session cookie in private app preferences and matches Spotify metadata to YouTube for playback. Spotify handles credentials on its own sign-in page; Aro has no separate device-email chooser.
 
-Optional server and cloud features send requests to the service you connect. Optional AI features send configured requests to the selected AI provider. These services operate under their own terms and privacy policies. Aro is not affiliated with them.
+Optional server and cloud features send requests to the service you connect. The unreleased source removes AI provider clients, model/key settings, and generation workers. The published 1.0.2 APK predates this removal. Existing AI preferences/cache/history are not actively used by the new source; legacy Room tables remain solely to preserve upgrade compatibility. These services operate under their own terms and privacy policies. Aro is not affiliated with them.
 
 ## Update checks and issue reports
 
