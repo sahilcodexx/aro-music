@@ -73,7 +73,6 @@ import com.aro.music.utils.shapes.RoundedStarShape
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.aro.music.data.ai.SongMetadata
 import com.aro.music.data.media.CoverArtUpdate
 import com.aro.music.ui.theme.MontserratFamily
 import com.aro.music.presentation.viewmodel.SongInfoBottomSheetViewModel
@@ -114,12 +113,7 @@ fun SongInfoBottomSheet(
         replayGainAlbumGainDb: String,
         coverArtUpdate: CoverArtUpdate?
     ) -> Unit,
-    generateAiMetadata: suspend (List<String>) -> Result<SongMetadata>,
     removeFromListTrigger: () -> Unit,
-    isGeneratingMetadata: Boolean = false,
-    aiMetadataSuccess: Boolean = false,
-    aiError: String? = null,
-    onRetryMetadata: () -> Unit = {},
     songInfoViewModel: SongInfoBottomSheetViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current

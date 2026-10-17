@@ -101,7 +101,7 @@ fun GenreDetailScreen(
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val playlistUiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
     val libraryGenres by playerViewModel.genres.collectAsStateWithLifecycle()
-    
+
     // Defer heavy list rendering until navigation transition settles
     var isTransitionFinished by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -171,11 +171,11 @@ fun GenreDetailScreen(
                         // Snap to nearest
                         if (currentHeight > (minTopBarHeightPx + maxTopBarHeightPx) / 2) maxTopBarHeightPx else minTopBarHeightPx
                     }
-                    
+
                     coroutineScope.launch {
                         topBarHeight.animateTo(
                             targetValue = targetHeight,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow) 
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                         )
                     }
                 }
@@ -202,10 +202,10 @@ fun GenreDetailScreen(
             )
         }
     }
-    
+
     val startColor = themeColor.container
     val contentColor = themeColor.onContainer
-    
+
     // Optimization: Calculate a fast display name for the title while the full Genre object is loading.
     // This prevents the "Genre" placeholder from flashing during the navigation transition.
     val initialDisplayName = remember(decodedGenreId) {
@@ -227,7 +227,7 @@ fun GenreDetailScreen(
             )
         }
     }
-    
+
     val toastAddedToQueue = stringResource(R.string.toast_added_to_queue)
     val toastPlayingNext = stringResource(R.string.toast_playing_next)
 
@@ -240,7 +240,7 @@ fun GenreDetailScreen(
     val isUnknownGenre = remember(decodedGenreId) {
         decodedGenreId.equals("unknown", ignoreCase = true) || decodedGenreId.equals("unknown genre", ignoreCase = true)
     }
-    
+
     val customGenres by playerViewModel.customGenres.collectAsStateWithLifecycle()
     val customGenreIcons by playerViewModel.customGenreIcons.collectAsStateWithLifecycle()
     val genrePaletteStyle by playerViewModel.albumArtPaletteStyle.collectAsStateWithLifecycle(
@@ -275,9 +275,9 @@ fun GenreDetailScreen(
             // Optimization: Cache Dp conversions
             val currentTopBarHeightDp = with(density) { topBarHeight.value.toDp() }
 
-            // Optimization: Use fixed padding and offset instead of dynamic contentPadding 
+            // Optimization: Use fixed padding and offset instead of dynamic contentPadding
             // to avoid triggered remeasures of the entire list on every pixel of scroll.
-            
+
             LazyColumn(
                 state = lazyListState,
                 contentPadding = PaddingValues(
@@ -399,7 +399,7 @@ fun GenreDetailScreen(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 collapsedContentColor = MaterialTheme.colorScheme.onSurface
             )
-        
+
             // FAB
             Box(
                  modifier = Modifier
@@ -420,7 +420,7 @@ fun GenreDetailScreen(
                     )
                 }
             }
-        
+
             // Sorting/Options Bottom Sheet
             if (showSortSheet) {
                 GenreSortBottomSheet(
@@ -481,7 +481,7 @@ fun GenreDetailScreen(
                     }
                 )
             }
-        
+
             // Song Options Bottom Sheet
             showSongOptionsSheet?.let { song ->
                 val isFavorite = favoriteSongIds.contains(song.id)
@@ -561,9 +561,6 @@ fun GenreDetailScreen(
                                 coverArtUpdate
                             )
                         },
-                        generateAiMetadata = { fields ->
-                            playerViewModel.generateAiMetadata(song, fields)
-                        },
                         removeFromListTrigger = {}
                     )
                 }
@@ -578,7 +575,7 @@ fun GenreDetailScreen(
                     )
                 }
             }
-        
+
             // Loading/Error States
             if (uiState.isLoadingSongs) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -653,7 +650,7 @@ fun GenreCollapsibleTopBar(
 
     // Optimization: Pre-calculate alpha values
     val gradientAlpha = 0.8f * (1f - solidAlpha)
-    
+
     // Optimization: Reuse gradient brush to avoid allocation on every pixel scroll
     val verticalGradient = remember(startColor, gradientAlpha) {
         Brush.verticalGradient(
@@ -673,7 +670,7 @@ fun GenreCollapsibleTopBar(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(containerColor.copy(alpha = solidAlpha)) 
+                .background(containerColor.copy(alpha = solidAlpha))
         )
         Box(
             modifier = Modifier
@@ -810,7 +807,7 @@ fun GenreAlbumHeader(
             )
         }
     }
-    
+
     Box(
          modifier = Modifier
             .fillMaxWidth()
@@ -893,7 +890,7 @@ fun GenreSongItemWrapper(
             else -> RoundedCornerShape(4.dp)
         }
     }
-    
+
     val containerShape = remember(isLastInAlbum, isLastAlbumInSection) {
         if (isLastInAlbum && isLastAlbumInSection) {
             AbsoluteSmoothCornerShape(
@@ -901,22 +898,22 @@ fun GenreSongItemWrapper(
                 cornerRadiusTL = 0.dp, smoothnessAsPercentTL = 0,
                 cornerRadiusBR = 24.dp, smoothnessAsPercentBR = 60,
                 cornerRadiusBL = 24.dp, smoothnessAsPercentBL = 60
-            ) 
+            )
         } else {
            RectangleShape
         }
     }
-   
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f), containerShape)
-            .padding(horizontal = 8.dp) 
+            .padding(horizontal = 8.dp)
             .padding(bottom = if (isLastInAlbum && !isLastAlbumInSection && useArtistStyle) 8.dp else 0.dp)
     ) {
         Column {
             if (!isFirstInAlbum) Spacer(Modifier.height(2.dp))
-            
+
             // Optimization: De-reference stable state values to avoid observing the whole object
             val isCurrent = stablePlayerState.currentSong?.id == song.id
             val isPlaying = stablePlayerState.isPlaying
@@ -930,7 +927,7 @@ fun GenreSongItemWrapper(
                  onClick = { onSongClick(song) },
                  onMoreOptionsClick = onMoreOptionsClick
              )
-             
+
              if (isLastInAlbum) Spacer(Modifier.height(8.dp))
         }
     }

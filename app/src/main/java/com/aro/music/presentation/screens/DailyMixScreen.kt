@@ -72,8 +72,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.aro.music.R
 import com.aro.music.data.model.Song
-import com.aro.music.presentation.components.AiPlaylistSheet
-import com.aro.music.presentation.components.DailyMixMenu
 import com.aro.music.presentation.components.MiniPlayerHeight
 import com.aro.music.presentation.components.PlaylistBottomSheet
 import com.aro.music.presentation.components.SmartImage
@@ -118,44 +116,10 @@ fun DailyMixScreen(
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val selectedSongForInfo by playerViewModel.selectedSongForInfo.collectAsStateWithLifecycle()
 
-    val showAiSheet by playerViewModel.showAiPlaylistSheet.collectAsStateWithLifecycle()
-    val isGeneratingAiPlaylist by playerViewModel.isGeneratingAiPlaylist.collectAsStateWithLifecycle()
-    val aiStatus by playerViewModel.aiStatus.collectAsStateWithLifecycle()
-    val aiError by playerViewModel.aiError.collectAsStateWithLifecycle()
-    val aiSuccess by playerViewModel.aiSuccess.collectAsStateWithLifecycle()
-    val isGeneratingAiMetadata by playerViewModel.isGeneratingAiMetadata.collectAsStateWithLifecycle()
-    val aiMetadataSuccess by playerViewModel.aiMetadataSuccess.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
 
     var showSongInfoSheet by remember { mutableStateOf(false) }
-    var showDailyMixMenu by remember { mutableStateOf(false) }
 
-    if (showDailyMixMenu) {
-        DailyMixMenu(
-            onDismiss = { showDailyMixMenu = false },
-            onApplyPrompt = { prompt ->
-                playerViewModel.regenerateDailyMixWithPrompt(prompt)
-                showDailyMixMenu = false
-            },
-            isLoading = isGeneratingAiPlaylist
-        )
-    }
-
-    if (showAiSheet) {
-        // AI Integration: Premium Material 3 Expressive sheet for interactive playlist curation
-        AiPlaylistSheet(
-            onDismiss = { playerViewModel.dismissAiPlaylistSheet() },
-            onGenerateClick = { prompt, minLength, maxLength ->
-                // Optimize: Trigger background AI generation and track real-time status
-                playerViewModel.generateAiPlaylist(prompt, minLength, maxLength, saveAsPlaylist = false)
-            },
-            isGenerating = isGeneratingAiPlaylist,
-            isSuccess = aiSuccess,
-            status = aiStatus,
-            error = aiError,
-            onRetry = { playerViewModel.retryLastPlaylistGeneration() }
-        )
-    }
 
     val surfaceContainer = MaterialTheme.colorScheme.surface
     val headerColor = MaterialTheme.colorScheme.primary
@@ -232,14 +196,7 @@ fun DailyMixScreen(
                     coverArtUpdate
                 )
             },
-            generateAiMetadata = { fields ->
-                playerViewModel.generateAiMetadata(song, fields)
-            },
             removeFromListTrigger = removeFromListTrigger,
-            isGeneratingMetadata = isGeneratingAiMetadata,
-            aiMetadataSuccess = aiMetadataSuccess,
-            aiError = aiError,
-            onRetryMetadata = { playerViewModel.retryLastMetadataGeneration() }
         )
 
         if (showPlaylistBottomSheet) {
@@ -279,7 +236,6 @@ fun DailyMixScreen(
                     ExpressiveDailyMixHeader(
                         songs = dailyMixSongs,
                         scrollState = lazyListState,
-                        onShowMenu = { playerViewModel.showAiPlaylistSheet() }
                     )
                 }
 
@@ -423,7 +379,6 @@ fun DailyMixScreen(
 private fun ExpressiveDailyMixHeader(
     songs: List<Song>,
     scrollState: LazyListState,
-    onShowMenu: () -> Unit
 ) {
     val dailyMixHeaderTitle = stringResource(R.string.presentation_batch_b_daily_mix_title)
     Trace.beginSection("ExpressiveDailyMixHeader.Composition")
@@ -564,21 +519,7 @@ private fun ExpressiveDailyMixHeader(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
             }
-            LargeExtendedFloatingActionButton(
-                modifier = Modifier,
-                onClick = onShowMenu,
-                shape = RoundedStarShape(
-                    sides = 8,
-                    curve = 0.05,
-                    rotation = 0f
-                )
-            ) {
-                Icon(
-                    modifier = Modifier.size(20.dp),
-                    painter = painterResource(R.drawable.gemini_ai),
-                    contentDescription = stringResource(R.string.cd_use_gemini_ai)
-                )
-            }
+
         }
     }
     Trace.endSection()
