@@ -62,8 +62,8 @@ android {
         applicationId = "com.aro.music"
         minSdk = 30
         targetSdk = 36
-        versionCode = (project.findProperty("APP_VERSION_CODE") as? String)?.toInt() ?: 20
-        versionName = (project.findProperty("APP_VERSION_NAME") as? String) ?: "1.0.3"
+        versionCode = (project.findProperty("APP_VERSION_CODE") as? String)?.toInt() ?: 21
+        versionName = (project.findProperty("APP_VERSION_NAME") as? String) ?: "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

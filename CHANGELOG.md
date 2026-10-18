@@ -1,6 +1,11 @@
 # Aro changelog
 
-## Unreleased — 1.0.3 candidate (code 20)
+## 1.0.4 — 2026-10-18
+
+- Playlist details move loading feedback below the songs and show the scrollbar after the cover collapses, with reserved space beside the list.
+- Library Albums groups tracks by actual release identity. Missing/unknown releases and play/view-count labels are hidden without deleting songs, favorites, or playlist membership. Catalog parsing requires an album link instead of guessing from subtitle position; later valid metadata can repair an invalid cached album title. Genuine singles remain separate releases.
+
+## 1.0.3 — 2026-10-17
 
 - Replace inherited app branding across in-app marks, adaptive monochrome layers, legacy launcher resources, and the website with supplied Aro artwork. White is the default; Appearance offers eight persistent icon choices. All choices have safe foreground padding. Notifications use the filled silhouette from `coloroutline.svg`.
 - Refine the original illustrated setup pages while retaining their text hierarchy, permission gates, and bottom forward/progress bar. No phone-music scan occurs during setup.
@@ -10,7 +15,7 @@
 - Remove AI provider integration, SDK, key/model/prompt settings, generation, background requests, usage UI, and backup selection. Existing generated playlists remain usable. Legacy Room tables are retained for compatibility, with old queued generation work canceled at startup. Manual playlists, smart rules, Daily Mix, and song editing remain.
 - Acknowledge PixelPlay UI inspiration in visible credits; retain code provenance and upstream obligations in `THIRD_PARTY_NOTICES.md` and the existing licenses. Website downloads follow the latest public release, with candidate build status linked separately.
 
-This candidate is not yet a published release. See `RELEASE_CHECKLIST.md` for current validation and unresolved gates.
+Published from `15d544f` after signed workflow `39058129041` passed. See `RELEASE_CHECKLIST.md` for validation limits and unresolved licensing.
 
 ## 1.0.2 — 2026-10-16
 
