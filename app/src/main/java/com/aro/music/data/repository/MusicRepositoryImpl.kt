@@ -657,8 +657,8 @@ class MusicRepositoryImpl @Inject constructor(
      * Grouped by album rather than assuming a single one, because a playlist
      * spans many albums while an album fetch does not. Rows are derived from the
      * tracks themselves, so they are self-consistent without needing the album
-     * browse response. `insertAlbums`/`insertArtists` merge on conflict, so this
-     * is safe to re-run.
+     * browse response. Existing parent rows are preserved; only invalid album
+     * titles are repaired when actual release metadata becomes available.
      */
     override suspend fun cacheCatalogSongs(songs: List<Song>) = persistRemoteTracks(songs)
 
@@ -684,6 +684,13 @@ class MusicRepositoryImpl @Inject constructor(
                     dateAdded = sample.dateAdded, year = sample.year, albumArtist = sample.albumArtist,
                 )
             })
+            byAlbum.forEach { (albumId, albumTracks) ->
+                if (InnerTubeIds.isAlbumId(albumId)) {
+                    albumTracks.firstOrNull { it.album.isNotBlank() }?.let { track ->
+                        musicDao.repairCatalogAlbumTitle(albumId, track.album)
+                    }
+                }
+            }
             musicDao.insertSongs(tracks.map { it.toEntityWithoutPaths() })
             val refs = tracks.flatMap { song ->
                 val artists = (song.artists + com.aro.music.data.model.ArtistRef(song.artistId, song.artist, true)).distinctBy { it.id }
