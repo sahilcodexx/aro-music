@@ -12,6 +12,22 @@ import com.aro.music.utils.AudioMeta
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
+// Parent rows for incomplete remote metadata remain for FK compatibility, but are
+// not releases. Apply before LIMIT/OFFSET so hidden cards cannot consume a page.
+private const val VALID_LIBRARY_ALBUM = """
+    albums.id NOT IN (0, -1)
+    AND TRIM(albums.title) != ''
+    AND LOWER(TRIM(albums.title)) NOT IN ('unknown', 'unknown album', '<unknown>')
+    AND NOT (
+        TRIM(albums.title) GLOB '[0-9]*'
+        AND (LOWER(TRIM(albums.title)) LIKE '% plays'
+            OR LOWER(TRIM(albums.title)) LIKE '% views'
+            OR LOWER(TRIM(albums.title)) LIKE '% streams'
+            OR LOWER(TRIM(albums.title)) LIKE '% listeners'
+            OR LOWER(TRIM(albums.title)) LIKE '% subscribers')
+    )
+"""
+
 private val SONG_SEARCH_QUERY_TOKEN_REGEX = Regex("""[\p{L}\p{N}]+""")
 private const val EMPTY_SONG_SEARCH_MATCH_QUERY = "aroemptyquery*"
 
@@ -145,6 +161,11 @@ interface MusicDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAlbumsIgnoreConflicts(albums: List<AlbumEntity>): List<Long>
+
+    // Repair a placeholder/statistics title only when a later catalog response
+    // supplies the actual release name. Preserve IDs, artwork, and all song rows.
+    @Query("UPDATE albums SET title = :title WHERE id = :id AND NOT (" + VALID_LIBRARY_ALBUM + ")")
+    suspend fun repairCatalogAlbumTitle(id: Long, title: String)
 
     @Update
     suspend fun updateAlbums(albums: List<AlbumEntity>)
@@ -1074,7 +1095,7 @@ interface MusicDao {
             albums.year AS year
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
-        WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        WHERE """ + VALID_LIBRARY_ALBUM + """ AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
             OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
@@ -1120,7 +1141,7 @@ interface MusicDao {
             albums.year AS year
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
-        WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        WHERE """ + VALID_LIBRARY_ALBUM + """ AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
             OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
@@ -1179,7 +1200,7 @@ interface MusicDao {
             albums.year AS year
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
-        WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        WHERE """ + VALID_LIBRARY_ALBUM + """ AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (songs.source_type != 9 OR songs.id IN (SELECT songId FROM favorites WHERE isFavorite = 1)
             OR songs.id IN (SELECT ps.song_id FROM playlist_songs ps INNER JOIN playlists p ON p.id = ps.playlist_id))
         AND (
@@ -1288,7 +1309,7 @@ interface MusicDao {
             albums.year AS year
         FROM songs
         INNER JOIN albums ON albums.id = songs.album_id
-        WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
+        WHERE """ + VALID_LIBRARY_ALBUM + """ AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.source_type >= 7 OR songs.parent_directory_path IN (:allowedParentDirs))
         GROUP BY
             albums.id,
             albums.title,
