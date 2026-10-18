@@ -1,6 +1,15 @@
 # Aro phone release validation
 
-## 1.0.3 candidate — 2026-10-17
+## 1.0.4 preparation — 2026-10-18
+
+- Four host SQLite regression tests passed against the actual DAO query strings: release grouping and counts across all four album-list queries, filtering before pagination, offline filtering, and conditional repair of invalid titles. Real numeric album titles and separate singles are retained. Existing song/favorite rows remain intact; no Room schema change or migration is introduced.
+- Website ESLint and Next.js production build (including TypeScript) passed. Rendered HTML contains the 1.0.4 universal APK and versioned release-notes links. No hosted website deployment is configured; this updates the checked-in website and its build output.
+- Playlist loading feedback moves to the list footer; the scrollbar is gated on cover collapse and gets a reserved end gutter. Phone checks remain pending for expanded/collapsed headers, long lists, scrollbar dragging, font scaling, reorder boundaries, and mini-player clearance.
+- Debug Kotlin/Room query compilation and 28 targeted unit tests passed with zero failures, errors, or skips (including the nested repository test). New parser cases cover play counts, missing metadata, linked release names, and numeric album titles. `git diff --check` passes. Version is 1.0.4/code 21. Signed release tests, full lint, shrinking, signatures, and native alignment must pass in the release workflow before publication. Phone checks and connected-account checks for these fixes remain pending. Host album-query checks now run in debug and release CI. The user authorized ten combined app/website commits and release publication. Original notices and unresolved licensing remain unchanged.
+
+## 1.0.3 — 2026-10-17
+
+- The corrected signed workflow [39058129041](https://github.com/sahilcodexx/aro-music/actions/runs/39058129041) passed on `15d544f`; [v1.0.3](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.3) is public and has universal, ARM64, ARMv7 APKs and checksums. The earlier preparation notes below describe checks pending at that time.
 
 - First signed CI attempt [39057065369](https://github.com/sahilcodexx/aro-music/actions/runs/39057065369) failed release lint on one `StringFormatInvalid` error: setup copy contained a literal `100%`. Marked that resource `formatted="false"`; its no-argument `stringResource` usage and AAPT2 compilation were checked. The baseline and visible wording are unchanged. The Metaspace expiry warning was not the failing task. Signed artifacts/shrinking were not completed by that attempt; the corrected main commit needs a fresh workflow dispatch.
 
