@@ -19,6 +19,8 @@ jobs:
           if grep -q 'Unresolved licensing:' LICENSE_STATUS.md; then
             echo '::warning::Component licensing remains unresolved. Preserve original notices; build validation does not establish redistribution rights.'
           fi
+      - name: Album query regression checks
+        run: python3 -m unittest discover -s scripts/tests -p 'test_library_album_queries.py'
       - uses: ./.github/actions/android-setup
       - name: Restore release signing key
         env:
