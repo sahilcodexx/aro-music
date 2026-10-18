@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RELEASE_VERSION, RELEASES_URL } from "../project-links";
 import type { Metadata } from "next";
 import PolicyPage, { type PolicySection } from "../policy-page";
 const REPO = "https://github.com/sahilcodexx/aro-music";
@@ -27,9 +28,8 @@ const sections: PolicySection[] = [
     body: (
       <>
         <p>
-          The website links to the latest public phone release for Android 11
-          or newer. The v1.0.3 candidate is being prepared separately; a draft
-          build is not a public download. Compatibility
+          The website links to Aro {RELEASE_VERSION} for Android 11
+          or newer. Review its release notes before installing. Compatibility
           varies by device, setting, and connected service; broader testing
           remains incomplete.
         </p>
@@ -70,8 +70,8 @@ const sections: PolicySection[] = [
     body: (
       <p>
         The website links to the project’s{" "}
-        <a href={`${REPO}/releases/latest`}>
-          latest public GitHub release
+        <a href={RELEASES_URL}>
+          GitHub release and checksums
         </a>
         . Review the release notes and installation requirements before
         installing. Future updates must use compatible signing credentials; an

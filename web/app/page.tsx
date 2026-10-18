@@ -4,7 +4,7 @@ import { Icon } from "./icons";
 import MusicArtwork from "./music-artwork";
 import Questions from "./questions";
 import { SiteHeader, SiteFooter } from "./site-shell";
-import { APK_URL, BUILD_URL, CANDIDATE_VERSION, RELEASES_URL } from "./project-links";
+import { APK_URL, BUILD_URL, RELEASE_VERSION, RELEASES_URL } from "./project-links";
 
 const REPO = "https://github.com/sahilcodexx/aro-music";
 
@@ -15,7 +15,7 @@ const questions = [
   ],
   [
     "Can I play music already on my phone?",
-    "Yes. In the 1.0.3 candidate, open Library → Songs → Import and confirm phone-music import, then grant audio access. Imported songs remain available offline. Published 1.0.2 uses the earlier library setup flow.",
+    "Yes. Open Library → Songs → Import and confirm phone-music import, then grant audio access. Imported songs remain available offline.",
   ],
   [
     "How do Spotify playlists work?",
@@ -60,7 +60,7 @@ export default function Home() {
                 </a>
               </div>
               <p className="release-note">
-                Android 11+ <span aria-hidden="true">/</span> 1.0.2
+                Android 11+ <span aria-hidden="true">/</span> {RELEASE_VERSION}
                 release
               </p>
             </div>
@@ -232,17 +232,17 @@ export default function Home() {
                 <br />
                 at home.
               </h2>
-              <p>Your next listening session starts here.</p>
+              <p>Version {RELEASE_VERSION} fixes playlist scrolling and keeps Albums grouped by actual release.</p>
               <a className="button button-dark" href={APK_URL}>
                 <Icon name="download" /> Download APK
               </a>
               <a className="text-link release-link" href={BUILD_URL}>
-                v{CANDIDATE_VERSION} candidate build <Icon name="external" />
+                Build validation <Icon name="external" />
               </a>
               <a className="text-link release-link" href={RELEASES_URL}>
                 Release notes and checksums <Icon name="external" />
               </a>
-              <p className="download-meta">Android 11+ · Choose universal or ARM64 on GitHub</p>
+              <p className="download-meta">Android 11+ · Universal APK · ARM64 option in release notes</p>
             </div>
             <div className="install-guide">
               <h3>A little help getting started</h3>
