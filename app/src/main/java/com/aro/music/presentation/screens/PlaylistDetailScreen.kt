@@ -315,6 +315,10 @@ fun PlaylistDetailScreen(
         }
     }
 
+    // Match Artist details: the scrollbar appears only after the artwork collapses.
+    val showPlaylistScrollBar = headerCollapse > 0.95f &&
+        (listState.canScrollForward || listState.canScrollBackward)
+
     MaterialTheme(colorScheme = headerScheme) {
 
     Scaffold(
@@ -379,13 +383,13 @@ fun PlaylistDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(
+                        end = if (showPlaylistScrollBar) 24.dp else 0.dp,
                         bottom = bottomBarHeightDp + (if (playerStableState.currentSong != null) MiniPlayerHeight else 0.dp) + 16.dp
                     )
                 ) {
                     item(key = "playlist_artwork_header", contentType = "playlist_header") {
                         Column {
 
-                            if (uiState.isLoading || uiState.isUpdatingArtwork) androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                             val actionButtonsHeight = 42.dp
                             val playbackControlBottomPadding = if (isFolderPlaylist) 8.dp else 6.dp
                             Row(
@@ -638,17 +642,26 @@ fun PlaylistDetailScreen(
                             )
                         }
                     }
+                    if (uiState.isLoading || uiState.isUpdatingArtwork) {
+                        item(key = "playlist_loading", contentType = "loading") {
+                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(Modifier.size(24.dp))
+                            }
+                        }
+                    }
                 }
-                ExpressiveScrollBar(
-                    listState = listState,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(
-                            bottom = if (playerStableState.currentSong != null) MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 20.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp,
-                            end = 14.dp,
-                            top = 18.dp // Increased to 16.dp as requested
-                        )
-                )
+                if (showPlaylistScrollBar) {
+                    ExpressiveScrollBar(
+                        listState = listState,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(
+                                top = 12.dp,
+                                bottom = bottomBarHeightDp +
+                                    (if (playerStableState.currentSong != null) MiniPlayerHeight else 0.dp) + 16.dp
+                            )
+                    )
+                }
             }
         }
     }
