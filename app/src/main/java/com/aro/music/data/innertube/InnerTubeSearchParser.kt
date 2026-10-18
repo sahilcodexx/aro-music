@@ -456,15 +456,24 @@ fun containsItemRenderer(root: JsonObject?): Boolean =
     private val BYLINE_SEPARATOR = Regex("\\s*(?:•|\\|)\\s*|\\s+&\\s+|\\s+,\\s+")
 
     private fun findAlbum(node: JsonObject): String? {
-        // Third flex column on list rows: "Album • 2020".
-        flexColumnRuns(node, 2)
-            ?.joinToString("")
-            ?.split(BYLINE_SEPARATOR)
-            ?.map { it.trim() }
-            ?.firstOrNull { it.isNotBlank() && !it.matches(YEAR_REGEX) }
-            ?.let { return it }
-
-        return cleanedSubtitleRuns(node).getOrNull(1)
+        // Subtitle position is not an album field: it can contain view/play counts.
+        // Use the display text of an actual album browse link, including byline runs.
+        val albumId = findBrowseId(node, "MUSIC_PAGE_TYPE_ALBUM") ?: return null
+        fun linkedTitle(element: JsonElement, depth: Int): String? {
+            if (depth > MAX_DEPTH) return null
+            when (element) {
+                is JsonObject -> {
+                    if (element.browseEndpoint() == albumId) {
+                        element.str("text")?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+                    }
+                    for (child in element.values) linkedTitle(child, depth + 1)?.let { return it }
+                }
+                is JsonArray -> for (child in element) linkedTitle(child, depth + 1)?.let { return it }
+                else -> Unit
+            }
+            return null
+        }
+        return linkedTitle(node, 0)
     }
 
     private fun findDurationSeconds(node: JsonObject): Int? {
