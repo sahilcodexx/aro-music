@@ -32,6 +32,12 @@ Run Gradle operations sequentially in one checkout:
 ./gradlew :app:connectedDebugAndroidTest -Paro.enableAbiSplits=false --no-daemon
 ```
 
+Album query regression checks can also run without a device using the SQL extracted from `MusicDao.kt`:
+
+```sh
+python3 -m unittest discover -s scripts/tests -p 'test_library_album_queries.py'
+```
+
 On a computer with about 8 GB of RAM, a large Gradle heap and many R8 threads can exhaust memory while other applications are open. If Linux kills the Java process, try this bounded local release build:
 
 ```sh
