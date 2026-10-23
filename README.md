@@ -2,13 +2,16 @@
 
 Your library, your playlists, and a home feed shaped by what you listen to.
 
-Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.4 (code 21)** is the phone bug-fix update. Component licensing remains unresolved; broader device and provider verification is incomplete. See the [release build](https://github.com/sahilcodexx/aro-music/actions/workflows/phone-release.yml) and [validation record](RELEASE_CHECKLIST.md) for its status.
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.5 (code 25)** adds background audio downloads and independent saved albums and artists. Component licensing remains unresolved; broader device and provider verification is incomplete. See the [release build](https://github.com/sahilcodexx/aro-music/actions/workflows/phone-release.yml) and [validation record](RELEASE_CHECKLIST.md) for its status.
 
-1.0.4 fixes playlist loading and scrollbar placement, groups saved tracks by actual release, and hides invalid or missing album entries without removing songs. It retains 1.0.3’s saved card/list layouts, editable artwork, explicit phone-music import, offline library behavior, illustrated setup, and eight Appearance → App icon choices. AI provider integration and generation remain removed.
+Download individual songs or entire albums/playlists into Music/Aro. Library → Downloads shows progress, retry/cancel controls, an All songs card, and full offline album/playlist pages. Saved albums and artists are independent of song likes. This update also fixes manual playlist selection, adds persistent Spotify playlist hiding with restore, distinct photo genre cards, and joined player actions. Spotify itself stays unchanged when a playlist is hidden in Aro.
+
+The maintainer tested the dev3 preview and reported all features working. Development APKs use `com.aro.music.debug` and keep separate app data; release APKs update `com.aro.music` with the existing production key. AI provider integration and generation remain removed.
 
 ## What you can do
 
-- Play local music and organize songs, artists, albums, favorites, and playlists. Albums group saved tracks by their actual release; missing or invalid album metadata is hidden from the Albums tab.
+- Play local music and organize songs, favorites, and playlists. Save actual albums and artists from their detail pages independently of song likes.
+- Download supported songs or full albums/playlists into Music/Aro and play completed files from Library → Downloads.
 - Search YouTube Music, explore artist collections, and start related-song queues.
 - Connect Spotify to browse account playlists and liked songs. Spotify metadata is matched to YouTube for audio playback.
 - Import YouTube and Spotify playlists as local copies. Remote edits are not automatically synchronized back.
@@ -21,9 +24,9 @@ Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Teleg
 
 Aro requires **Android 11 or newer**. The phone build targets Android 16.
 
-Download [**Aro-1.0.4-universal.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.4/Aro-1.0.4-universal.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
+Download [**Aro-1.0.5-universal.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.5/Aro-1.0.5-universal.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
 
-[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.4) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. Choose the universal APK when unsure, or the [smaller ARM64 APK](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.4/Aro-1.0.4-arm64-v8a.apk) for an ARM64 phone. Install one APK; an AAB cannot be installed directly. Only install packages from a trusted source.
+[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.5) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. Choose the universal APK when unsure, or the [smaller ARM64 APK](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.5/Aro-1.0.5-arm64-v8a.apk) for an ARM64 phone. Install one APK; an AAB cannot be installed directly. Only install packages from a trusted source.
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 

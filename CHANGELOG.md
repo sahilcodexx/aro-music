@@ -1,5 +1,30 @@
 # Aro changelog
 
+## 1.0.5 — 2026-10-23
+
+Code 25. The maintainer tested the dev3 preview on their phone and reported all features working. Signed production validation is recorded in RELEASE_CHECKLIST.md.
+
+- Downloads now opens an All songs card for all completed Aro downloads. Album/playlist cards open full offline pages with the existing artwork header, play/shuffle, ordered local tracks, and Download remaining; loose track rows and the details sheet are replaced.
+
+- Start manual playlist song selection on All sources; apply the same local/cloud classification during search and liked filtering.
+- Make Library Albums and Artists explicit saved collections. Save or remove them from their detail pages independently of song likes and playlists. Existing liked songs, playlists, and cached metadata are retained.
+- Hide deleted Spotify playlists only in Aro and persist that choice across reloads. Library → Playlists can restore hidden entries; Spotify itself is unchanged.
+- Replace default genre icons with bundled music photos in rounded, petal, and scalloped shapes. Keep custom icon overrides and existing theme/type settings.
+- Join share, download, and lyrics into one player action group with rounded outer ends. Keep the existing queue/output controls.
+- Download YouTube audio, including Spotify-matched tracks, through Aro’s resolver and background workers into system Music/Aro. Library Downloads shows only completed files created by this app, with progress, cancel, and retry controls. Files from other apps remain local music. Downloads use AAC/M4A and Opus/Ogg audio, validate size/duration, and remove failed partial transfers. Interrupted transfers restart rather than resume.
+
+- Correct Android audio-library registration: save Opus in Ogg (`.opus`, `audio/ogg`), preserve the original encoded samples, and handle negative initial Opus timestamps.
+- Keep album/playlist download cards, original track order, completion counts, offline cover copies, and local-only collection playback in Downloads. Missing tracks can be retried from each card.
+- Fold the old Folders/Artists alias into the real Artists tab while preserving the saved tab order.
+
+Unknown artist song totals show Artist instead of an incorrect zero/negative count.
+
+Add Download all to album and playlist details, including continuation pages. Queue submission survives page navigation, skips duplicates and existing downloads, and limits active transfers to two. Downloads shows progress cards with percentage, transferred size, queue/resolve/finalize states, cancel, and retry.
+
+Downloads use a separate resolution cache and finalize streamed audio into a standalone container without re-encoding. Failures now distinguish unavailable audio, interrupted transfer, file finalization, and storage.
+
+This is a local development preview, not a published release. Live account and device coverage is recorded in `RELEASE_CHECKLIST.md`.
+
 ## 1.0.4 — 2026-10-18
 
 - Playlist details move loading feedback below the songs and show the scrollbar after the cover collapses, with reserved space beside the list.

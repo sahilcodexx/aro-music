@@ -88,3 +88,17 @@ Read the [licensing status](LICENSE_STATUS.md) and [release checklist](RELEASE_C
 - KSP/build cache corruption: stop overlapping Gradle processes before rebuilding.
 - No artifacts: inspect the earlier failed setup/build step first.
 - Provider failures: distinguish network, session expiry, region restrictions, and catalog parsing; sanitize logs.
+
+## Saved collections and audio downloads
+
+Album/artist membership and Spotify playlist hiding are stored separately from song likes in the existing Preferences DataStore. Library collection flows read those explicit saves; Room’s catalog parents remain metadata, not membership. No Room schema change or destructive migration is introduced.
+
+Audio downloads reuse the InnerTube resolver and Media3 HTTP/SABR transports in a Hilt WorkManager worker. Completed files are published through MediaStore into Music/Aro and indexed as local audio. A separate record of created MediaStore IDs, checked against the owning package, drives Library Downloads. Existing local music is not automatically marked downloaded. MediaStore IDs keep local copies out of the remote album track list. Supported sources are YouTube and Spotify’s YouTube matches; other cloud providers are not downloaded by this preview. Work retries restart the transfer instead of resuming bytes.
+
+Host checks include `SavedLibraryRepositoryTest`, `SpotifyPlaylistImportTest`, and `AudioDownloadsTest`. Verify real transfer, cancellation, process death, external file deletion, file visibility, and offline decoding/position advancement on a device before publishing this feature. Do not install a production package over the maintainer’s regular app to test the preview.
+
+Download extraction disables HLS manifests and uses a separate SABR cache from playback. Compressed samples pass through MediaExtractor/MediaMuxer to finalize M4A/Ogg-Opus containers; no audio effects or encoding are applied. `NativePlaybackCompatibilityTest.fragmentedDownloadFinalizesWithoutChangingAudioSamples` compares compressed sample digests and checks real decoding/position with synthetic audio.
+
+`aro_download_collections_v1` stores album/playlist identity, title, ordered source IDs, and cover references independently of saved-library membership. Cover copies live under app-private `download-covers`. Downloads landing contains an All songs card plus collection cards; `downloaded_collection/{collectionId}` opens a full offline page using the shared playlist artwork header. All songs includes standalone and collection files, while collection playback resolves only owned completed download IDs in source order; missing/deleted copies remain partial. Legacy `FOLDERS`/`ARTISTS` tab keys normalize to `ARTIST` before deduplication.
+
+Android rejects `audio/webm` in the audio media collection on the tested phone. Opus is remuxed into Ogg and registered as `audio/ogg` with an `.opus` extension; AAC remains `.m4a`. Negative Opus preroll timestamps are normalized instead of ending extraction early.
