@@ -55,6 +55,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import com.aro.music.data.model.StorageFilter
+import com.aro.music.presentation.viewmodel.isLocalLibrarySong
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -132,11 +133,6 @@ fun SongPickerContent(
     val hasCloudSongs by playerViewModel.hasCloudSongsFlow.collectAsStateWithLifecycle()
     val showCloudFilter = hasCloudSongs != false
 
-    LaunchedEffect(hasCloudSongs, storageFilter) {
-        if (hasCloudSongs == false && storageFilter != StorageFilter.OFFLINE) {
-            playerViewModel.setPlaylistPickerStorageFilter(StorageFilter.OFFLINE)
-        }
-    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -166,6 +162,7 @@ fun SongPickerContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val tabs = listOf(
+                        StorageFilter.ALL to R.string.song_picker_all_sources,
                         StorageFilter.OFFLINE to R.string.library_storage_filter_offline,
                         StorageFilter.ONLINE to R.string.library_storage_filter_online
                     )
@@ -200,16 +197,19 @@ fun SongPickerContent(
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp)
                                         )
-                                    } else {
+                                    } else if (filter == StorageFilter.ONLINE) {
                                         Icon(
                                             imageVector = Icons.Rounded.Cloud,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
-                                    Spacer(Modifier.width(8.dp))
+                                    if (filter == StorageFilter.ALL) Icon(painterResource(R.drawable.rounded_library_music_24), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = stringResource(labelRes),
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                         fontFamily = GoogleSansRounded,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(end = 4.dp)
@@ -300,15 +300,8 @@ fun SongPickerSelectionPane(
         playerViewModel.searchSongs(searchQuery)
             .map { songs ->
                 when (storageFilter) {
-                    StorageFilter.OFFLINE -> songs.filter { s ->
-                        s.telegramFileId == null && s.neteaseId == null && s.gdriveFileId == null &&
-                                s.qqMusicMid == null && s.navidromeId == null && s.jellyfinId == null
-                    }
-
-                    StorageFilter.ONLINE -> songs.filter { s ->
-                        s.telegramFileId != null || s.neteaseId != null || s.gdriveFileId != null ||
-                                s.qqMusicMid != null || s.navidromeId != null || s.jellyfinId != null
-                    }
+                    StorageFilter.OFFLINE -> songs.filter { it.isLocalLibrarySong() }
+                    StorageFilter.ONLINE -> songs.filterNot { it.isLocalLibrarySong() }
 
                     else -> songs
                 }
@@ -473,6 +466,13 @@ fun SongPickerPagingList(
                         Text(stringResource(R.string.library_retry), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
+            }
+        }
+
+        pagedSongs.itemCount == 0 -> {
+            Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.song_picker_no_matching_songs), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
