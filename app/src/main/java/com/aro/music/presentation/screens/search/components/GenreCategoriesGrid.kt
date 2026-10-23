@@ -225,25 +225,24 @@ private fun GenreCard(
                 )
             }
 
-            // Imagen del género en esquina inferior derecha
-            Box(
-                modifier = Modifier
-                    .size(90.dp) 
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 16.dp, y = 16.dp) 
-            ) {
-                SmartImage(
-                    model = GenreIconProvider.getGenreImageResource(genre.name, customIcons),
-                    contentDescription = "Genre illustration",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(0.55f),
-                    colorFilter = ColorFilter.tint(onBackgroundColor),
-                    contentScale = ContentScale.Crop
-                )
+            val photo = genrePhoto(genre.name)
+            val photoShape = remember(genre.id) {
+                when (genre.id.hashCode().and(Int.MAX_VALUE) % 3) {
+                    0 -> com.aro.music.utils.shapes.RoundedStarShape(8, 0.15)
+                    1 -> RoundedCornerShape(topStartPercent = 50, topEndPercent = 12, bottomEndPercent = 50, bottomStartPercent = 12)
+                    else -> androidx.compose.foundation.shape.CircleShape
+                }
             }
+            SmartImage(
+                model = customIcons[genre.name] ?: "file:///android_asset/genre/$photo.webp",
+                colorFilter = if (customIcons.containsKey(genre.name)) ColorFilter.tint(onBackgroundColor) else null,
+                contentDescription = null,
+                modifier = Modifier.size(if (isGridView) 96.dp else 80.dp)
+                    .align(Alignment.BottomEnd).padding(6.dp)
+                    .clip(photoShape),
+                contentScale = ContentScale.Crop
+            )
 
-            // Nombre del género en esquina superior izquierda
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
