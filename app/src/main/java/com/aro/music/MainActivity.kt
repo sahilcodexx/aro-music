@@ -594,6 +594,7 @@ class MainActivity : ComponentActivity() {
                 Screen.Settings.route,
                 Screen.Accounts.route,
                 Screen.PlaylistDetail.route,
+                Screen.DownloadedCollection.route,
                 Screen.DailyMixScreen.route,
                 Screen.RecentlyPlayed.route,
                 Screen.GenreDetail.route,

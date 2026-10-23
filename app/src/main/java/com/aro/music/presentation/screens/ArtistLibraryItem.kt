@@ -59,7 +59,7 @@ private fun ArtistLabels(artist: Artist, isLoading: Boolean) {
         } else {
             Text(artist.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(formatSongCount(artist.songCount), style = MaterialTheme.typography.bodySmall,
+            Text(if (artist.songCount > 0) formatSongCount(artist.songCount) else androidx.compose.ui.res.stringResource(R.string.catalog_artist_label), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }

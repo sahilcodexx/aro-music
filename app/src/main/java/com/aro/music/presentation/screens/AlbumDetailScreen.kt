@@ -117,6 +117,8 @@ fun AlbumDetailScreen(
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val savedLibrary: com.aro.music.presentation.viewmodel.SavedLibraryViewModel = hiltViewModel()
+    val savedCollections by savedLibrary.albums.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
@@ -309,6 +311,19 @@ fun AlbumDetailScreen(
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        item(key = "save_album") {
+                            com.aro.music.presentation.components.SavedCollectionButton(
+                                saved = savedCollections.any { it.id == album.id },
+                                onClick = { savedLibrary.toggleAlbum(album) }
+                            )
+                        }
+                        item(key = "download_album") {
+                            com.aro.music.presentation.components.DownloadCollectionButton(songs = songs,
+                                collection = com.aro.music.data.download.DownloadCollection(
+                                    id = "album:${album.id}", title = album.title,
+                                    kind = com.aro.music.data.download.DownloadCollectionKind.ALBUM,
+                                    songIds = songs.map { it.id }, artwork = album.albumArtUriString))
+                        }
                         songsByDisc.forEach { (discNumber, discSongs) ->
                             if (songsByDisc.size > 1) {
                                 item(key = "disc_header_$discNumber") {

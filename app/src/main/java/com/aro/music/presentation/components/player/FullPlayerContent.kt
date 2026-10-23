@@ -86,6 +86,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -102,6 +104,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material3.Slider
@@ -1532,76 +1535,43 @@ private fun SongMetadataDisplaySection(
             }
         }
 
-        FilledIconButton(
-            onClick = { shareSong = song }, enabled = song != null,
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor)
-        ) {
-            Icon(androidx.compose.material.icons.Icons.Rounded.Share, contentDescription = stringResource(R.string.share_song_image))
-        }
-
-        if (showQueueButton) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(height = 42.dp, width = 50.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 50.dp,
-                                topEnd = 6.dp,
-                                bottomStart = 50.dp,
-                                bottomEnd = 6.dp
-                            )
-                        )
-                        .background(chipColor)
-                        .clickable { onClickLyrics() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.rounded_lyrics_24),
-                        contentDescription = stringResource(R.string.presentation_batch_g_player_cd_lyrics),
-                        tint = chipContentColor
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(height = 42.dp, width = 50.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 6.dp,
-                                topEnd = 50.dp,
-                                bottomStart = 6.dp,
-                                bottomEnd = 50.dp
-                            )
-                        )
-                        .background(chipColor)
-                        .clickable { onClickQueue() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.rounded_queue_music_24),
-                        contentDescription = stringResource(R.string.presentation_batch_g_player_cd_queue),
-                        tint = chipContentColor
-                    )
-                }
-            }
-        } else {
-            // Portrait Mode: Just the Lyrics button (Queue is in TopBar)
+        val downloads: com.aro.music.presentation.viewmodel.AudioDownloadsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+        val downloaded by downloads.records.collectAsStateWithLifecycle()
+        val tasks by downloads.work.collectAsStateWithLifecycle()
+        val context = androidx.compose.ui.platform.LocalContext.current
+        LaunchedEffect(downloads) { downloads.message.collect { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show() } }
+        val busy = tasks.any { !it.state.isFinished && "audio-song:${song?.id}" in it.tags }
+        val saved = song?.id in downloaded.keys || song?.id in downloaded.values
+        val supported = song?.let { com.aro.music.data.innertube.InnerTubeIds.videoIdFromContentUri(it.contentUriString) != null } == true
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
             FilledIconButton(
-                modifier = Modifier
-                    .size(width = 48.dp, height = 48.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = chipColor,
-                    contentColor = chipContentColor
-                ),
-                onClick = onClickLyrics,
+                onClick = { shareSong = song }, enabled = song != null,
+                modifier = Modifier.size(width = 48.dp, height = 48.dp),
+                shape = RoundedCornerShape(topStart = 50.dp, bottomStart = 50.dp, topEnd = 6.dp, bottomEnd = 6.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor)
+            ) { Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share_song_image)) }
+            FilledIconButton(
+                onClick = { song?.let(downloads::download) }, enabled = supported && !busy,
+                modifier = Modifier.size(width = 48.dp, height = 48.dp),
+                shape = RoundedCornerShape(6.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor,
+                    disabledContainerColor = chipColor, disabledContentColor = chipContentColor.copy(alpha = 0.65f))
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.rounded_lyrics_24),
-                    contentDescription = stringResource(R.string.presentation_batch_g_player_cd_lyrics)
-                )
+                if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.size(20.dp).semantics { contentDescription = context.getString(R.string.audio_download_running) }, color = chipContentColor, strokeWidth = 2.dp)
+                else Icon(painterResource(if (saved) R.drawable.rounded_check_circle_24 else R.drawable.aro_download_24),
+                    contentDescription = stringResource(if (saved) R.string.audio_download_exists else R.string.audio_download_action))
+            }
+            FilledIconButton(
+                onClick = onClickLyrics,
+                modifier = Modifier.size(width = 48.dp, height = 48.dp),
+                shape = RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp, topEnd = 50.dp, bottomEnd = 50.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor)
+            ) { Icon(painterResource(R.drawable.rounded_lyrics_24), contentDescription = stringResource(R.string.presentation_batch_g_player_cd_lyrics)) }
+        }
+        if (showQueueButton) {
+            FilledIconButton(onClick = onClickQueue,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor)) {
+                Icon(painterResource(R.drawable.rounded_queue_music_24), contentDescription = stringResource(R.string.presentation_batch_g_player_cd_queue))
             }
         }
     }

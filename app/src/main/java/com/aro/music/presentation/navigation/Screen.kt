@@ -16,6 +16,9 @@ sealed class Screen(val route: String) {
     object PaletteStyle : Screen("palette_style_settings")
     object Experimental : Screen("experimental_settings")
     object NavBarCrRad : Screen("nav_bar_corner_radius")
+    object DownloadedCollection : Screen("downloaded_collection/{collectionId}") {
+        fun createRoute(id: String) = "downloaded_collection/${android.net.Uri.encode(id)}"
+    }
     object PlaylistDetail : Screen("playlist_detail/{playlistId}") {
         fun createRoute(playlistId: String) = "playlist_detail/$playlistId"
     }

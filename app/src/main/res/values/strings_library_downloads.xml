@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">All</string>
+    <string name="collection_save">Save to library</string>
+    <string name="collection_saved">Saved · Remove</string>
+    <string name="restore_spotify_playlists">Restore hidden Spotify playlists</string>
+    <string name="audio_downloads">Downloads</string>
+    <string name="audio_download_location">Saved by Aro in Music/Aro</string>
+    <string name="audio_download_empty">Download a song from the player to listen offline.</string>
+    <string name="audio_download_running">Downloading audio…</string>
+    <string name="audio_download_queued">Download queued</string>
+    <string name="audio_download_exists">Already saved on this device</string>
+    <string name="audio_download_unavailable">Could not start this download. Please try again.</string>
+    <string name="audio_download_retry">Download failed · Tap to retry</string>
+    <string name="audio_download_action">Download song</string>
+    <string name="saved_albums_empty_title">Your saved albums</string>
+    <string name="saved_albums_empty_body">Open an album from Search or an artist page, then tap Save to library.</string>
+    <string name="saved_artists_empty_title">Your saved artists</string>
+    <string name="saved_artists_empty_body">Open an artist page and tap Save to library. Liking a song does not save its artist.</string>
+    <string name="audio_download_waiting">Queued · Waiting to download</string>
+    <string name="hide_spotify_playlist_body">Hide this playlist in Aro? Your Spotify playlist stays unchanged. You can restore it from Library → Playlists.</string>
+    <string name="song_picker_no_matching_songs">No saved songs match these filters. Try All, turn off Liked, or import music.</string>
+    <string name="audio_download_resolve_failed">Audio unavailable · Tap to retry</string>
+    <string name="audio_download_transfer_failed">Transfer interrupted · Tap to retry</string>
+    <string name="audio_download_finalize_failed">Could not finish the audio file · Tap to retry</string>
+    <string name="audio_download_save_failed">Could not save the audio file · Tap to retry</string>
+    <string name="audio_download_all">Download all</string>
+    <string name="audio_download_queueing">Adding to Downloads…</string>
+    <string name="audio_download_batch_result">%1$d queued · %2$d skipped · %3$d could not be queued</string>
+    <string name="audio_download_summary">%1$d active · %2$d saved</string>
+    <string name="audio_download_resolving">Finding downloadable audio…</string>
+    <string name="audio_download_finishing">Finishing audio file…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Retry</string>
+    <string name="audio_download_collections">Your downloads</string>
+    <string name="audio_download_collection_count">%1$d of %2$d songs downloaded</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Download remaining</string>
+    <string name="audio_download_collection_empty">Downloads will appear here as they finish.</string>
+    <string name="audio_download_all_songs">All songs</string>
+    <string name="audio_download_saved_count">%1$d songs downloaded</string>
+</resources>

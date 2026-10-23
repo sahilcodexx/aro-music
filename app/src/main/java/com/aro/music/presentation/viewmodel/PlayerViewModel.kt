@@ -304,7 +304,7 @@ class PlayerViewModel @Inject constructor(
     }
 
 
-    private val _playlistPickerStorageFilter = MutableStateFlow(com.aro.music.data.model.StorageFilter.OFFLINE)
+    private val _playlistPickerStorageFilter = MutableStateFlow(com.aro.music.data.model.StorageFilter.ALL)
     val playlistPickerStorageFilter: StateFlow<com.aro.music.data.model.StorageFilter> = _playlistPickerStorageFilter.asStateFlow()
 
     /**
@@ -1025,15 +1025,15 @@ class PlayerViewModel @Inject constructor(
         .map { orderJson ->
             if (orderJson != null) {
                 try {
-                    Json.decodeFromString<List<String>>(orderJson)
+                    com.aro.music.data.model.normalizeLibraryTabOrder(Json.decodeFromString<List<String>>(orderJson))
                 } catch (e: Exception) {
-                    listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
+                    listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "LIKED", "DOWNLOADS")
                 }
             } else {
-                listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
+                listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "LIKED", "DOWNLOADS")
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED"))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "LIKED", "DOWNLOADS"))
 
     private val _loadedTabs = MutableStateFlow(emptySet<String>())
     private var lastBlockedDirectories: Set<String>? = null
@@ -1055,6 +1055,7 @@ class PlayerViewModel @Inject constructor(
                     LibraryTabId.PLAYLISTS -> SortOption.PLAYLISTS
                     LibraryTabId.FOLDERS -> SortOption.FOLDERS
                     LibraryTabId.LIKED -> SortOption.LIKED
+                    LibraryTabId.DOWNLOADS -> SortOption.SONGS
                 }
             } finally {
                 Trace.endSection()

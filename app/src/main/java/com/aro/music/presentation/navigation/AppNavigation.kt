@@ -357,6 +357,18 @@ fun AppNavigation(
                 }
             }
             composable(
+                route = Screen.DownloadedCollection.route,
+                arguments = listOf(navArgument("collectionId") { type = NavType.StringType }),
+                enterTransition = { enterTransition() }, exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() }, popExitTransition = { popExitTransition() },
+            ) { entry ->
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    com.aro.music.presentation.screens.DownloadedCollectionScreen(
+                        collectionId = entry.arguments?.getString("collectionId").orEmpty(),
+                        playerViewModel = playerViewModel, onBack = { navController.popBackStack() })
+                }
+            }
+            composable(
                 route = Screen.PlaylistDetail.route,
                 arguments = listOf(navArgument("playlistId") { type = NavType.StringType }),
                 enterTransition = { enterTransition() },

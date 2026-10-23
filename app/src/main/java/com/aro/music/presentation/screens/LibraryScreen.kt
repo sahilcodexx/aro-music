@@ -688,7 +688,7 @@ fun LibraryScreen(
                 LibraryTabId.SONGS,
                 LibraryTabId.LIKED -> isSelectionMode
                 LibraryTabId.FOLDERS,
-                LibraryTabId.ARTISTS -> false
+                LibraryTabId.ARTISTS, LibraryTabId.DOWNLOADS -> false
             }
         }
     }
@@ -717,7 +717,7 @@ fun LibraryScreen(
                     }
 
                     LibraryTabId.FOLDERS,
-                    LibraryTabId.ARTISTS -> Unit
+                    LibraryTabId.ARTISTS, LibraryTabId.DOWNLOADS -> Unit
                 }
             }
 
@@ -1113,6 +1113,7 @@ fun LibraryScreen(
                             LibraryTabId.PLAYLISTS -> playlistUiState.currentPlaylistSortOption
                             LibraryTabId.LIKED -> playerUiState.currentFavoriteSortOption
                             LibraryTabId.FOLDERS -> playerUiState.currentArtistSortOption
+                            LibraryTabId.DOWNLOADS -> null
                         }
 
                         val showLocateButton = when (currentTabId) {
@@ -1135,12 +1136,13 @@ fun LibraryScreen(
                                     LibraryTabId.FOLDERS -> playerViewModel.sortArtists(option)
                                     LibraryTabId.PLAYLISTS -> playlistViewModel.sortPlaylists(option)
                                     LibraryTabId.LIKED -> playerViewModel.sortFavoriteSongs(option)
+                                    LibraryTabId.DOWNLOADS -> Unit
                                 }
                             }
                         }
 
                         // Switch between normal action row and selection action row
-                        AnimatedContent(
+                        if (currentTabId != LibraryTabId.DOWNLOADS) AnimatedContent(
                             targetState = isSelectionMode || isPlaylistSelectionMode || isAlbumSelectionMode,
                             label = "ActionRowModeSwitch",
                             transitionSpec = {
@@ -1251,8 +1253,6 @@ fun LibraryScreen(
                                     onNavigateBack = { playerViewModel.navigateBackFolder() },
                                     isShuffleEnabled = isShuffleEnabled,
                                     showStorageFilterButton = online && (currentTabId == LibraryTabId.SONGS ||
-                                            currentTabId == LibraryTabId.ALBUMS ||
-                                            currentTabId == LibraryTabId.ARTISTS ||
                                             currentTabId == LibraryTabId.FOLDERS ||
                                             currentTabId == LibraryTabId.LIKED),
                                     currentStorageFilter = playerUiState.currentStorageFilter,
@@ -1564,7 +1564,13 @@ fun LibraryScreen(
                                     }
 
                                     LibraryTabId.PLAYLISTS -> {
-                                        LibraryPlaylistsTab(
+                                        Column {
+                                            val saved: com.aro.music.presentation.viewmodel.SavedLibraryViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                                            val hidden by saved.hiddenSpotifyPlaylists.collectAsStateWithLifecycle()
+                                            if (hidden.isNotEmpty()) TextButton(onClick = saved::restoreSpotifyPlaylists) {
+                                                Text(stringResource(R.string.restore_spotify_playlists))
+                                            }
+                                            LibraryPlaylistsTab(
                                             playlistUiState = playlistUiState,
                                             filteredPlaylists = visiblePlaylists,
                                             navController = navController,
@@ -1579,6 +1585,7 @@ fun LibraryScreen(
                                             onPlaylistSelectionToggle = onPlaylistSelectionToggle,
                                             onPlaylistOptionsClick = { showPlaylistMultiSelectionSheet = true }
                                         )
+                                        }
                                     }
 
                                     LibraryTabId.LIKED -> {
@@ -1626,6 +1633,9 @@ fun LibraryScreen(
                                         )
                                     }
 
+                                    LibraryTabId.DOWNLOADS -> LibraryDownloadsTab(playerViewModel, bottomBarHeightDp, onOpenCollection = { id ->
+                                        navController.navigateSafely(Screen.DownloadedCollection.createRoute(id))
+                                    })
                                     null -> Unit
                                 }
                             }
@@ -2690,6 +2700,7 @@ private fun LibraryTabId.iconRes(): Int = when (this) {
     LibraryTabId.ARTISTS -> R.drawable.rounded_artist_24
     LibraryTabId.PLAYLISTS -> R.drawable.rounded_playlist_play_24
     LibraryTabId.FOLDERS -> R.drawable.rounded_artist_24
+    LibraryTabId.DOWNLOADS -> R.drawable.aro_download_24
     LibraryTabId.LIKED -> R.drawable.round_favorite_24
 }
 

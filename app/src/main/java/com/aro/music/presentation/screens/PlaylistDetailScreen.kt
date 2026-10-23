@@ -189,7 +189,7 @@ fun PlaylistDetailScreen(
     val setDefaultTransitionLabel = stringResource(R.string.presentation_batch_b_set_default_transition)
     val exportPlaylistLabel = stringResource(R.string.presentation_batch_b_export_playlist)
     val deletePlaylistConfirmTitle = stringResource(R.string.presentation_batch_b_delete_playlist_confirm_title)
-    val deletePlaylistConfirmBody = stringResource(R.string.presentation_batch_b_delete_playlist_confirm_body)
+    val deletePlaylistConfirmBody = stringResource(if (playlistId.startsWith("spotify:")) R.string.hide_spotify_playlist_body else R.string.presentation_batch_b_delete_playlist_confirm_body)
     val sortSheetTitle = stringResource(R.string.presentation_batch_b_sort_songs)
     val toastAddedToQueue = stringResource(R.string.toast_added_to_queue)
     val toastPlayingNext = stringResource(R.string.toast_playing_next)
@@ -428,6 +428,15 @@ fun PlaylistDetailScreen(
 
                             }
 
+                            com.aro.music.presentation.components.DownloadCollectionButton(
+                                songs = songsInPlaylist,
+                                collection = com.aro.music.data.download.DownloadCollection(
+                                    id = "playlist:${currentPlaylist.id}", title = currentPlaylist.name,
+                                    kind = com.aro.music.data.download.DownloadCollectionKind.PLAYLIST,
+                                    songIds = songsInPlaylist.map { it.id }, artwork = headerArt),
+                                enabled = !uiState.isLoading,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                            )
                             if (!isFolderPlaylist) {
                                 Row(
                                     modifier = Modifier
@@ -1078,14 +1087,14 @@ fun RenamePlaylistDialog(currentName: String, onDismiss: () -> Unit, onRename: (
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun PlaylistArtworkHeader(
+internal fun PlaylistArtworkHeader(
     name: String,
     subtitle: String,
     artwork: String?,
     headerHeight: Dp,
     collapseFraction: Float,
     onBack: () -> Unit,
-    onSort: () -> Unit,
+    onSort: (() -> Unit)?,
     onOptions: (() -> Unit)?,
     onShuffle: () -> Unit,
     shuffleEnabled: Boolean,
@@ -1127,7 +1136,7 @@ private fun PlaylistArtworkHeader(
             subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
             fadeSubtitleOnCollapse = false, syncStatusBarWithContainer = false,
             actions = {
-                FilledTonalIconButton(onClick = onSort) {
+                if (onSort != null) FilledTonalIconButton(onClick = onSort) {
                     Icon(Icons.AutoMirrored.Rounded.Sort, sortLabel)
                 }
                 if (onOptions != null) FilledTonalIconButton(onClick = onOptions, modifier = Modifier.padding(end = 12.dp)) {

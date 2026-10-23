@@ -116,6 +116,8 @@ fun ArtistDetailScreen(
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val savedLibrary: com.aro.music.presentation.viewmodel.SavedLibraryViewModel = hiltViewModel()
+    val savedCollections by savedLibrary.artists.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
 
     // Optimization: Defer heavy list rendering until navigation transition settles
@@ -308,6 +310,12 @@ fun ArtistDetailScreen(
                             bottom = MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp
                         )
                     ) {
+                        item(key = "save_artist") {
+                            com.aro.music.presentation.components.SavedCollectionButton(
+                                saved = savedCollections.any { it.id == artist.id },
+                                onClick = { savedLibrary.toggleArtist(artist) }
+                            )
+                        }
                         if (InnerTubeIds.isArtistId(artist.id)) {
                             uiState.catalog?.let { page ->
                                 item(key = "artist_audience") {
@@ -878,7 +886,7 @@ private fun SharedArtistTopBarProbe(
 
         CollapsibleCommonTopBar(
             title = artist.name,
-            subtitle = formatSongCount(songsCount),
+            subtitle = if (songsCount > 0) formatSongCount(songsCount) else stringResource(R.string.catalog_artist_label),
             collapseFraction = collapseFraction,
             headerHeight = headerHeight,
             onBackClick = onBackPressed,
@@ -1161,7 +1169,7 @@ private fun CustomCollapsingTopBar(
                         )
 
                         Text(
-                            text = formatSongCount(songsCount),
+                            text = if (songsCount > 0) formatSongCount(songsCount) else stringResource(R.string.catalog_artist_label),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
