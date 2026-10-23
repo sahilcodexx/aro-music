@@ -30,10 +30,11 @@ class SpotifyRepository @Inject constructor(
     private val database: AroDatabase,
     val mapper: SpotifyYouTubeMapper,
     private val registry: com.aro.music.data.innertube.InnerTubeBrowseRegistry,
+    private val savedLibrary: com.aro.music.data.preferences.SavedLibraryRepository,
 ) {
     private val playlistCache by lazy { SpotifyPlaylistCache(context) }
     private val playlistLocks = Array(32) { kotlinx.coroutines.sync.Mutex() }
-    val libraryPlaylistsFlow = session.isLoggedInFlow.mapLatest { connected ->
+    private val accountPlaylistsFlow = session.isLoggedInFlow.mapLatest { connected ->
         if (!connected) return@mapLatest emptyList<com.aro.music.data.model.Playlist>()
         catalog {
             val playlists = mutableListOf<com.aro.music.data.model.Playlist>()
@@ -57,6 +58,11 @@ class SpotifyRepository @Inject constructor(
             }
         }
     }.flowOn(kotlinx.coroutines.Dispatchers.IO)
+
+    val libraryPlaylistsFlow = kotlinx.coroutines.flow.combine(accountPlaylistsFlow, savedLibrary.hiddenSpotifyPlaylists) { playlists, hidden ->
+        playlists.filterNot { it.id in hidden }
+    }
+    suspend fun hidePlaylist(id: String) = savedLibrary.hideSpotifyPlaylist(id)
 
     private suspend fun playlistCount(id: String): Int? = try {
         if (id == "spotify:liked") Spotify.likedSongs(1, 0).getOrThrow().total
@@ -105,7 +111,16 @@ class SpotifyRepository @Inject constructor(
         if (!session.ensureAuthenticated()) return@safely emptyList()
         val album = Spotify.album(browseId.removePrefix("spotify:")).getOrThrow()
         val parent = com.aro.music.spotify.models.SpotifySimpleAlbum(id = album.id, name = album.name, images = album.images)
-        resolve(album.tracks?.items.orEmpty().map { it.copy(album = parent) })
+        val tracks = album.tracks?.items.orEmpty().toMutableList()
+        var offset = album.tracks?.rawCount ?: tracks.size
+        while (offset < album.totalTracks) {
+            val page = Spotify.album(album.id, offset).getOrThrow().tracks ?: error("Album page unavailable")
+            val count = page.rawCount ?: page.items.size
+            check(count > 0) { "Album page made no progress" }
+            tracks += page.items
+            offset += count
+        }
+        resolve(tracks.distinctBy { it.id }.map { it.copy(album = parent) })
     }
 
     suspend fun artistSongs(browseId: String): List<Song> = safely {

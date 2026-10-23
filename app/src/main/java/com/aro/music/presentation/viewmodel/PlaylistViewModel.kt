@@ -595,7 +595,8 @@ class PlaylistViewModel @Inject constructor(
     fun deletePlaylist(playlistId: String) {
         if (isFolderPlaylistId(playlistId)) return
         viewModelScope.launch {
-            playlistPreferencesRepository.deletePlaylist(playlistId)
+            if (playlistId.startsWith("spotify:")) spotifyRepository.hidePlaylist(playlistId)
+            else playlistPreferencesRepository.deletePlaylist(playlistId)
         }
     }
 
@@ -1059,7 +1060,8 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             playlistIds.forEach { playlistId ->
                 if (!isFolderPlaylistId(playlistId)) {
-                    playlistPreferencesRepository.deletePlaylist(playlistId)
+                    if (playlistId.startsWith("spotify:")) spotifyRepository.hidePlaylist(playlistId)
+            else playlistPreferencesRepository.deletePlaylist(playlistId)
                 }
             }
         }

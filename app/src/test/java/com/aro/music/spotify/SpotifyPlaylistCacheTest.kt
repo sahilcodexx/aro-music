@@ -28,7 +28,7 @@ class SpotifyPlaylistCacheTest {
         coEvery { session.ensureAuthenticated() } returns true
         val mapper = customMapper ?: mockk<SpotifyYouTubeMapper>()
         if (customMapper == null) coEvery { mapper.mapToYouTube(any()) } answers { Song.emptySong().copy(id = firstArg<SpotifyTrack>().id, duration = 123000, contentUriString = "innertube://video") }
-        return SpotifyRepository(context, session, mockk(), mapper, mockk())
+        return SpotifyRepository(context, session, mockk(), mapper, mockk(), mockk(relaxed = true))
     }
     private fun source() {
         mockkObject(Spotify)
