@@ -594,11 +594,8 @@ class MusicRepositoryImpl @Inject constructor(
     /**
      * Tracks of an album.
      *
-     * A YouTube Music album has no local rows until it is opened, so an empty
-     * Room result for an InnerTube id triggers a network fetch; the fetched
-     * tracks are then written to Room, which means the album also becomes a real
-     * row for the library tabs and for favourites. Local albums never enter this
-     * branch because their ids are positive MediaStore ids.
+     * Refresh remote releases before the first result: cached liked songs may
+     * represent only part of the album. Local albums read directly from Room.
      */
     override fun getSongsForAlbum(albumId: Long): Flow<List<Song>> {
         val fromRoom = musicDao.getSongsByAlbumId(albumId).map { entities ->
@@ -608,11 +605,8 @@ class MusicRepositoryImpl @Inject constructor(
             return fromRoom.flowOn(Dispatchers.IO)
         }
         return flow {
-            val cached = fromRoom.first()
-            if (cached.isNotEmpty()) {
-                emitAll(fromRoom)
-                return@flow
-            }
+            // A liked track is only a partial cache. Fetch before emitting so
+            // playback callers using first() receive the complete release.
             val fetched = fetchInnerTubeAlbumTracks(albumId)
             // Re-read from Room rather than emitting [fetched] directly, so the
             // favourite flag and any normalisation Room applies are consistent
@@ -636,15 +630,24 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             val header = musicDao.getAlbumById(albumId).first()?.toAlbum()
             val fetched = if (browseId.startsWith("spotify:")) streamingRepository.spotifyAlbumSongs(browseId) else innerTubeRepository.getAlbumTracks(browseId)
+            val cached = musicDao.getSongsByAlbumId(albumId).first().associateBy { it.id.toString() }
             val tracks = fetched.mapIndexed { index, song ->
-                song.copy(albumId = albumId, album = header?.title ?: song.album,
+                song.copy(albumId = albumId, album = song.album.ifBlank { header?.title.orEmpty() },
+                    isFavorite = cached[song.id]?.isFavorite ?: song.isFavorite,
                     trackNumber = song.trackNumber.takeIf { it > 0 } ?: index + 1)
             }
             if (tracks.isNotEmpty()) {
                 persistRemoteTracks(tracks)
+                musicDao.getAlbumById(albumId).first()?.let { cached ->
+                    musicDao.updateAlbums(listOf(cached.copy(
+                        title = tracks.first().album.ifBlank { cached.title },
+                        songCount = tracks.size,
+                    )))
+                }
             }
             tracks
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("MusicRepository", "Album track fetch failed for $albumId: ${e.message}")
             emptyList()
         }

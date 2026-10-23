@@ -26,6 +26,15 @@ class InnerTubePlaylistPaginationTest {
         assertEquals(listOf(2, 3), progress)
         coVerify(exactly = 1) { engine.browse("VLPLtest", null, "next") }
     }
+    @Test fun `album downloads follow continuation pages`() = runBlocking {
+        val engine = mockk<InnerTubeEngine>()
+        coEvery { engine.browse("MPRErelease", null, null) } returns page(listOf("first", "second"), "next")
+        coEvery { engine.browse("MPRErelease", null, "next") } returns page(listOf("second", "third"))
+        val result = InnerTubeRepository(engine, mockk(relaxed = true)).getAlbumTracks("MPRErelease")
+        assertEquals(listOf("first", "second", "third"), result.map { it.title })
+        assertTrue(result.all { it.albumId == InnerTubeIds.albumId("MPRErelease") })
+    }
+
     @Test fun `failed continuation does not return an incomplete saved copy`() = runBlocking {
         val engine = mockk<InnerTubeEngine>()
         coEvery { engine.browse("VLPLtest", null, null) } returns page(listOf("first"), "next")

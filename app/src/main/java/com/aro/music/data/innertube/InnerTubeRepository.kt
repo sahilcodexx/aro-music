@@ -243,9 +243,34 @@ class InnerTubeRepository @Inject constructor(
      * The album browse response embeds the full tracklist, so a single request
      * covers both the tracks and (via [getAlbum]) the metadata.
      */
-    suspend fun getAlbumTracks(browseId: String, limit: Int = 300): List<Song> =
+    suspend fun getAlbumTracks(browseId: String, limit: Int = Int.MAX_VALUE): List<Song> =
         withContext(Dispatchers.IO) {
-            browseTracks(browseId = browseId, limit = limit)
+            val root = engine.browse(browseId = browseId) ?: return@withContext emptyList()
+            val header = InnerTubeSearchParser.parsePageHeader(root)
+            val albumId = InnerTubeIds.albumId(browseId)
+            registry.putAlbum(albumId, browseId)
+            var page = InnerTubeSearchParser.parse(root)
+            val tracks = linkedMapOf<String, InnerTubeTrack>()
+            val tokens = mutableSetOf<String>()
+            while (true) {
+                page.tracks.forEach { if (tracks.size < limit) tracks.putIfAbsent(it.videoId, it) }
+                val token = page.continuation ?: break
+                if (tracks.size >= limit) break
+                check(tokens.add(token)) { "Album continuation repeated" }
+                val next = engine.browse(browseId = browseId, continuation = token)
+                    ?: throw java.io.IOException("Album page unavailable")
+                page = InnerTubeSearchParser.parse(next)
+            }
+            tracks.values.map { track ->
+                track.toSong().let { song ->
+                    song.copy(
+                        albumId = albumId,
+                        album = header?.title?.takeIf { it.isNotBlank() } ?: song.album,
+                        albumArtist = header?.artist ?: song.albumArtist,
+                        albumArtUriString = song.albumArtUriString ?: header?.artworkUrl,
+                    )
+                }
+            }
         }
 
     /**
@@ -374,6 +399,9 @@ suspend fun radioPage(
     /** Resolves a playable stream. Returns null when YouTube refuses playback. */
     suspend fun resolveStream(videoId: String): InnerTubeStream? =
         withContext(Dispatchers.IO) { engine.extractStream(videoId) }
+
+    suspend fun resolveDownloadStream(videoId: String): InnerTubeStream? =
+        withContext(Dispatchers.IO) { engine.extractStream(videoId, forDownload = true) }
 
     /**
      * Live query suggestions for the search field, Meld's `YouTube
@@ -569,7 +597,7 @@ suspend fun resolveRemotePlaylist(
  * This is what the playlist detail screen needs, where all that survives
  * navigation is the id. One browse covers both header and tracklist.
  */
-suspend fun getRemotePlaylist(browseId: String, limit: Int = 300, onProgress: ((Int) -> Unit)? = null): ResolvedRemotePlaylist? =
+suspend fun getRemotePlaylist(browseId: String, limit: Int = Int.MAX_VALUE, onProgress: ((Int) -> Unit)? = null): ResolvedRemotePlaylist? =
     withContext(Dispatchers.IO) {
         val root = engine.browse(browseId = browseId) ?: return@withContext null
         val header = InnerTubeSearchParser.parsePageHeader(root)

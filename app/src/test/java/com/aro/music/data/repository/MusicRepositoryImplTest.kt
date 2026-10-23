@@ -50,6 +50,59 @@ class MusicRepositoryImplTest {
     private val mockStreamingRepository: com.aro.music.data.streaming.StreamingRepository = mockk(relaxed = true)
     private val mockInnerTubeRepository: com.aro.music.data.innertube.InnerTubeRepository = mockk(relaxed = true)
 
+    @Test
+    fun `remote album refreshes partial cache before first emission and preserves favorites`() = runTest {
+        // Host Android stubs do not implement JSONArray; keep the real song mapper.
+        mockkStatic("com.aro.music.data.database.SongEntityKt")
+        every { com.aro.music.data.database.serializeArtistRefs(any()) } returns "[]"
+        val albumId = com.aro.music.data.innertube.InnerTubeIds.albumId("MPRE_release")
+        val cached = createSongEntity(1L, "First", "Artist", "", "", "").copy(
+            albumId = albumId, isFavorite = true,
+        )
+        val rows = kotlinx.coroutines.flow.MutableStateFlow(listOf(cached))
+        val header = kotlinx.coroutines.flow.MutableStateFlow<AlbumEntity?>(
+            AlbumEntity(albumId, "Old title", "Artist", 101L, null, 1, 0L, 2026)
+        )
+        every { mockMusicDao.getSongsByAlbumId(albumId) } returns rows
+        every { mockMusicDao.getAlbumById(albumId) } returns header
+        every { mockInnerTubeRepository.browseIdForAlbum(albumId) } returns "MPRE_release"
+        val fetched = listOf(cached.toSong().copy(album = "Full release", isFavorite = false),
+            cached.toSong().copy(id = "2", title = "Second", album = "Full release", isFavorite = false, trackNumber = 2))
+        coEvery { mockInnerTubeRepository.getAlbumTracks("MPRE_release", any()) } returns fetched
+        coEvery { mockMusicDao.insertArtistsIgnoreConflicts(any()) } returns emptyList()
+        coEvery { mockMusicDao.insertAlbumsIgnoreConflicts(any()) } returns emptyList()
+        coEvery { mockMusicDao.repairCatalogAlbumTitle(any(), any()) } just Runs
+        coEvery { mockMusicDao.insertSongs(any()) } coAnswers {
+            rows.value = firstArg<List<SongEntity>>()
+        }
+        coEvery { mockMusicDao.insertSongArtistCrossRefs(any()) } just Runs
+        coEvery { mockMusicDao.updateAlbums(any()) } coAnswers {
+            header.value = firstArg<List<AlbumEntity>>().single()
+        }
+
+        val songs = musicRepository.getSongsForAlbum(albumId).first()
+
+        coVerify(exactly = 1) { mockInnerTubeRepository.getAlbumTracks("MPRE_release", any()) }
+        coVerify(exactly = 1) { mockMusicDao.insertSongs(any()) }
+        assertEquals(2, songs.size)
+        assertTrue(songs.first().isFavorite)
+        assertEquals("Full release", header.value?.title)
+        assertEquals(2, header.value?.songCount)
+        coVerify(exactly = 1) { mockInnerTubeRepository.getAlbumTracks("MPRE_release", any()) }
+    }
+
+    @Test
+    fun `remote album retains cached songs when refresh returns nothing`() = runTest {
+        val albumId = com.aro.music.data.innertube.InnerTubeIds.albumId("MPRE_offline")
+        val cached = createSongEntity(1L, "Saved", "Artist", "", "", "").copy(albumId = albumId)
+        every { mockMusicDao.getSongsByAlbumId(albumId) } returns flowOf(listOf(cached))
+        every { mockMusicDao.getAlbumById(albumId) } returns flowOf(null)
+        every { mockInnerTubeRepository.browseIdForAlbum(albumId) } returns "MPRE_offline"
+        coEvery { mockInnerTubeRepository.getAlbumTracks("MPRE_offline", any()) } returns emptyList()
+
+        assertEquals(listOf("Saved"), musicRepository.getSongsForAlbum(albumId).first().map { it.title })
+    }
+
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeEach
@@ -125,6 +178,7 @@ class MusicRepositoryImplTest {
 
     @AfterEach
     fun tearDown() {
+        unmockkStatic("com.aro.music.data.database.SongEntityKt")
         Dispatchers.resetMain() // Limpiar el dispatcher de Main
     }
 

@@ -1442,13 +1442,13 @@ object Spotify {
 
     // ── Albums (GQL: getAlbum) ──────────────────────────────────────────
 
-    suspend fun album(albumId: String): Result<SpotifyAlbum> =
+    suspend fun album(albumId: String, offset: Int = 0): Result<SpotifyAlbum> =
         spotifyRunCatching {
             val vars =
                 buildJsonObject {
                     put("uri", "spotify:album:$albumId")
                     put("locale", "")
-                    put("offset", 0)
+                    put("offset", offset)
                     put("limit", 50)
                 }
 
@@ -1495,7 +1495,8 @@ object Spotify {
                 images = albumImages,
                 releaseDate = albumData.obj("date")?.str("isoString"),
                 totalTracks = tracksData?.int("totalCount") ?: 0,
-                tracks = SpotifyPaging(items = trackItems, total = tracksData?.int("totalCount") ?: 0),
+                tracks = SpotifyPaging(items = trackItems, total = tracksData?.int("totalCount") ?: 0,
+                    offset = offset, limit = 50, rawCount = tracksData?.arr("items")?.size ?: 0),
                 uri = "spotify:album:$albumId",
             )
         }
