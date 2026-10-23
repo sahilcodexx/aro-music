@@ -25,9 +25,17 @@ class PersonalShelvesLayoutTest {
     @get:Rule val compose = createComposeRule()
 
     @Test fun loadingShelfPreservesTheFollowingSectionsPosition() {
+        assertShelfPosition("A song with a title that takes two lines", "Artist")
+    }
+
+    @Test fun loadingShelfReservesMetadataSpaceForShortTitlesAndMissingArtists() {
+        assertShelfPosition("Song", "")
+    }
+
+    private fun assertShelfPosition(title: String, artist: String) {
         val ready = mutableStateOf(false)
         val section = HomeCatalogSection("Speed dial", "Quick picks", listOf(HomeCatalogItem.Track(
-            Song.emptySong().copy(title = "A song with a title that takes two lines", artist = "Artist"))))
+            Song.emptySong().copy(title = title, artist = artist))))
         compose.setContent {
             MaterialTheme {
                 Column {

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">전체</string>
+    <string name="collection_save">라이브러리에 저장</string>
+    <string name="collection_saved">저장됨 · 삭제</string>
+    <string name="restore_spotify_playlists">숨긴 Spotify 재생목록 복원</string>
+    <string name="audio_downloads">다운로드</string>
+    <string name="audio_download_location">Aro가 Music/Aro에 저장</string>
+    <string name="audio_download_empty">플레이어에서 곡을 다운로드하여 오프라인으로 감상하세요.</string>
+    <string name="audio_download_running">오디오 다운로드 중…</string>
+    <string name="audio_download_queued">다운로드 대기 중</string>
+    <string name="audio_download_exists">이미 이 기기에 저장됨</string>
+    <string name="audio_download_unavailable">다운로드를 시작할 수 없습니다. 다시 시도하세요.</string>
+    <string name="audio_download_retry">다운로드 실패 · 탭하여 재시도</string>
+    <string name="audio_download_action">곡 다운로드</string>
+    <string name="saved_albums_empty_title">저장한 앨범</string>
+    <string name="saved_albums_empty_body">검색이나 아티스트 페이지에서 앨범을 열고 라이브러리에 저장을 누르세요.</string>
+    <string name="saved_artists_empty_title">저장한 아티스트</string>
+    <string name="saved_artists_empty_body">아티스트 페이지에서 라이브러리에 저장을 누르세요. 곡에 좋아요를 눌러도 아티스트는 저장되지 않습니다.</string>
+    <string name="audio_download_waiting">대기열 · 다운로드 대기 중</string>
+    <string name="hide_spotify_playlist_body">이 재생목록을 Aro에서 숨길까요? Spotify 재생목록은 변경되지 않습니다. 라이브러리 → 재생목록에서 복원할 수 있습니다.</string>
+    <string name="song_picker_no_matching_songs">필터에 맞는 저장된 곡이 없습니다. 전체를 선택하거나 좋아요 필터를 끄거나 음악을 가져오세요.</string>
+    <string name="audio_download_resolve_failed">오디오를 사용할 수 없음 · 탭하여 재시도</string>
+    <string name="audio_download_transfer_failed">전송 중단 · 탭하여 재시도</string>
+    <string name="audio_download_finalize_failed">오디오 파일을 완성할 수 없음 · 탭하여 재시도</string>
+    <string name="audio_download_save_failed">오디오 파일을 저장할 수 없음 · 탭하여 재시도</string>
+    <string name="audio_download_all">모두 다운로드</string>
+    <string name="audio_download_queueing">다운로드에 추가 중…</string>
+    <string name="audio_download_batch_result">%1$d개 대기 중 · %2$d개 건너뜀 · %3$d개 추가 실패</string>
+    <string name="audio_download_summary">%1$d개 진행 중 · %2$d개 저장됨</string>
+    <string name="audio_download_resolving">다운로드 가능한 오디오 검색 중…</string>
+    <string name="audio_download_finishing">오디오 파일 마무리 중…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">재시도</string>
+    <string name="audio_download_collections">내 다운로드</string>
+    <string name="audio_download_collection_count">%2$d곡 중 %1$d곡 다운로드됨</string>
+    <string name="audio_download_album">앨범</string>
+    <string name="audio_download_playlist">재생목록</string>
+    <string name="audio_download_missing">나머지 다운로드</string>
+    <string name="audio_download_collection_empty">다운로드가 완료되면 여기에 표시됩니다.</string>
+    <string name="audio_download_all_songs">모든 곡</string>
+    <string name="audio_download_saved_count">%1$d곡 다운로드됨</string>
+</resources>

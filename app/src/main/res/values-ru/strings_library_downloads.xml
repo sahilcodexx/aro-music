@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Все</string>
+    <string name="collection_save">Сохранить в медиатеку</string>
+    <string name="collection_saved">Сохранено · Удалить</string>
+    <string name="restore_spotify_playlists">Восстановить скрытые плейлисты Spotify</string>
+    <string name="audio_downloads">Загрузки</string>
+    <string name="audio_download_location">Сохранено Aro в Music/Aro</string>
+    <string name="audio_download_empty">Скачайте трек из плеера, чтобы слушать без интернета.</string>
+    <string name="audio_download_running">Загрузка аудио…</string>
+    <string name="audio_download_queued">Загрузка в очереди</string>
+    <string name="audio_download_exists">Уже сохранено на этом устройстве</string>
+    <string name="audio_download_unavailable">Не удалось начать загрузку. Повторите попытку.</string>
+    <string name="audio_download_retry">Ошибка загрузки · Нажмите для повтора</string>
+    <string name="audio_download_action">Скачать трек</string>
+    <string name="saved_albums_empty_title">Сохранённые альбомы</string>
+    <string name="saved_albums_empty_body">Откройте альбом из поиска или со страницы исполнителя и нажмите «Сохранить в медиатеку».</string>
+    <string name="saved_artists_empty_title">Сохранённые исполнители</string>
+    <string name="saved_artists_empty_body">Откройте страницу исполнителя и нажмите «Сохранить в медиатеку». Отметка «Нравится» у трека не сохраняет исполнителя.</string>
+    <string name="audio_download_waiting">В очереди · Ожидание загрузки</string>
+    <string name="hide_spotify_playlist_body">Скрыть этот плейлист в Aro? Плейлист Spotify не изменится. Восстановить его можно в разделе Медиатека → Плейлисты.</string>
+    <string name="song_picker_no_matching_songs">Нет сохранённых треков с этими фильтрами. Выберите «Все», отключите «Понравившиеся» или импортируйте музыку.</string>
+    <string name="audio_download_resolve_failed">Аудио недоступно · Нажмите для повтора</string>
+    <string name="audio_download_transfer_failed">Передача прервана · Нажмите для повтора</string>
+    <string name="audio_download_finalize_failed">Не удалось завершить аудиофайл · Нажмите для повтора</string>
+    <string name="audio_download_save_failed">Не удалось сохранить аудиофайл · Нажмите для повтора</string>
+    <string name="audio_download_all">Скачать всё</string>
+    <string name="audio_download_queueing">Добавление в загрузки…</string>
+    <string name="audio_download_batch_result">В очереди: %1$d · Пропущено: %2$d · Не удалось добавить: %3$d</string>
+    <string name="audio_download_summary">Активно: %1$d · Сохранено: %2$d</string>
+    <string name="audio_download_resolving">Поиск аудио для загрузки…</string>
+    <string name="audio_download_finishing">Завершение аудиофайла…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Повторить</string>
+    <string name="audio_download_collections">Ваши загрузки</string>
+    <string name="audio_download_collection_count">Загружено треков: %1$d из %2$d</string>
+    <string name="audio_download_album">Альбом</string>
+    <string name="audio_download_playlist">Плейлист</string>
+    <string name="audio_download_missing">Скачать оставшиеся</string>
+    <string name="audio_download_collection_empty">Загрузки появятся здесь после завершения.</string>
+    <string name="audio_download_all_songs">Все треки</string>
+    <string name="audio_download_saved_count">Загружено треков: %1$d</string>
+</resources>

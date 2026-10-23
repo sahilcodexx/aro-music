@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Todos</string>
+    <string name="collection_save">Guardar en la biblioteca</string>
+    <string name="collection_saved">Guardado · Quitar</string>
+    <string name="restore_spotify_playlists">Restaurar playlists de Spotify ocultas</string>
+    <string name="audio_downloads">Descargas</string>
+    <string name="audio_download_location">Guardado por Aro en Music/Aro</string>
+    <string name="audio_download_empty">Descarga una canción desde el reproductor para escucharla sin conexión.</string>
+    <string name="audio_download_running">Descargando audio…</string>
+    <string name="audio_download_queued">Descarga en cola</string>
+    <string name="audio_download_exists">Ya está guardado en este dispositivo</string>
+    <string name="audio_download_unavailable">No se pudo iniciar esta descarga. Inténtalo de nuevo.</string>
+    <string name="audio_download_retry">Descarga fallida · Toca para reintentar</string>
+    <string name="audio_download_action">Descargar canción</string>
+    <string name="saved_albums_empty_title">Tus álbumes guardados</string>
+    <string name="saved_albums_empty_body">Abre un álbum desde Buscar o desde la página de un artista y toca Guardar en la biblioteca.</string>
+    <string name="saved_artists_empty_title">Tus artistas guardados</string>
+    <string name="saved_artists_empty_body">Abre la página de un artista y toca Guardar en la biblioteca. Dar me gusta a una canción no guarda a su artista.</string>
+    <string name="audio_download_waiting">En cola · Esperando la descarga</string>
+    <string name="hide_spotify_playlist_body">¿Ocultar esta playlist en Aro? Tu playlist de Spotify no cambiará. Puedes restaurarla desde Biblioteca → Playlists.</string>
+    <string name="song_picker_no_matching_songs">Ninguna canción guardada coincide con estos filtros. Prueba Todos, desactiva Me gusta o importa música.</string>
+    <string name="audio_download_resolve_failed">Audio no disponible · Toca para reintentar</string>
+    <string name="audio_download_transfer_failed">Transferencia interrumpida · Toca para reintentar</string>
+    <string name="audio_download_finalize_failed">No se pudo finalizar el archivo de audio · Toca para reintentar</string>
+    <string name="audio_download_save_failed">No se pudo guardar el archivo de audio · Toca para reintentar</string>
+    <string name="audio_download_all">Descargar todo</string>
+    <string name="audio_download_queueing">Añadiendo a Descargas…</string>
+    <string name="audio_download_batch_result">%1$d en cola · %2$d omitidas · %3$d no se pudieron añadir</string>
+    <string name="audio_download_summary">%1$d activas · %2$d guardadas</string>
+    <string name="audio_download_resolving">Buscando audio descargable…</string>
+    <string name="audio_download_finishing">Finalizando archivo de audio…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Reintentar</string>
+    <string name="audio_download_collections">Tus descargas</string>
+    <string name="audio_download_collection_count">%1$d de %2$d canciones descargadas</string>
+    <string name="audio_download_album">Álbum</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Descargar restantes</string>
+    <string name="audio_download_collection_empty">Las descargas aparecerán aquí cuando terminen.</string>
+    <string name="audio_download_all_songs">Todas las canciones</string>
+    <string name="audio_download_saved_count">%1$d canciones descargadas</string>
+</resources>

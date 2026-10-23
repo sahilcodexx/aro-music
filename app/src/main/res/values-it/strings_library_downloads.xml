@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Tutti</string>
+    <string name="collection_save">Salva nella libreria</string>
+    <string name="collection_saved">Salvato · Rimuovi</string>
+    <string name="restore_spotify_playlists">Ripristina playlist Spotify nascoste</string>
+    <string name="audio_downloads">Download</string>
+    <string name="audio_download_location">Salvato da Aro in Music/Aro</string>
+    <string name="audio_download_empty">Scarica un brano dal lettore per ascoltarlo offline.</string>
+    <string name="audio_download_running">Download audio…</string>
+    <string name="audio_download_queued">Download in coda</string>
+    <string name="audio_download_exists">Già salvato su questo dispositivo</string>
+    <string name="audio_download_unavailable">Impossibile avviare il download. Riprova.</string>
+    <string name="audio_download_retry">Download non riuscito · Tocca per riprovare</string>
+    <string name="audio_download_action">Scarica brano</string>
+    <string name="saved_albums_empty_title">I tuoi album salvati</string>
+    <string name="saved_albums_empty_body">Apri un album dalla ricerca o dalla pagina di un artista, poi tocca Salva nella libreria.</string>
+    <string name="saved_artists_empty_title">I tuoi artisti salvati</string>
+    <string name="saved_artists_empty_body">Apri la pagina di un artista e tocca Salva nella libreria. Mettere Mi piace a un brano non salva il suo artista.</string>
+    <string name="audio_download_waiting">In coda · In attesa del download</string>
+    <string name="hide_spotify_playlist_body">Nascondere questa playlist in Aro? La playlist Spotify resta invariata. Puoi ripristinarla da Libreria → Playlist.</string>
+    <string name="song_picker_no_matching_songs">Nessun brano salvato corrisponde ai filtri. Prova Tutti, disattiva Mi piace o importa musica.</string>
+    <string name="audio_download_resolve_failed">Audio non disponibile · Tocca per riprovare</string>
+    <string name="audio_download_transfer_failed">Trasferimento interrotto · Tocca per riprovare</string>
+    <string name="audio_download_finalize_failed">Impossibile finalizzare il file audio · Tocca per riprovare</string>
+    <string name="audio_download_save_failed">Impossibile salvare il file audio · Tocca per riprovare</string>
+    <string name="audio_download_all">Scarica tutto</string>
+    <string name="audio_download_queueing">Aggiunta ai download…</string>
+    <string name="audio_download_batch_result">%1$d in coda · %2$d saltati · %3$d non aggiunti</string>
+    <string name="audio_download_summary">%1$d attivi · %2$d salvati</string>
+    <string name="audio_download_resolving">Ricerca audio scaricabile…</string>
+    <string name="audio_download_finishing">Finalizzazione del file audio…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Riprova</string>
+    <string name="audio_download_collections">I tuoi download</string>
+    <string name="audio_download_collection_count">%1$d di %2$d brani scaricati</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Scarica rimanenti</string>
+    <string name="audio_download_collection_empty">I download appariranno qui al completamento.</string>
+    <string name="audio_download_all_songs">Tutti i brani</string>
+    <string name="audio_download_saved_count">%1$d brani scaricati</string>
+</resources>

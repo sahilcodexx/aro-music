@@ -4,6 +4,8 @@
 
 Code 25. The maintainer tested the dev3 preview on their phone and reported all features working. Signed production validation is recorded in RELEASE_CHECKLIST.md.
 
+- Keep home shelf height stable between loading and loaded states, including two-line titles and missing artist text.
+- Add download/library translations for the nine existing app locales and keep the player progress label responsive to configuration changes.
 - Downloads now opens an All songs card for all completed Aro downloads. Album/playlist cards open full offline pages with the existing artwork header, play/shuffle, ordered local tracks, and Download remaining; loose track rows and the details sheet are replaced.
 
 - Start manual playlist song selection on All sources; apply the same local/cloud classification during search and liked filtering.

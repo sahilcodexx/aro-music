@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">全部</string>
+    <string name="collection_save">保存到音乐库</string>
+    <string name="collection_saved">已保存 · 移除</string>
+    <string name="restore_spotify_playlists">恢复隐藏的 Spotify 播放列表</string>
+    <string name="audio_downloads">下载</string>
+    <string name="audio_download_location">由 Aro 保存到 Music/Aro</string>
+    <string name="audio_download_empty">在播放器中下载歌曲，即可离线收听。</string>
+    <string name="audio_download_running">正在下载音频…</string>
+    <string name="audio_download_queued">下载已加入队列</string>
+    <string name="audio_download_exists">已保存在此设备上</string>
+    <string name="audio_download_unavailable">无法开始下载，请重试。</string>
+    <string name="audio_download_retry">下载失败 · 点按重试</string>
+    <string name="audio_download_action">下载歌曲</string>
+    <string name="saved_albums_empty_title">已保存的专辑</string>
+    <string name="saved_albums_empty_body">从搜索或艺人页面打开专辑，然后点按“保存到音乐库”。</string>
+    <string name="saved_artists_empty_title">已保存的艺人</string>
+    <string name="saved_artists_empty_body">打开艺人页面并点按“保存到音乐库”。喜欢歌曲不会保存其艺人。</string>
+    <string name="audio_download_waiting">已排队 · 等待下载</string>
+    <string name="hide_spotify_playlist_body">在 Aro 中隐藏此播放列表？Spotify 播放列表不会更改。可从音乐库 → 播放列表恢复。</string>
+    <string name="song_picker_no_matching_songs">没有符合筛选条件的已保存歌曲。请选择“全部”、关闭“喜欢”筛选或导入音乐。</string>
+    <string name="audio_download_resolve_failed">音频不可用 · 点按重试</string>
+    <string name="audio_download_transfer_failed">传输中断 · 点按重试</string>
+    <string name="audio_download_finalize_failed">无法完成音频文件 · 点按重试</string>
+    <string name="audio_download_save_failed">无法保存音频文件 · 点按重试</string>
+    <string name="audio_download_all">全部下载</string>
+    <string name="audio_download_queueing">正在添加到下载…</string>
+    <string name="audio_download_batch_result">%1$d 首已排队 · %2$d 首已跳过 · %3$d 首无法加入队列</string>
+    <string name="audio_download_summary">%1$d 项进行中 · %2$d 项已保存</string>
+    <string name="audio_download_resolving">正在查找可下载的音频…</string>
+    <string name="audio_download_finishing">正在完成音频文件…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">重试</string>
+    <string name="audio_download_collections">我的下载</string>
+    <string name="audio_download_collection_count">已下载 %1$d 首，共 %2$d 首</string>
+    <string name="audio_download_album">专辑</string>
+    <string name="audio_download_playlist">播放列表</string>
+    <string name="audio_download_missing">下载剩余歌曲</string>
+    <string name="audio_download_collection_empty">下载完成后将显示在此处。</string>
+    <string name="audio_download_all_songs">所有歌曲</string>
+    <string name="audio_download_saved_count">已下载 %1$d 首歌曲</string>
+</resources>

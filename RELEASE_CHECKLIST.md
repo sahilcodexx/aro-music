@@ -2,6 +2,9 @@
 
 ## 1.0.5 release candidate — 2026-10-23
 
+- Follow-up verification: the first signed CI attempt failed with one Compose `LocalContextGetResourceValueCall` error and 40 missing-translation errors. The progress semantics label now uses `stringResource`; all 40 resources have translations for the nine existing locales, with names and format placeholders checked. Baseline is unchanged. Resource/Kotlin compilation passed; local full lint and a fresh signed CI run must complete before publication. Translation wording has not had native-speaker review.
+- The interrupted API 36 run reported all four native playback tests passing, including AAC and Opus packet-preserving remux/decode checks, but caught a home shelf height mismatch (one-line placeholder versus a two-line loaded title). Loaded and placeholder cards now reserve matching title/artist lines; the device regression also covers short titles and missing artist text. Fresh API 30/36 results are required; the interrupted run is not recorded as passing.
+
 - Maintainer explicitly reported testing all features successfully on the dev3 preview and authorized versioning, website updates, 10 commits, pushing, and a new release. This is user-reported coverage, not an automated test of the final production APK.
 - Version 1.0.5/code 25 upgrades production code 21 and all dev previews; production package and signing configuration remain unchanged. Room schema is unchanged; preferences and original library/download rows remain intact.
 - Local dev3 checks passed 278 debug unit tests, debug assembly, unchanged development signer, and five ARM64 native-library alignment checks. Earlier native AAC/Opus decoding and MediaStore evidence remains below.

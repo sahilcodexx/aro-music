@@ -52,12 +52,10 @@ fun HomeCatalogShelf(section: HomeCatalogSection, onMoreClick: (() -> Unit)? = n
                         targetSize = Size(pixels, pixels),
                     )
                     Spacer(Modifier.height(6.dp))
-                    Text((if (item is HomeCatalogItem.Track && item.song.id in pinnedIds) "★ " else "") + item.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    if (item.subtitle.isNotBlank()) {
-                        Spacer(Modifier.height(2.dp))
-                        Text(item.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
+                    Text((if (item is HomeCatalogItem.Track && item.song.id in pinnedIds) "★ " else "") + item.title, style = MaterialTheme.typography.titleSmall, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(2.dp))
+                    Text(item.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        minLines = 1, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

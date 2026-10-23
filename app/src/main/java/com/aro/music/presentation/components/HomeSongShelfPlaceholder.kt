@@ -19,7 +19,7 @@ fun HomeSongShelfPlaceholder(title: String, label: String?, loading: Boolean, em
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(Modifier.padding(horizontal = 24.dp)) {
             Text(title, style = MaterialTheme.typography.headlineSmall)
-            label?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            label?.takeIf { it.isNotBlank() && !it.equals(title, ignoreCase = true) }?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Box(Modifier.fillMaxWidth()) {
             LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), userScrollEnabled = false) {
@@ -29,12 +29,12 @@ fun HomeSongShelfPlaceholder(title: String, label: String?, loading: Boolean, em
                         else Spacer(Modifier.size(144.dp))
                         Spacer(Modifier.height(6.dp))
                         Box {
-                            Text("Song title", style = MaterialTheme.typography.titleSmall, maxLines = 2, color = Color.Transparent)
+                            Text("Song title", style = MaterialTheme.typography.titleSmall, minLines = 2, maxLines = 2, color = Color.Transparent)
                             if (loading) ShimmerBox(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(6.dp)))
                         }
                         Spacer(Modifier.height(2.dp))
                         Box {
-                            Text("Artist", style = MaterialTheme.typography.bodySmall, maxLines = 1, color = Color.Transparent)
+                            Text("Artist", style = MaterialTheme.typography.bodySmall, minLines = 1, maxLines = 1, color = Color.Transparent)
                             if (loading) ShimmerBox(Modifier.width(90.dp).height(10.dp).clip(RoundedCornerShape(6.dp)))
                         }
                     }

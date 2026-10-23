@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Alle</string>
+    <string name="collection_save">Lagre i biblioteket</string>
+    <string name="collection_saved">Lagret · Fjern</string>
+    <string name="restore_spotify_playlists">Gjenopprett skjulte Spotify-spillelister</string>
+    <string name="audio_downloads">Nedlastinger</string>
+    <string name="audio_download_location">Lagret av Aro i Music/Aro</string>
+    <string name="audio_download_empty">Last ned en sang fra spilleren for å lytte uten nett.</string>
+    <string name="audio_download_running">Laster ned lyd…</string>
+    <string name="audio_download_queued">Nedlasting i kø</string>
+    <string name="audio_download_exists">Allerede lagret på denne enheten</string>
+    <string name="audio_download_unavailable">Kunne ikke starte nedlastingen. Prøv igjen.</string>
+    <string name="audio_download_retry">Nedlasting mislyktes · Trykk for å prøve igjen</string>
+    <string name="audio_download_action">Last ned sang</string>
+    <string name="saved_albums_empty_title">Dine lagrede album</string>
+    <string name="saved_albums_empty_body">Åpne et album fra Søk eller en artistside, og trykk på Lagre i biblioteket.</string>
+    <string name="saved_artists_empty_title">Dine lagrede artister</string>
+    <string name="saved_artists_empty_body">Åpne en artistside og trykk på Lagre i biblioteket. Å like en sang lagrer ikke artisten.</string>
+    <string name="audio_download_waiting">I kø · Venter på nedlasting</string>
+    <string name="hide_spotify_playlist_body">Skjule denne spillelisten i Aro? Spotify-spillelisten forblir uendret. Gjenopprett den fra Bibliotek → Spillelister.</string>
+    <string name="song_picker_no_matching_songs">Ingen lagrede sanger samsvarer med filtrene. Prøv Alle, slå av Likte eller importer musikk.</string>
+    <string name="audio_download_resolve_failed">Lyd utilgjengelig · Trykk for å prøve igjen</string>
+    <string name="audio_download_transfer_failed">Overføring avbrutt · Trykk for å prøve igjen</string>
+    <string name="audio_download_finalize_failed">Kunne ikke fullføre lydfilen · Trykk for å prøve igjen</string>
+    <string name="audio_download_save_failed">Kunne ikke lagre lydfilen · Trykk for å prøve igjen</string>
+    <string name="audio_download_all">Last ned alle</string>
+    <string name="audio_download_queueing">Legger til i Nedlastinger…</string>
+    <string name="audio_download_batch_result">%1$d i kø · %2$d hoppet over · %3$d kunne ikke legges til</string>
+    <string name="audio_download_summary">%1$d aktive · %2$d lagret</string>
+    <string name="audio_download_resolving">Finner nedlastbar lyd…</string>
+    <string name="audio_download_finishing">Fullfører lydfil…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Prøv igjen</string>
+    <string name="audio_download_collections">Dine nedlastinger</string>
+    <string name="audio_download_collection_count">%1$d av %2$d sanger lastet ned</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Spilleliste</string>
+    <string name="audio_download_missing">Last ned resten</string>
+    <string name="audio_download_collection_empty">Nedlastinger vises her når de er fullført.</string>
+    <string name="audio_download_all_songs">Alle sanger</string>
+    <string name="audio_download_saved_count">%1$d sanger lastet ned</string>
+</resources>

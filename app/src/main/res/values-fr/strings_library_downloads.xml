@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Tout</string>
+    <string name="collection_save">Enregistrer dans la bibliothèque</string>
+    <string name="collection_saved">Enregistré · Retirer</string>
+    <string name="restore_spotify_playlists">Restaurer les playlists Spotify masquées</string>
+    <string name="audio_downloads">Téléchargements</string>
+    <string name="audio_download_location">Enregistré par Aro dans Music/Aro</string>
+    <string name="audio_download_empty">Téléchargez un titre depuis le lecteur pour écouter hors connexion.</string>
+    <string name="audio_download_running">Téléchargement audio…</string>
+    <string name="audio_download_queued">Téléchargement en attente</string>
+    <string name="audio_download_exists">Déjà enregistré sur cet appareil</string>
+    <string name="audio_download_unavailable">Impossible de démarrer ce téléchargement. Réessayez.</string>
+    <string name="audio_download_retry">Échec du téléchargement · Appuyez pour réessayer</string>
+    <string name="audio_download_action">Télécharger le titre</string>
+    <string name="saved_albums_empty_title">Vos albums enregistrés</string>
+    <string name="saved_albums_empty_body">Ouvrez un album depuis la recherche ou une page artiste, puis appuyez sur Enregistrer dans la bibliothèque.</string>
+    <string name="saved_artists_empty_title">Vos artistes enregistrés</string>
+    <string name="saved_artists_empty_body">Ouvrez une page artiste et appuyez sur Enregistrer dans la bibliothèque. Aimer un titre ne sauvegarde pas son artiste.</string>
+    <string name="audio_download_waiting">En attente · Téléchargement à venir</string>
+    <string name="hide_spotify_playlist_body">Masquer cette playlist dans Aro ? Votre playlist Spotify reste inchangée. Restaurez-la depuis Bibliothèque → Playlists.</string>
+    <string name="song_picker_no_matching_songs">Aucun titre enregistré ne correspond à ces filtres. Essayez Tout, désactivez les favoris ou importez de la musique.</string>
+    <string name="audio_download_resolve_failed">Audio indisponible · Appuyez pour réessayer</string>
+    <string name="audio_download_transfer_failed">Transfert interrompu · Appuyez pour réessayer</string>
+    <string name="audio_download_finalize_failed">Impossible de finaliser le fichier audio · Appuyez pour réessayer</string>
+    <string name="audio_download_save_failed">Impossible de sauvegarder le fichier audio · Appuyez pour réessayer</string>
+    <string name="audio_download_all">Tout télécharger</string>
+    <string name="audio_download_queueing">Ajout aux téléchargements…</string>
+    <string name="audio_download_batch_result">%1$d en attente · %2$d ignorés · %3$d ajouts impossibles</string>
+    <string name="audio_download_summary">%1$d actifs · %2$d enregistrés</string>
+    <string name="audio_download_resolving">Recherche audio téléchargeable…</string>
+    <string name="audio_download_finishing">Finalisation du fichier audio…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Réessayer</string>
+    <string name="audio_download_collections">Vos téléchargements</string>
+    <string name="audio_download_collection_count">%1$d titres sur %2$d téléchargés</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Télécharger le reste</string>
+    <string name="audio_download_collection_empty">Les téléchargements apparaîtront ici une fois terminés.</string>
+    <string name="audio_download_all_songs">Tous les titres</string>
+    <string name="audio_download_saved_count">%1$d titres téléchargés</string>
+</resources>

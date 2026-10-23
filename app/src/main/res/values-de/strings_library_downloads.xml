@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Alle</string>
+    <string name="collection_save">In Bibliothek speichern</string>
+    <string name="collection_saved">Gespeichert · Entfernen</string>
+    <string name="restore_spotify_playlists">Ausgeblendete Spotify-Playlists wiederherstellen</string>
+    <string name="audio_downloads">Downloads</string>
+    <string name="audio_download_location">Von Aro in Music/Aro gespeichert</string>
+    <string name="audio_download_empty">Lade einen Song im Player herunter, um ihn offline anzuhören.</string>
+    <string name="audio_download_running">Audio wird heruntergeladen…</string>
+    <string name="audio_download_queued">Download eingereiht</string>
+    <string name="audio_download_exists">Bereits auf diesem Gerät gespeichert</string>
+    <string name="audio_download_unavailable">Download konnte nicht gestartet werden. Bitte erneut versuchen.</string>
+    <string name="audio_download_retry">Download fehlgeschlagen · Zum Wiederholen tippen</string>
+    <string name="audio_download_action">Song herunterladen</string>
+    <string name="saved_albums_empty_title">Deine gespeicherten Alben</string>
+    <string name="saved_albums_empty_body">Öffne ein Album über die Suche oder eine Künstlerseite und tippe auf In Bibliothek speichern.</string>
+    <string name="saved_artists_empty_title">Deine gespeicherten Künstler</string>
+    <string name="saved_artists_empty_body">Öffne eine Künstlerseite und tippe auf In Bibliothek speichern. Das Liken eines Songs speichert den Künstler nicht.</string>
+    <string name="audio_download_waiting">Eingereiht · Warten auf Download</string>
+    <string name="hide_spotify_playlist_body">Diese Playlist in Aro ausblenden? Deine Spotify-Playlist bleibt unverändert. Du kannst sie unter Bibliothek → Playlists wiederherstellen.</string>
+    <string name="song_picker_no_matching_songs">Keine gespeicherten Songs passen zu diesen Filtern. Wähle Alle, deaktiviere Gefällt mir oder importiere Musik.</string>
+    <string name="audio_download_resolve_failed">Audio nicht verfügbar · Zum Wiederholen tippen</string>
+    <string name="audio_download_transfer_failed">Übertragung unterbrochen · Zum Wiederholen tippen</string>
+    <string name="audio_download_finalize_failed">Audiodatei konnte nicht fertiggestellt werden · Zum Wiederholen tippen</string>
+    <string name="audio_download_save_failed">Audiodatei konnte nicht gespeichert werden · Zum Wiederholen tippen</string>
+    <string name="audio_download_all">Alle herunterladen</string>
+    <string name="audio_download_queueing">Zu Downloads hinzufügen…</string>
+    <string name="audio_download_batch_result">%1$d eingereiht · %2$d übersprungen · %3$d konnten nicht eingereiht werden</string>
+    <string name="audio_download_summary">%1$d aktiv · %2$d gespeichert</string>
+    <string name="audio_download_resolving">Herunterladbares Audio wird gesucht…</string>
+    <string name="audio_download_finishing">Audiodatei wird fertiggestellt…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Wiederholen</string>
+    <string name="audio_download_collections">Deine Downloads</string>
+    <string name="audio_download_collection_count">%1$d von %2$d Songs heruntergeladen</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Rest herunterladen</string>
+    <string name="audio_download_collection_empty">Downloads erscheinen hier, sobald sie fertig sind.</string>
+    <string name="audio_download_all_songs">Alle Songs</string>
+    <string name="audio_download_saved_count">%1$d Songs heruntergeladen</string>
+</resources>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_picker_all_sources">Semua</string>
+    <string name="collection_save">Simpan ke koleksi</string>
+    <string name="collection_saved">Tersimpan · Hapus</string>
+    <string name="restore_spotify_playlists">Pulihkan playlist Spotify tersembunyi</string>
+    <string name="audio_downloads">Unduhan</string>
+    <string name="audio_download_location">Disimpan oleh Aro di Music/Aro</string>
+    <string name="audio_download_empty">Unduh lagu dari pemutar untuk mendengarkan secara offline.</string>
+    <string name="audio_download_running">Mengunduh audio…</string>
+    <string name="audio_download_queued">Unduhan dalam antrean</string>
+    <string name="audio_download_exists">Sudah tersimpan di perangkat ini</string>
+    <string name="audio_download_unavailable">Tidak dapat memulai unduhan. Coba lagi.</string>
+    <string name="audio_download_retry">Unduhan gagal · Ketuk untuk mencoba lagi</string>
+    <string name="audio_download_action">Unduh lagu</string>
+    <string name="saved_albums_empty_title">Album tersimpan Anda</string>
+    <string name="saved_albums_empty_body">Buka album dari Pencarian atau halaman artis, lalu ketuk Simpan ke koleksi.</string>
+    <string name="saved_artists_empty_title">Artis tersimpan Anda</string>
+    <string name="saved_artists_empty_body">Buka halaman artis, lalu ketuk Simpan ke koleksi. Menyukai lagu tidak menyimpan artisnya.</string>
+    <string name="audio_download_waiting">Dalam antrean · Menunggu unduhan</string>
+    <string name="hide_spotify_playlist_body">Sembunyikan playlist ini di Aro? Playlist Spotify Anda tidak berubah. Pulihkan dari Koleksi → Playlist.</string>
+    <string name="song_picker_no_matching_songs">Tidak ada lagu tersimpan yang cocok dengan filter ini. Coba Semua, nonaktifkan Disukai, atau impor musik.</string>
+    <string name="audio_download_resolve_failed">Audio tidak tersedia · Ketuk untuk mencoba lagi</string>
+    <string name="audio_download_transfer_failed">Transfer terputus · Ketuk untuk mencoba lagi</string>
+    <string name="audio_download_finalize_failed">Tidak dapat menyelesaikan berkas audio · Ketuk untuk mencoba lagi</string>
+    <string name="audio_download_save_failed">Tidak dapat menyimpan berkas audio · Ketuk untuk mencoba lagi</string>
+    <string name="audio_download_all">Unduh semua</string>
+    <string name="audio_download_queueing">Menambahkan ke Unduhan…</string>
+    <string name="audio_download_batch_result">%1$d dalam antrean · %2$d dilewati · %3$d gagal ditambahkan</string>
+    <string name="audio_download_summary">%1$d aktif · %2$d tersimpan</string>
+    <string name="audio_download_resolving">Mencari audio yang dapat diunduh…</string>
+    <string name="audio_download_finishing">Menyelesaikan berkas audio…</string>
+    <string name="audio_download_progress">%1$d%% · %2$s / %3$s</string>
+    <string name="audio_download_retry_action">Coba lagi</string>
+    <string name="audio_download_collections">Unduhan Anda</string>
+    <string name="audio_download_collection_count">%1$d dari %2$d lagu diunduh</string>
+    <string name="audio_download_album">Album</string>
+    <string name="audio_download_playlist">Playlist</string>
+    <string name="audio_download_missing">Unduh sisanya</string>
+    <string name="audio_download_collection_empty">Unduhan akan muncul di sini setelah selesai.</string>
+    <string name="audio_download_all_songs">Semua lagu</string>
+    <string name="audio_download_saved_count">%1$d lagu diunduh</string>
+</resources>

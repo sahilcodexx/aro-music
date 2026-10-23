@@ -1540,6 +1540,7 @@ private fun SongMetadataDisplaySection(
         val tasks by downloads.work.collectAsStateWithLifecycle()
         val context = androidx.compose.ui.platform.LocalContext.current
         LaunchedEffect(downloads) { downloads.message.collect { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show() } }
+        val downloadRunningLabel = stringResource(R.string.audio_download_running)
         val busy = tasks.any { !it.state.isFinished && "audio-song:${song?.id}" in it.tags }
         val saved = song?.id in downloaded.keys || song?.id in downloaded.values
         val supported = song?.let { com.aro.music.data.innertube.InnerTubeIds.videoIdFromContentUri(it.contentUriString) != null } == true
@@ -1557,7 +1558,7 @@ private fun SongMetadataDisplaySection(
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = chipColor, contentColor = chipContentColor,
                     disabledContainerColor = chipColor, disabledContentColor = chipContentColor.copy(alpha = 0.65f))
             ) {
-                if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.size(20.dp).semantics { contentDescription = context.getString(R.string.audio_download_running) }, color = chipContentColor, strokeWidth = 2.dp)
+                if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.size(20.dp).semantics { contentDescription = downloadRunningLabel }, color = chipContentColor, strokeWidth = 2.dp)
                 else Icon(painterResource(if (saved) R.drawable.rounded_check_circle_24 else R.drawable.aro_download_24),
                     contentDescription = stringResource(if (saved) R.string.audio_download_exists else R.string.audio_download_action))
             }
