@@ -52,7 +52,8 @@ private data class GenreSeed(
 class LibraryStateHolder @Inject constructor(
     private val musicRepository: MusicRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val connectivity: ConnectivityStateHolder
+    private val connectivity: ConnectivityStateHolder,
+    private val savedLibrary: com.aro.music.data.preferences.SavedLibraryRepository
 ) {
 
     // --- State ---
@@ -128,27 +129,12 @@ class LibraryStateHolder @Inject constructor(
     private val _currentFavoriteSortOption = MutableStateFlow<SortOption>(SortOption.LikedSongDateLiked)
     val currentFavoriteSortOption = _currentFavoriteSortOption.asStateFlow()
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val albumsPagingFlow: kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<Album>> =
-        kotlinx.coroutines.flow.combine(
-            _currentAlbumSortOption,
-            effectiveStorageFilter,
-            userPreferencesRepository.minTracksPerAlbumFlow
-        ) { sort, filter, minTracks ->
-            Triple(sort, filter, minTracks)
-        }.flatMapLatest { (sortOption, filter, minTracks) ->
-            musicRepository.getPaginatedAlbums(sortOption, filter, minTracks)
-        }
-        .flowOn(Dispatchers.IO)
-
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val artistsPagingFlow: kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<Artist>> =
-        kotlinx.coroutines.flow.combine(_currentArtistSortOption, effectiveStorageFilter) { sort, filter ->
-            sort to filter
-        }.flatMapLatest { (sortOption, filter) ->
-            musicRepository.getPaginatedArtists(sortOption, filter)
-        }
-        .flowOn(Dispatchers.IO)
+    val albumsPagingFlow = kotlinx.coroutines.flow.combine(savedLibrary.albums, _currentAlbumSortOption) { albums, sort ->
+        androidx.paging.PagingData.from(sortAlbumsList(albums, sort))
+    }
+    val artistsPagingFlow = kotlinx.coroutines.flow.combine(savedLibrary.artists, _currentArtistSortOption) { artists, sort ->
+        androidx.paging.PagingData.from(sortArtistsList(artists, sort))
+    }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val favoritesPagingFlow: kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<Song>> =
@@ -278,15 +264,7 @@ class LibraryStateHolder @Inject constructor(
 
         albumsJob = scope?.launch {
             _isLoadingCategories.value = true
-            @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-            kotlinx.coroutines.flow.combine(
-                effectiveStorageFilter,
-                userPreferencesRepository.minTracksPerAlbumFlow
-            ) { filter, minTracks ->
-                filter to minTracks
-            }.flatMapLatest { (filter, minTracks) ->
-                musicRepository.getAlbums(filter, minTracks)
-            }.conflate().collect { albums ->
+            savedLibrary.albums.conflate().collect { albums ->
                 val sortedAlbums = withContext(Dispatchers.Default) {
                     sortAlbumsList(albums, _currentAlbumSortOption.value).toImmutableList()
                 }
@@ -297,10 +275,7 @@ class LibraryStateHolder @Inject constructor(
 
         artistsJob = scope?.launch {
             _isLoadingCategories.value = true
-            @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-            effectiveStorageFilter.flatMapLatest { filter ->
-                musicRepository.getArtists(filter)
-            }.conflate().collect { artists ->
+            savedLibrary.artists.conflate().collect { artists ->
                 val sortedArtists = withContext(Dispatchers.Default) {
                     sortArtistsList(artists, _currentArtistSortOption.value).toImmutableList()
                 }

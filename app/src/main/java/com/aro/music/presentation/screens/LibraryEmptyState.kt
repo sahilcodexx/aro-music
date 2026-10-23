@@ -57,41 +57,9 @@ private fun libraryEmptySpec(
             )
         }
 
-        LibraryTabId.ALBUMS -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_album_24,
-                titleRes = R.string.lib_empty_albums_all_title,
-                subtitleRes = R.string.lib_empty_albums_all_subtitle
-            )
-            StorageFilter.OFFLINE -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_album_24,
-                titleRes = R.string.lib_empty_albums_offline_title,
-                subtitleRes = R.string.lib_empty_albums_offline_subtitle
-            )
-            StorageFilter.ONLINE -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_album_24,
-                titleRes = R.string.lib_empty_albums_online_title,
-                subtitleRes = R.string.lib_empty_albums_online_subtitle
-            )
-        }
-
-        LibraryTabId.ARTISTS -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_artist_24,
-                titleRes = R.string.lib_empty_artists_all_title,
-                subtitleRes = R.string.lib_empty_artists_all_subtitle
-            )
-            StorageFilter.OFFLINE -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_artist_24,
-                titleRes = R.string.lib_empty_artists_offline_title,
-                subtitleRes = R.string.lib_empty_artists_offline_subtitle
-            )
-            StorageFilter.ONLINE -> LibraryEmptySpec(
-                iconRes = R.drawable.rounded_artist_24,
-                titleRes = R.string.lib_empty_artists_online_title,
-                subtitleRes = R.string.lib_empty_artists_online_subtitle
-            )
-        }
+        LibraryTabId.ALBUMS -> LibraryEmptySpec(R.drawable.rounded_album_24, R.string.saved_albums_empty_title, R.string.saved_albums_empty_body)
+        LibraryTabId.ARTISTS -> LibraryEmptySpec(R.drawable.rounded_artist_24, R.string.saved_artists_empty_title, R.string.saved_artists_empty_body)
+        LibraryTabId.DOWNLOADS -> LibraryEmptySpec(R.drawable.aro_download_24, R.string.audio_downloads, R.string.audio_download_empty)
 
         LibraryTabId.LIKED -> when (storageFilter) {
             StorageFilter.ALL -> LibraryEmptySpec(

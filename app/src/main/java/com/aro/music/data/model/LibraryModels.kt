@@ -6,6 +6,7 @@ import kotlinx.parcelize.Parcelize
 
 @Immutable
 @Parcelize
+@kotlinx.serialization.Serializable
 data class Album(
     val id: Long, // MediaStore.Audio.Albums._ID
     val title: String,
@@ -32,6 +33,7 @@ data class Album(
 
 @Immutable
 @Parcelize
+@kotlinx.serialization.Serializable
 data class Artist(
     val id: Long, // MediaStore.Audio.Artists._ID
     val name: String,
