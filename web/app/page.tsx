@@ -18,8 +18,12 @@ const questions = [
     "Yes. Open Library → Songs → Import and confirm phone-music import, then grant audio access. Imported songs remain available offline.",
   ],
   [
+    "Can I download music for offline listening?",
+    "Download a song from the player or a full album or playlist from its page. Aro saves supported YouTube audio, including Spotify matches, in Music/Aro. Library → Downloads shows progress, All songs, and offline album and playlist pages. Other apps’ files remain local music.",
+  ],
+  [
     "How do Spotify playlists work?",
-    "Connect Spotify to browse playlists and liked songs, or paste a playlist link into Library’s Import action. Aro matches Spotify metadata to YouTube for playback; it does not stream Spotify audio. Imports are local copies, and remote edits do not sync back. Unavailable tracks may be omitted.",
+    "Connect Spotify to browse playlists and liked songs, or paste a playlist link into Library’s Import action. Aro matches Spotify metadata to YouTube for playback; it does not stream Spotify audio. Imports are local copies, and remote edits do not sync back. Unavailable tracks may be omitted. Hiding a Spotify playlist in Aro does not delete it on Spotify; restore hidden entries from Library → Playlists.",
   ],
   [
     "Do I need to connect an account?",
@@ -232,7 +236,7 @@ export default function Home() {
                 <br />
                 at home.
               </h2>
-              <p>Version {RELEASE_VERSION} fixes playlist scrolling and keeps Albums grouped by actual release.</p>
+              <p>Version {RELEASE_VERSION} adds song, album, and playlist downloads, full offline collection pages, and independently saved albums and artists.</p>
               <a className="button button-dark" href={APK_URL}>
                 <Icon name="download" /> Download APK
               </a>

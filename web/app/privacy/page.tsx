@@ -45,10 +45,11 @@ const sections: PolicySection[] = [
     body: (
       <p>
         The app stores music metadata, playlists, favorites, listening history,
-        settings, artwork caches, and connected-account session information on
+        settings, download records, saved album/artist selections, artwork caches, and connected-account session information on
         your device. Listening history retains track metadata for statistics;
         sharing a song image creates a temporary PNG on your device and opens
         Android’s share sheet only when you choose Share image.
+        Audio downloads save files in Music/Aro; collection covers are cached on your device.
         This website does not read your app library or
         connected-account sessions.
       </p>
@@ -75,13 +76,13 @@ const sections: PolicySection[] = [
     body: (
       <>
         <p>
-          YouTube and YouTube Music receive catalog and playback requests.
+          YouTube and YouTube Music receive catalog, playback, and audio-download requests.
           Spotify receives sign-in, catalog, and playlist requests. Aro stores a
           Spotify session cookie and matches Spotify metadata to YouTube for
           audio playback; it does not stream Spotify audio.
         </p>
         <p>
-          Optional server, cloud, and AI features send requests to the service
+          Optional server and cloud features send requests to the service
           or provider you configure. Those services operate under their own
           terms and privacy policies. App update checks and APK downloads contact
           GitHub. Downloads use temporary on-device files and are verified before
