@@ -156,13 +156,14 @@ class InnerTubeEngine @Inject constructor(
     private val streamCache = android.util.LruCache<String, ExtractedStream>(32)
 
     @OptIn(com.metrolist.innertubex.sabr.ExperimentalSabrApi::class)
-    suspend fun sabrAudio(videoId: String): kotlinx.coroutines.flow.Flow<ByteArray> {
-        val cached = streamCache[videoId]?.takeIf {
+    suspend fun sabrAudio(videoId: String, forDownload: Boolean = false): kotlinx.coroutines.flow.Flow<ByteArray> {
+        val cacheKey = if (forDownload) "download:$videoId" else videoId
+        val cached = streamCache[cacheKey]?.takeIf {
             it.expiresAt?.toEpochMilliseconds()?.let { expiry -> expiry > System.currentTimeMillis() + 60_000L } != false
         }
-        val stream = cached ?: extractor.extract(videoId, hints = ContentHints(wantVideo = false))
+        val stream = cached ?: extractor.extract(videoId, hints = extractionHints(forDownload))
             ?: throw java.io.IOException("No audio stream for $videoId")
-        streamCache.put(videoId, stream)
+        streamCache.put(cacheKey, stream)
         val bootstrap = stream.sabrBootstrap ?: throw java.io.IOException("Missing SABR bootstrap for $videoId")
         return com.metrolist.innertubex.sabr.SabrAudioStream(httpClient, bootstrap).bytes()
     }
@@ -541,14 +542,16 @@ class InnerTubeEngine @Inject constructor(
     suspend fun extractStream(
         videoId: String,
         audioQuality: AudioQuality = AudioQuality.HIGH,
+        forDownload: Boolean = false,
     ): InnerTubeStream? = withContext(Dispatchers.IO) {
         try {
             val stream = extractor.extract(
                 videoId = videoId,
-                hints = ContentHints(wantVideo = false),
+                hints = extractionHints(forDownload),
                 audioQuality = audioQuality,
             )
-            stream?.let { streamCache.put(videoId, it); toInnerTubeStream(videoId, it) }
+            // Download extraction must not replace a playing track's SABR bootstrap.
+            stream?.let { streamCache.put(if (forDownload) "download:$videoId" else videoId, it); toInnerTubeStream(videoId, it) }
         } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.w(e, "$TAG: extractStream failed for $videoId")
@@ -668,3 +671,7 @@ data class InnerTubePlaylist(
     val artworkUrl: String? = null,
     val songCount: Int? = null,
 )
+
+/** A playlist manifest cannot be saved as a standalone audio file. */
+internal fun extractionHints(forDownload: Boolean): ContentHints =
+    ContentHints(wantVideo = false).withStreamCapabilities(allowHls = !forDownload)

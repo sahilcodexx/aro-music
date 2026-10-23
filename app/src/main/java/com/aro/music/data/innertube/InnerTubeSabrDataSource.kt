@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
 /** Bridges InnerTubeX's demultiplexed SABR audio into Media3's byte reader. */
-class InnerTubeSabrDataSource(private val engine: InnerTubeEngine) : BaseDataSource(true) {
+class InnerTubeSabrDataSource(private val engine: InnerTubeEngine, private val forDownload: Boolean = false) : BaseDataSource(true) {
     private var uri: Uri? = null
     private var scope: CoroutineScope? = null
     private var chunks: Channel<ByteArray>? = null
@@ -28,7 +28,7 @@ class InnerTubeSabrDataSource(private val engine: InnerTubeEngine) : BaseDataSou
         transferInitializing(dataSpec)
         uri = dataSpec.uri
         val videoId = requireNotNull(dataSpec.uri.host) { "SABR URI has no video ID" }
-        val audio = runBlocking(Dispatchers.IO) { engine.sabrAudio(videoId) }
+        val audio = runBlocking(Dispatchers.IO) { engine.sabrAudio(videoId, forDownload) }
         val channel = Channel<ByteArray>(2)
         chunks = channel
         skip = dataSpec.position

@@ -49,6 +49,64 @@ class NativePlaybackCompatibilityTest {
             .put("data".toByteArray()).putInt(samplesSize).array()
         val file = File.createTempFile("aro-playback-check", ".wav", context.cacheDir)
         file.writeBytes(wav)
+        assertDecodesAndAdvances(file)
+    }
+
+    @Test fun fragmentedDownloadFinalizesWithoutChangingAudioSamples() = runBlocking {
+        assertDownloadRemux("download-fragments.m4a", "m4a", false)
+    }
+
+    @Test fun opusDownloadUsesOggWithoutChangingAudioSamples() = runBlocking {
+        assertDownloadRemux("download-opus.webm", "opus", true)
+    }
+
+    private suspend fun assertDownloadRemux(asset: String, extension: String, opus: Boolean) {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val source = File.createTempFile("aro-fragments", ".part", context.cacheDir)
+        val output = File.createTempFile("aro-finalized", ".$extension", context.cacheDir)
+        try {
+            InstrumentationRegistry.getInstrumentation().context.assets.open(asset).use { input ->
+                source.outputStream().use { input.copyTo(it) }
+            }
+            java.io.FileOutputStream(output).use {
+                com.aro.music.data.download.remuxAudio(source, it.fd, opus = opus)
+            }
+            org.junit.Assert.assertArrayEquals(compressedAudioDigest(source), compressedAudioDigest(output))
+            val duration = android.media.MediaMetadataRetriever().use {
+                it.setDataSource(output.absolutePath)
+                it.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0
+            }
+            assertTrue("Finalized audio must retain its full duration", duration >= 1900)
+            assertDecodesAndAdvances(output)
+        } finally {
+            source.delete()
+            output.delete()
+        }
+    }
+
+    private fun compressedAudioDigest(file: File): ByteArray {
+        val extractor = android.media.MediaExtractor()
+        try {
+            extractor.setDataSource(file.absolutePath)
+            extractor.selectTrack(0)
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val buffer = ByteBuffer.allocate(1024 * 1024)
+            while (true) {
+                buffer.clear()
+                val size = extractor.readSampleData(buffer, 0)
+                if (size < 0) break
+                buffer.position(0)
+                buffer.limit(size)
+                digest.update(buffer)
+                if (!extractor.advance()) break
+            }
+            return digest.digest()
+        } finally { extractor.release() }
+    }
+
+    private fun assertDecodesAndAdvances(file: File) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
         val advanced = CountDownLatch(1)
         val failure = AtomicReference<Throwable?>()
         val handler = Handler(Looper.getMainLooper())
