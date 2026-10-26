@@ -27,9 +27,9 @@ Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Teleg
 
 Aro requires **Android 11 or newer**. The phone build targets Android 16.
 
-Download [**Aro-1.0.5-universal.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.5/Aro-1.0.5-universal.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
+Download [**Aro-1.0.7-universal.apk**](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.7/Aro-1.0.7-universal.apk), then open it to install or update Aro. This universal APK contains ARM64, ARMv7, x86, and x86_64 native libraries; physical validation covers the Samsung ARM64 phone recorded in the checklist.
 
-[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.5) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. Choose the universal APK when unsure, or the [smaller ARM64 APK](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.5/Aro-1.0.5-arm64-v8a.apk) for an ARM64 phone. Install one APK; an AAB cannot be installed directly. Only install packages from a trusted source.
+[Release notes](https://github.com/sahilcodexx/aro-music/releases/tag/v1.0.7) describe the changes and verification limits. GitHub Actions also retains split APKs, an AAB, and checksums for developers. Choose the universal APK when unsure, or the [smaller ARM64 APK](https://github.com/sahilcodexx/aro-music/releases/download/v1.0.7/Aro-1.0.7-arm64-v8a.apk) for an ARM64 phone. Install one APK; an AAB cannot be installed directly. Only install packages from a trusted source.
 
 Release builds use `com.aro.music`; development builds use `com.aro.music.debug` and keep separate app data. Keep the release signing key for all future updates. Wear OS sources are included but are outside this phone milestone's verified scope.
 

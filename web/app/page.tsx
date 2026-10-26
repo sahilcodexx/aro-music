@@ -22,6 +22,14 @@ const questions = [
     "Download a song from the player or a full album or playlist from its page. Aro saves supported YouTube audio, including Spotify matches, in Music/Aro. Library → Downloads shows progress, All songs, and offline album and playlist pages. Other apps’ files remain local music.",
   ],
   [
+    "Can I share lyrics as an image?",
+    "Open Lyrics → Options → Create lyric card. Choose up to six lines and 300 characters, then preview with Artwork, Soft or Dark colours and share a PNG. The card keeps the song title, artist and Aro branding. Lyrics need to be available for the song.",
+  ],
+  [
+    "Can I change what appears on Home?",
+    "Use the pencil button on Home to reorder or hide its existing section groups, then choose Save layout. Reset restores the default layout. At least one section stays visible; this does not remove songs or playlists.",
+  ],
+  [
     "How do Spotify playlists work?",
     "Connect Spotify to browse playlists and liked songs, or paste a playlist link into Library’s Import action. Aro matches Spotify metadata to YouTube for playback; it does not stream Spotify audio. Imports are local copies, and remote edits do not sync back. Unavailable tracks may be omitted. Hiding a Spotify playlist in Aro does not delete it on Spotify; restore hidden entries from Library → Playlists.",
   ],

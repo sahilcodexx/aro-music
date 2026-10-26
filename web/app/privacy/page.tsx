@@ -47,7 +47,7 @@ const sections: PolicySection[] = [
         The app stores music metadata, playlists, favorites, listening history,
         settings, download records, saved album/artist selections, artwork caches, and connected-account session information on
         your device. Listening history retains track metadata for statistics;
-        sharing a song image creates a temporary PNG on your device and opens
+        sharing a song or selected-lyrics card creates a temporary PNG on your device and opens
         Android’s share sheet only when you choose Share image.
         Audio downloads save files in Music/Aro; collection covers are cached on your device.
         This website does not read your app library or
