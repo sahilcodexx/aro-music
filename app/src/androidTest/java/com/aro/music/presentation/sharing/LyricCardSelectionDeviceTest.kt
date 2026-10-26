@@ -26,12 +26,14 @@ class LyricCardSelectionDeviceTest {
             }
         }
         compose.onNodeWithTag("lyric_card_preview").assertIsNotEnabled()
-        (5 downTo 0).forEach { compose.onNodeWithTag("lyric_line_$it").performScrollTo().performClick() }
-        compose.onNodeWithTag("lyric_line_6").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithTag("lyric_card_preview").performClick()
-        compose.runOnIdle { assertEquals(lines.take(6), previewed) }
-        compose.onNodeWithTag("lyric_line_0").performScrollTo().performClick()
-        compose.onNodeWithTag("lyric_line_6").performScrollTo().assertIsEnabled().performClick()
+        fun line(index: Int): SemanticsNodeInteraction {
+            compose.onNodeWithTag("lyric_card_lines").performScrollToIndex(index)
+            return compose.onNodeWithTag("lyric_line_$index").assertIsDisplayed()
+        }
+        (5 downTo 0).forEach { line(it).performClick().assertIsOn() }
+        line(6).assertIsNotEnabled()
+        line(0).performClick().assertIsOff()
+        line(6).assertIsEnabled().performClick().assertIsOn()
         compose.onNodeWithTag("lyric_card_preview").performClick()
         compose.runOnIdle { assertEquals(lines.drop(1), previewed) }
     }

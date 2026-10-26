@@ -48,7 +48,7 @@ internal fun LyricCardSelectionContent(
         Text(stringResource(R.string.lyric_card_hint, LYRIC_CARD_MAX_LINES, LYRIC_CARD_MAX_CHARACTERS),
             style = MaterialTheme.typography.bodyMedium)
         if (lines.isEmpty()) Text(stringResource(R.string.lyric_card_empty))
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("lyric_card_lines"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             itemsIndexed(lines, key = { index, _ -> index }) { index, line ->
                 val checked = index in selected
                 val enabled = checked || isValidLyricExcerpt(selectedLyricLines(lines, selected + index))

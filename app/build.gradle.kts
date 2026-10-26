@@ -316,7 +316,6 @@ dependencies {
     androidTestImplementation(libs.worktesting)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    androidTestImplementation(libs.androidx.benchmark.macro.junit4)
     androidTestImplementation(libs.androidx.uiautomator)
 
     // Debug
