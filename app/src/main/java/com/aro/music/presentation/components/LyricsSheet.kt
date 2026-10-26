@@ -362,6 +362,7 @@ fun LyricsSheet(
     var wasResetTriggered by remember { mutableStateOf(false) }
     // Save lyrics dialog state
     var showSaveLyricsDialog by remember { mutableStateOf(false) }
+    var lyricCard by remember { mutableStateOf<Pair<Song, Lyrics>?>(null) }
     var showSyncControls by remember { mutableStateOf(false) }
     var previewSeekPositionMs by remember(currentSong?.id) { mutableStateOf<Long?>(null) }
 
@@ -515,6 +516,14 @@ fun LyricsSheet(
     }
 
     
+
+    lyricCard?.let { (song, selectedLyrics) ->
+        MaterialTheme(colorScheme = colorScheme) {
+            com.aro.music.presentation.sharing.LyricCardSheet(
+                song = song, lyrics = selectedLyrics, onDismiss = { lyricCard = null }
+            )
+        }
+    }
 
     Scaffold(
         modifier = modifier
@@ -925,6 +934,11 @@ fun LyricsSheet(
                     showSyncedLyrics = showSyncedLyrics == true,
                     isSyncControlsVisible = showSyncControls,
                     onSaveLyricsAsLrc = { showSaveLyricsDialog = true },
+                    onCreateLyricCard = {
+                        val song = currentSong
+                        val availableLyrics = lyrics
+                        if (song != null && availableLyrics != null) lyricCard = song to availableLyrics
+                    },
                     onResetImportedLyrics = {
                         wasResetTriggered = true
                         resetLyricsForCurrentSong()

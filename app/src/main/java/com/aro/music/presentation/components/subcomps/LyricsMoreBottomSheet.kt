@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.rounded.FormatAlignRight
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Abc
 import androidx.compose.material.icons.rounded.FormatAlignCenter
 import androidx.compose.material.icons.rounded.Tune
@@ -62,6 +63,7 @@ fun LyricsMoreBottomSheet(
     showSyncedLyrics: Boolean,
     isSyncControlsVisible: Boolean,
     onSaveLyricsAsLrc: () -> Unit,
+    onCreateLyricCard: () -> Unit,
     onResetImportedLyrics: () -> Unit,
     onToggleSyncControls: () -> Unit,
     isImmersiveTemporarilyDisabled: Boolean,
@@ -146,6 +148,20 @@ fun LyricsMoreBottomSheet(
                             headlineColor = contentColor,
                             leadingIconColor = contentColor
                         )
+                    )
+                }
+
+                if (com.aro.music.presentation.sharing.lyricCardLines(lyrics).isNotEmpty()) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.lyric_card_title)) },
+                        leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                            .background(itemBackgroundColor).clickable {
+                                onDismissRequest()
+                                onCreateLyricCard()
+                            },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent,
+                            headlineColor = contentColor, leadingIconColor = contentColor)
                     )
                 }
 

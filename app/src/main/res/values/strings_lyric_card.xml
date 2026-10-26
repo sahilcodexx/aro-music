@@ -1,0 +1,9 @@
+<resources>
+    <string name="lyric_card_title" translatable="false">Create lyric card</string>
+    <string name="lyric_card_image" translatable="false">Lyric card preview</string>
+    <string name="lyric_card_hint" translatable="false">Choose up to %1$d lines and %2$d characters. Lines stay in song order. Long lines that cannot fit are unavailable.</string>
+    <string name="lyric_card_empty" translatable="false">No lyrics available for this song yet.</string>
+    <string name="lyric_card_count" translatable="false">Lines: %1$d · Characters: %2$d</string>
+    <string name="lyric_card_preview" translatable="false">Preview card</string>
+    <string name="lyric_card_edit_lines" translatable="false">Edit lines</string>
+</resources>

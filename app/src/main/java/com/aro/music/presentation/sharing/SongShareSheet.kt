@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
+fun SongShareSheet(song: Song, onDismiss: () -> Unit, lyricText: String? = null) {
     val context = LocalContext.current
     val shareTitle = stringResource(R.string.share_song_action)
     val scheme = MaterialTheme.colorScheme
@@ -59,14 +59,14 @@ fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
         }
         artworkReady = true
     }
-    LaunchedEffect(song.id, artworkReady, style, fallback) {
+    LaunchedEffect(song.id, artworkReady, style, fallback, lyricText) {
         if (!artworkReady) return@LaunchedEffect
         bitmap = null; failed = false
         try {
             bitmap = withContext(Dispatchers.IO) {
                 val colors = SongShareCard.colorsFor(artwork, fallback, style)
                 val font = ResourcesCompat.getFont(context, R.font.gflex_variable)
-                SongShareCard.render(song, artwork, colors, font, SongShareCard.brandIcon(context))
+                SongShareCard.render(song, artwork, colors, font, SongShareCard.brandIcon(context), lyricText)
             }
         } catch (error: Exception) { if (error is CancellationException) throw error; failed = true }
     }
@@ -83,7 +83,7 @@ fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
                     Toast.makeText(context, R.string.share_song_failed, Toast.LENGTH_LONG).show()
                 } finally { sharing = false }
             }
-        }, onDismiss = onDismiss)
+        }, onDismiss = onDismiss, isLyricCard = lyricText != null)
     }
 }
 
@@ -91,14 +91,15 @@ fun SongShareSheet(song: Song, onDismiss: () -> Unit) {
 @Composable
 internal fun SongShareSheetContent(
     bitmap: Bitmap?, failed: Boolean, sharing: Boolean, style: SongShareCard.Style,
-    onStyle: (SongShareCard.Style) -> Unit, onShare: () -> Unit, onDismiss: () -> Unit
+    onStyle: (SongShareCard.Style) -> Unit, onShare: () -> Unit, onDismiss: () -> Unit,
+    isLyricCard: Boolean = false
 ) {
     val configuration = LocalConfiguration.current
     val compact = configuration.screenHeightDp < 500
     val height = (configuration.screenHeightDp.dp * 0.85f).coerceAtMost(780.dp)
     val preview: @Composable (Modifier) -> Unit = { modifier ->
         Box(modifier.testTag("song_share_preview"), contentAlignment = Alignment.Center) {
-            if (bitmap != null) Image(bitmap.asImageBitmap(), stringResource(R.string.share_song_image), Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            if (bitmap != null) Image(bitmap.asImageBitmap(), stringResource(if (isLyricCard) R.string.lyric_card_image else R.string.share_song_image), Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
             else if (!failed) ShimmerBox(Modifier.fillMaxSize())
             else Text(stringResource(R.string.share_song_failed))
         }
@@ -117,19 +118,19 @@ internal fun SongShareSheetContent(
         Button(onClick = onShare, enabled = bitmap != null && !sharing, modifier = Modifier.fillMaxWidth().testTag("song_share_action")) {
             Text(stringResource(if (sharing) R.string.share_song_preparing else R.string.share_song_action))
         }
-        TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.share_song_close)) }
+        TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(if (isLyricCard) R.string.lyric_card_edit_lines else R.string.share_song_close)) }
     }
     if (compact) {
         Row(Modifier.fillMaxWidth().height(height).navigationBarsPadding().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             preview(Modifier.weight(1f).fillMaxHeight().padding(bottom = 12.dp))
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.share_song_title), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(if (isLyricCard) R.string.lyric_card_title else R.string.share_song_title), style = MaterialTheme.typography.titleLarge)
                 actions()
             }
         }
     } else {
         Column(Modifier.fillMaxWidth().height(height).navigationBarsPadding().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.share_song_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(if (isLyricCard) R.string.lyric_card_title else R.string.share_song_title), style = MaterialTheme.typography.titleLarge)
             preview(Modifier.weight(1f).fillMaxWidth().padding(vertical = 8.dp))
             actions()
             Spacer(Modifier.height(4.dp))

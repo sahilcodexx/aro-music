@@ -37,7 +37,7 @@ object SongShareCard {
         return Colors(background, foreground, seed, android.graphics.Color.WHITE)
     }
 
-    fun render(song: Song, artwork: Bitmap?, colors: Colors, font: Typeface? = null, brandIcon: Bitmap? = null): Bitmap {
+    fun render(song: Song, artwork: Bitmap?, colors: Colors, font: Typeface? = null, brandIcon: Bitmap? = null, lyricText: String? = null): Bitmap {
         val bitmap = Bitmap.createBitmap(1080, 1440, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -65,7 +65,9 @@ object SongShareCard {
         fun drawText(layout: StaticLayout, x: Float, y: Float) {
             canvas.save(); canvas.translate(x, y); layout.draw(canvas); canvas.restore()
         }
-        drawText(paragraph("NOW PLAYING", 28f, 880, 1, true, colors.foreground), 100f, 76f)
+        val excerpt = lyricText?.takeIf { it.isNotBlank() }
+        require(excerpt == null || isValidLyricExcerpt(excerpt.lines()))
+        drawText(paragraph(if (excerpt == null) "NOW PLAYING" else "LYRICS", 28f, 880, 1, true, colors.foreground), 100f, 76f)
         val title = paragraph(song.title, 58f, 792, 2, true, white)
         val artist = paragraph(song.displayArtist, 32f, 792, 1, false, blend(white, colors.accent, 0.20f))
         val titleY = 1040f
@@ -82,7 +84,21 @@ object SongShareCard {
         val cover = RectF(128f, 184f, 952f, 1008f)
         val save = canvas.save()
         canvas.clipPath(android.graphics.Path().apply { addRoundRect(cover, 28f, 28f, android.graphics.Path.Direction.CW) })
-        if (artwork != null && artwork.width > 0 && artwork.height > 0) {
+        if (excerpt != null) {
+            paint.shader = android.graphics.LinearGradient(128f, 184f, 952f, 1008f,
+                blend(colors.accent, black, 0.55f), blend(colors.accent, black, 0.82f), android.graphics.Shader.TileMode.CLAMP)
+            canvas.drawRect(cover, paint)
+            paint.shader = null
+            drawText(paragraph("“", 140f, 728, 1, true, white), 176f, 208f)
+            var size = 64f
+            var text = paragraph(excerpt, size, 728, Int.MAX_VALUE, true, white)
+            while (text.height > 588 && size > 24f) {
+                size -= 2f
+                text = paragraph(excerpt, size, 728, Int.MAX_VALUE, true, white)
+            }
+            check(text.height <= 588) { "Lyrics do not fit the card" }
+            drawText(text, 176f, 348f + (588f - text.height) / 2f)
+        } else if (artwork != null && artwork.width > 0 && artwork.height > 0) {
             val size = minOf(artwork.width, artwork.height)
             val left = (artwork.width - size) / 2
             val top = (artwork.height - size) / 2

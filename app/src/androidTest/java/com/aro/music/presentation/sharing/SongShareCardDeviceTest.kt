@@ -59,4 +59,26 @@ class SongShareCardDeviceTest {
         } finally { artwork.recycle() }
     }
 
+    @Test fun lyricCardReplacesOnlyArtworkAndFitsMaximumExcerpt() {
+        val artwork = Bitmap.createBitmap(80, 80, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.MAGENTA) }
+        val song = Song.emptySong().copy(title = "Song", artist = "Artist")
+        val colors = SongShareCard.Colors(Color.BLACK, Color.WHITE, Color.BLUE, Color.YELLOW)
+        val original = SongShareCard.render(song, artwork, colors)
+        val excerpts = listOf("A".repeat(300), List(6) { "A line with enough words to wrap across the lyric card".take(49) }.joinToString("\n"), "एक याद\nএকটা গান\n하나의 노래\nأغنية\nA favourite verse")
+        try {
+            excerpts.forEach { excerpt ->
+                val card = SongShareCard.render(song, artwork, colors, lyricText = excerpt)
+                try {
+                    assertNotEquals(Color.MAGENTA, card.getPixel(540, 540))
+                    val originalPanel = Bitmap.createBitmap(original, 96, 1020, 888, 300)
+                    val lyricPanel = Bitmap.createBitmap(card, 96, 1020, 888, 300)
+                    try { assertTrue("Song details and branding must remain unchanged", originalPanel.sameAs(lyricPanel)) }
+                    finally { originalPanel.recycle(); lyricPanel.recycle() }
+                    assertEquals(1080, card.width)
+                    assertEquals(1440, card.height)
+                } finally { card.recycle() }
+            }
+        } finally { artwork.recycle(); original.recycle() }
+    }
+
 }
