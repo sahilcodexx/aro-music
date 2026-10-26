@@ -2,11 +2,13 @@
 
 Your library, your playlists, and a home feed shaped by what you listen to.
 
-Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.5 (code 25)** adds background audio downloads and independent saved albums and artists. Component licensing remains unresolved; broader device and provider verification is incomplete. See the [release build](https://github.com/sahilcodexx/aro-music/actions/workflows/phone-release.yml) and [validation record](RELEASE_CHECKLIST.md) for its status.
+Aro is an Android music app with local playback, YouTube Music discovery, Spotify playlist imports, and artwork-based colors. **1.0.7 (code 30)** adds lyric cards and an editable Home layout, fixes queue-to-playlist saves, and improves player transitions and update notes. Component licensing remains unresolved; broader device and provider verification is incomplete. See the [release build](https://github.com/sahilcodexx/aro-music/actions/workflows/phone-release.yml) and [validation record](RELEASE_CHECKLIST.md) for its status.
 
 Download individual songs or entire albums/playlists into Music/Aro. Library → Downloads shows progress, retry/cancel controls, an All songs card, and full offline album/playlist pages. Saved albums and artists are independent of song likes. This update also fixes manual playlist selection, adds persistent Spotify playlist hiding with restore, distinct photo genre cards, and joined player actions. Spotify itself stays unchanged when a playlist is hidden in Aro.
 
 The maintainer tested the dev3 preview and reported all features working. Development APKs use `com.aro.music.debug` and keep separate app data; release APKs update `com.aro.music` with the existing production key. AI provider integration and generation remain removed.
+
+In **1.0.7**, use Home’s pencil button to reorder or hide existing sections, and Lyrics → Options → Create lyric card to share selected lines in Aro’s existing song card styles. Queue saves retain metadata for unplayed selected tracks. Update-note Markdown uses a phone-friendly layout. Home-editor and lyric-card labels are currently English. The maintainer approved the dev3 preview; exact signed-package verification is tracked in RELEASE_CHECKLIST.md.
 
 ## What you can do
 
@@ -16,7 +18,8 @@ The maintainer tested the dev3 preview and reported all features working. Develo
 - Connect Spotify to browse account playlists and liked songs. Spotify metadata is matched to YouTube for audio playback.
 - Import YouTube and Spotify playlists as local copies. Remote edits are not automatically synchronized back.
 - Open a home feed with recently played, speed dial, daily mix, and discovery shelves. Cached content and loading placeholders preserve the layout; pull to refresh recommendations.
-- Use lyrics, listening history, an equalizer, and artwork colors across the player, navigation, and backgrounds.
+- Use lyrics, listening history, an equalizer, and artwork colors across the player, navigation, and backgrounds. Share selected lyrics as PNG cards.
+- Customize Home section order and visibility with explicit Save/reset controls.
 
 Optional server/account integrations include Subsonic/Navidrome, Jellyfin, Telegram, NetEase Music, and QQ Music. Their live release verification is incomplete. Google Drive remains disabled pending OAuth setup. See the [validation record](RELEASE_CHECKLIST.md) for tested features and remaining work.
 

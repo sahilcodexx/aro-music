@@ -1,5 +1,17 @@
 # Aro changelog
 
+## 1.0.7 — 2026-10-26
+
+Code 30. The maintainer tested the 1.0.6-dev3 preview and approved the Home/player changes and lyric cards. Signed-release and device results are recorded in RELEASE_CHECKLIST.md.
+
+- Create lyric cards from Lyrics → Options: select up to six lines/300 characters, preview with Artwork, Soft or Dark colours, and share a PNG. Lyrics replace the artwork in the existing card; song, artist and Aro branding remain. Edit lines retains the selection, and playback advancing does not change the card being created.
+- Edit Home from its toolbar: reorder the six existing section groups, hide sections, explicitly save changes, or reset. At least one section stays visible.
+- Move artwork between mini-player and full-player bounds where cover rendering is ready; preserve the existing presentation for delayed covers. Fix the overlay enlarging the mini-player or covering a loading placeholder.
+- Save metadata for every selected queue track before writing playlist membership, preserving order, likes and local paths. Existing incomplete playlists recover missing metadata when it is still available in the saved queue.
+- Format update notes with readable headings, lists, emphasis, code and HTTPS links. Wide Markdown tables become phone-width cards.
+
+Home-editor and lyric-card labels are currently English. No shared-room service is included. Original notices and unresolved licensing remain unchanged.
+
 ## 1.0.5 — 2026-10-23
 
 Code 25. The maintainer tested the dev3 preview on their phone and reported all features working. Signed production validation is recorded in RELEASE_CHECKLIST.md.

@@ -1,8 +1,34 @@
 # Aro phone release validation
 
+## 1.0.7 release preparation — 2026-10-26
+
+- Maintainer tested 1.0.6-dev3 and explicitly approved the changes, four or five combined app/website commits, a new app version/release, and updated website downloads. Version 1.0.7/code 30 upgrades production code 25 and local preview code 28 with the original production signer. No schema changes or deletion of existing library/playlist/preferences data.
+- Local dev3 passed all 292 debug unit tests, debug assembly and device-test Kotlin compilation. Maintainer phone acceptance is user-reported; it does not substitute for exact signed release validation. New Home editor, artwork-layout and lyric selection regressions are included in CI's account-independent API 30/36 suite.
+- Signed release unit/lint, R8 APK/AAB assembly, signatures/native alignment and API 30/36 checks must pass on the committed app source before publication. Baseline and original notices remain unchanged. The existing development-release authorization and unresolved licensing status remain documented in LICENSE_STATUS.md; this is not a claim of stable/store readiness.
+- Website download URLs stay on the existing public APK until 1.0.7 assets are accessible. Final build/device results and website checks will be appended before the website commit.
+
+## 1.0.6-dev3 lyric card preview — 2026-10-26
+
+- Lyrics → Options → Create lyric card selects up to six lines/300 characters in original order. Reuses the existing PNG renderer, styles, temporary content URI/read grant, and song/artist/Aro panel. Text replaces the cover and shrinks to fit without ellipsis. Returning from preview preserves selection; song/lyrics are captured when opening so automatic playback advance cannot change the card.
+- No schema, library, playback, download, or signing changes. Labels are explicitly English for this local preview. New unit coverage checks synced/plain fallback, timestamp cleanup, repeated verses, ordering, and line/character limits. Device regressions cover the selector and rendering long/multilingual excerpts while preserving the metadata panel; selection test added to the existing CI device suite.
+- Final local verification passed all 292 debug unit tests (zero failures/errors/skips), `:app:assembleDebug`, and `:app:compileDebugAndroidTestKotlin` (1m 56s final rebuild). ARM64 APK verifies as `com.aro.music.debug`, 1.0.6-dev3/code 28, with the unchanged development signer and all five ARM64 native libraries passing 16 KiB alignment. Device rendering/sharing tests compiled but have not been executed on a phone or emulator; full lint and release shrinking are not claimed. No phone installation, commit, push, or release.
+
+## 1.0.6-dev2 local fixes — 2026-10-26
+
+- Fix artwork overlay measurement (zero footprint) and retain existing rendering for delayed covers. A Compose regression asserts a 400 px overlay cannot enlarge the 64 dp mini-player.
+- Queue/selection saves persist and verify every selected track before writing playlist IDs, using only missing remote rows. Existing partial playlists recover from saved queue metadata where available; no rows, likes, local paths, or playlist IDs are deleted. Unit coverage includes 53 selected tracks with only five cached, original order, selected subsets, local-path/like preservation, old queue recovery, and persistence failure.
+- Update popup renders Markdown headings/lists/emphasis/code/HTTPS links and converts tables to phone-width cards. Tests cover table parsing, escaped pipes, unsafe URLs, and mobile table display.
+- Final verification passed all 289 unit tests (zero failures/errors/skips), `:app:assembleDebug`, and `:app:compileDebugAndroidTestKotlin` (2m 1s final build). ARM64 APK confirms `com.aro.music.debug`, 1.0.6-dev2/code 27, unchanged development signer, and all five ARM64 libraries pass 16 KiB alignment. Full lint and release shrinking are deferred for this local preview. No emulator is configured locally; Compose device regressions have not been executed. No phone installation, commit, push, or release.
+
+## 1.0.6-dev1 local UI preview — 2026-10-26
+
+- Adds Home section reorder/visibility with explicit Save/reset and measured mini/full artwork motion. Keeps existing library data, player controls, settings, and loading sections. Shared-room experiment was removed. No schema, audio transport, or DSP changes.
+- Final debug verification passed: all 282 unit tests with zero failures/errors/skips, `:app:assembleDebug`, and `:app:compileDebugAndroidTestKotlin` (1m 26s final incremental run). ARM64 APK verifies as `com.aro.music.debug`, 1.0.6-dev1/code 26, with the unchanged development certificate and five native libraries passing 16 KiB ELF alignment. Home editor device tests compile but have not been executed; on-phone UI/gesture/rotation review is not claimed. Full lint/release shrinking is deferred until the local UI is accepted.
+- English preview labels are explicitly non-translatable; locale wording/release localization remains future work. Existing release/signing configuration is preserved. No commits, push, public release, or phone installation for this preview.
+
 ## 1.0.5 release candidate — 2026-10-23
 
-- Follow-up verification: the first signed CI attempt failed with one Compose `LocalContextGetResourceValueCall` error and 40 missing-translation errors. The progress semantics label now uses `stringResource`; all 40 resources have translations for the nine existing locales, with names and format placeholders checked. Baseline is unchanged. Resource/Kotlin compilation passed; local full lint and a fresh signed CI run must complete before publication. Translation wording has not had native-speaker review.
+- Follow-up verification: the first signed CI attempt failed with one Compose `LocalContextGetResourceValueCall` error and 40 missing-translation errors. The progress semantics label now uses `stringResource`; all 40 resources have translations for the nine existing locales, with names and format placeholders checked. Baseline is unchanged. Resource/Kotlin compilation and local `:app:lintRelease` passed (15m 24s), with zero errors and 135 warnings; baseline is unchanged. Fresh signed CI and API 30/36 runs must complete before publication. Translation wording has not had native-speaker review.
 - The interrupted API 36 run reported all four native playback tests passing, including AAC and Opus packet-preserving remux/decode checks, but caught a home shelf height mismatch (one-line placeholder versus a two-line loaded title). Loaded and placeholder cards now reserve matching title/artist lines; the device regression also covers short titles and missing artist text. Fresh API 30/36 results are required; the interrupted run is not recorded as passing.
 
 - Maintainer explicitly reported testing all features successfully on the dev3 preview and authorized versioning, website updates, 10 commits, pushing, and a new release. This is user-reported coverage, not an automated test of the final production APK.

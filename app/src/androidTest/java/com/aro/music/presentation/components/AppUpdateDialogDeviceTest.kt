@@ -25,6 +25,15 @@ class AppUpdateDialogDeviceTest {
         compose.onNodeWithText("Download APK").performClick()
         compose.runOnIdle { assertEquals(url,download) }
     }
+    @Test fun releaseNotesRenderTablesAsReadableCards() {
+        val notes = "## Changes\n\n| Feature | Result |\n| --- | --- |\n| Playlist | **All songs saved** |"
+        val url = "${AroProject.URL}/releases/download/v2.0.0/Aro-arm64.apk"
+        compose.setContent { MaterialTheme { AppUpdateDialog(UpdateDialog.Available(AppRelease("v2.0.0", AppVersion.parse("2.0.0")!!, url, notes)), "1.0.0", {}, {}, {}) } }
+        compose.onNodeWithText("Changes").assertIsDisplayed()
+        compose.onNodeWithText("All songs saved").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("| --- | --- |").assertDoesNotExist()
+    }
+
     @Test fun currentBuildDoesNotOfferADowngradeDownload() {
         compose.setContent { MaterialTheme { AppUpdateDialog(UpdateDialog.Current,"1.0.0-rc.4",{}, {}, { error("No update available") }) } }
         compose.onNodeWithText("You’re up to date").assertIsDisplayed()

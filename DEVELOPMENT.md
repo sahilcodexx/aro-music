@@ -102,3 +102,15 @@ Download extraction disables HLS manifests and uses a separate SABR cache from p
 `aro_download_collections_v1` stores album/playlist identity, title, ordered source IDs, and cover references independently of saved-library membership. Cover copies live under app-private `download-covers`. Downloads landing contains an All songs card plus collection cards; `downloaded_collection/{collectionId}` opens a full offline page using the shared playlist artwork header. All songs includes standalone and collection files, while collection playback resolves only owned completed download IDs in source order; missing/deleted copies remain partial. Legacy `FOLDERS`/`ARTISTS` tab keys normalize to `ARTIST` before deduplication.
 
 Android rejects `audio/webm` in the audio media collection on the tested phone. Opus is remuxed into Ogg and registered as `audio/ogg` with an `.opus` extension; AAC remains `.m4a`. Negative Opus preroll timestamps are normalized instead of ending extraction early.
+
+## Home layout, player motion and lyric cards
+
+`HomeLayoutPreferences` uses the existing settings DataStore with `home_section_order_v1` and `home_hidden_sections_v1`. It normalizes unknown/duplicate section IDs, appends new defaults, and retains at least one visible group. Saving replaces only these two keys. Home groups keep their stable LazyColumn item keys and existing loading/playback actions.
+
+`PlayerArtworkMotion` lives inside the player layers and tracks measured mini/full artwork bounds. The overlay follows the sheet expansion fraction; original images remain visible whenever endpoints or the loaded overlay are unavailable. Orientation and track changes reset the geometry. No playback/DSP or database changes are involved. Unit checks cover layout persistence/normalization and interpolation. `EditHomeSheetDeviceTest` covers saving visibility and resetting; run it on an emulator or designated test device before release.
+
+Dev2 makes the artwork overlay a zero-size layout so its cover never contributes to the player container measurement. Delayed album rendering retains its existing transition. `PlaylistSongResolver` persists missing remote metadata from supplied songs or the stored playback queue before explicit playlist saves, verifies all selected IDs are readable, and avoids overwriting existing rows. Old playlists can only recover uncached rows while their metadata is still in that queue snapshot.
+
+The update popup renders a bounded Markdown subset with stacked table cards. HTTPS links are clickable; unsafe schemes are rendered as plain labels, and remote images are not loaded.
+
+Lyric cards use `LyricCardSheet` for up to six selected lines/300 characters in original song order, then reuse `SongShareSheet` and `SongShareCard` for palette, preview and temporary PNG sharing. Synced text is preferred, with plain lyrics as fallback; no additional lyrics request or storage permission is needed. The lyric cover fits text without ellipsis and retains the existing metadata/brand panel. Home-editor and lyric-card labels are currently English.

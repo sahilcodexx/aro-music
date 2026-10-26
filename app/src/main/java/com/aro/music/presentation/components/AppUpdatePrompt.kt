@@ -74,8 +74,9 @@ fun AppUpdateDialog(
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.update_available_title, dialog.release.tag.removePrefix("v"))) },
             text = {
-                Column(Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())) {
-                    Text(if (dialog.release.notes.isBlank()) stringResource(R.string.update_available_body) else dialog.release.notes)
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                    if (dialog.release.notes.isBlank()) Text(stringResource(R.string.update_available_body))
+                    else ReleaseNotesContent(dialog.release.notes)
                 }
             },
             confirmButton = { TextButton(onClick = { onDownload(dialog.release.apkUrl) }) { Text(stringResource(R.string.update_download_apk)) } },
