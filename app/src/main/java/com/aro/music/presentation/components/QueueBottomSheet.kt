@@ -1050,7 +1050,8 @@ fun QueueBottomSheet(
                                             playlistViewModel.createPlaylist(
                                                 name = name,
                                                 songIds = orderedSelection,
-                                                isQueueGenerated = true
+                                                isQueueGenerated = true,
+                                                suppliedSongs = queue.filter { it.id in selectedIds }
                                             )
                                         }
                                     }

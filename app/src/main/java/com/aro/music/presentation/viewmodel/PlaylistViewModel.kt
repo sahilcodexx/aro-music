@@ -82,6 +82,7 @@ class PlaylistViewModel @Inject constructor(
     private val spotifyRepository: com.aro.music.spotify.SpotifyRepository,
     private val artworkPreferences: com.aro.music.data.preferences.PlaylistArtworkPreferences,
     private val playlistImporter: com.aro.music.data.playlist.PlaylistImportRepository,
+    private val playlistSongResolver: com.aro.music.data.playlist.PlaylistSongResolver,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -314,7 +315,7 @@ class PlaylistViewModel @Inject constructor(
 
                         // Colectar la lista de canciones del Flow devuelto por el repositorio en un hilo de IO
                         val songsList: List<Song> = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            musicRepository.getSongsByIds(playlist.songIds).first()
+                            playlistSongResolver.resolve(playlist.songIds)
                         }
 
                         val orderedSongs = when (orderMode) {
@@ -381,9 +382,11 @@ class PlaylistViewModel @Inject constructor(
         coverShapeDetail3: Float? = null,
         coverShapeDetail4: Float? = null,
         source: String = "LOCAL", // Mark source
-        smartRuleKey: String? = null
+        smartRuleKey: String? = null,
+        suppliedSongs: List<Song> = emptyList()
     ) {
         viewModelScope.launch {
+            try {
             var savedCoverPath: String? = null
 
             if (coverImageUri != null) {
@@ -412,6 +415,8 @@ class PlaylistViewModel @Inject constructor(
                 else -> source
             }
 
+            if (resolvedSongIds.isNotEmpty()) playlistSongResolver.resolve(resolvedSongIds, suppliedSongs, requireComplete = true)
+
             playlistPreferencesRepository.createPlaylist(
                 name = name,
                 songIds = resolvedSongIds,
@@ -428,6 +433,11 @@ class PlaylistViewModel @Inject constructor(
                 source = resolvedSource
             )
             _playlistCreationEvent.emit(true)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                _playlistCreationEvent.emit(false)
+                Toast.makeText(context, R.string.playlist_import_save_failed, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -616,7 +626,7 @@ class PlaylistViewModel @Inject constructor(
     fun exportM3u(playlist: Playlist, uri: Uri, context: android.content.Context) {
         viewModelScope.launch {
             try {
-                val songs = musicRepository.getSongsByIds(playlist.songIds).first()
+                val songs = playlistSongResolver.resolve(playlist.songIds)
                 val m3uContent = m3uManager.generateM3u(playlist, songs)
                 context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                     OutputStreamWriter(outputStream).use { writer ->
@@ -777,13 +787,17 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    fun addSongsToPlaylist(playlistId: String, songIdsToAdd: List<String>) {
+    fun addSongsToPlaylist(playlistId: String, songIdsToAdd: List<String>, suppliedSongs: List<Song> = emptyList()) {
         if (isFolderPlaylistId(playlistId)) return
         viewModelScope.launch {
+            try {
+            playlistSongResolver.resolve(songIdsToAdd, suppliedSongs, requireComplete = true)
             playlistPreferencesRepository.addSongsToPlaylist(playlistId, songIdsToAdd)
             if (_uiState.value.currentPlaylistDetails?.id == playlistId) {
                 loadPlaylistDetails(playlistId)
             }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { Toast.makeText(context, R.string.playlist_import_save_failed, Toast.LENGTH_LONG).show() }
         }
     }
 
@@ -793,22 +807,31 @@ class PlaylistViewModel @Inject constructor(
     fun addOrRemoveSongFromPlaylists(
         songId: String,
         playlistIds: List<String>,
-        currentPlaylistId: String?
+        currentPlaylistId: String?,
+        suppliedSongs: List<Song> = emptyList()
     ) {
         viewModelScope.launch {
+            try {
+            if (playlistIds.isNotEmpty()) playlistSongResolver.resolve(listOf(songId), suppliedSongs, requireComplete = true)
             val removedFromPlaylists =
                 playlistPreferencesRepository.addOrRemoveSongFromPlaylists(songId, playlistIds)
             if (currentPlaylistId != null && removedFromPlaylists.contains (currentPlaylistId)) {
                 removeSongFromPlaylist(currentPlaylistId, songId)
             }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { Toast.makeText(context, R.string.playlist_import_save_failed, Toast.LENGTH_LONG).show() }
         }
     }
 
-    fun addSongsToPlaylists(songIds: List<String>, playlistIds: List<String>) {
+    fun addSongsToPlaylists(songIds: List<String>, playlistIds: List<String>, suppliedSongs: List<Song> = emptyList()) {
         viewModelScope.launch {
+            try {
+            playlistSongResolver.resolve(songIds, suppliedSongs, requireComplete = true)
             playlistIds.forEach { playlistId ->
                 playlistPreferencesRepository.addSongsToPlaylist(playlistId, songIds)
             }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { Toast.makeText(context, R.string.playlist_import_save_failed, Toast.LENGTH_LONG).show() }
         }
     }
 
@@ -1101,7 +1124,7 @@ class PlaylistViewModel @Inject constructor(
         return try {
             val selectedPlaylists = _uiState.value.playlists.filter { it.id in playlistIds }
             selectedPlaylists.map { playlist ->
-                val songs = musicRepository.getSongsByIds(playlist.songIds).first()
+                val songs = playlistSongResolver.resolve(playlist.songIds)
                 playlist to songs
             }
         } catch (e: Exception) {
