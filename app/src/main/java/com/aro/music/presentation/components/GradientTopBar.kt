@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -107,6 +108,7 @@ fun HomeGradientTopBar(
     onMenuClick: () -> Unit = {},
     onBrandClick: () -> Unit = {},
     isScrolled: Boolean = false,
+    onEditHome: (() -> Unit)? = null,
 ) {
     val brandDescription = stringResource(R.string.beta_details_brand_description)
     val surfaceContainerHigh = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -150,6 +152,9 @@ fun HomeGradientTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(end = 14.dp)
             ) {
+                if (onEditHome != null) IconButton(onClick = onEditHome) {
+                    Icon(Icons.Rounded.Edit, stringResource(R.string.home_edit_title))
+                }
                 FilledIconButton(
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

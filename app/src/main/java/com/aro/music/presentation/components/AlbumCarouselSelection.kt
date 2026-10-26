@@ -176,7 +176,7 @@ fun AlbumCarouselSection(
                     OptimizedAlbumArt(
                         uri = com.aro.music.data.innertube.InnerTubeArtwork.forSong(song.albumArtUriString, song.contentUriString),
                         title = song.title,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().playerArtworkEndpoint(mini = false, enabled = isFocusedItem),
                         targetSize = targetSize,
                         placeholderModel = if (song.albumArtUriString?.startsWith("telegram_art") == true) {
                              "${song.albumArtUriString}?quality=thumb"

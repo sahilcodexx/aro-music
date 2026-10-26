@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,9 +44,15 @@ class HomeFeedViewModel @Inject constructor(
     private val repository: InnerTubeRepository,
     private val musicDao: MusicDao,
     private val musicRepository: com.aro.music.data.repository.MusicRepository,
+    private val homeLayoutPreferences: com.aro.music.data.preferences.HomeLayoutPreferences,
     private val statsRepository: com.aro.music.data.stats.PlaybackStatsRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) : ViewModel() {
+    val homeLayout = homeLayoutPreferences.layout.stateIn(viewModelScope,
+        kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), com.aro.music.data.preferences.HomeLayout())
+    fun saveHomeLayout(layout: com.aro.music.data.preferences.HomeLayout) {
+        viewModelScope.launch { homeLayoutPreferences.save(layout) }
+    }
     private val _state = MutableStateFlow(HomeFeedState())
     val state = _state.asStateFlow()
     private var job: Job? = null

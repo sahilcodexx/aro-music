@@ -61,7 +61,7 @@ class HomeFeedViewModelTest {
         withTimeout(10_000) { model.state.first { it.sections.isNotEmpty() && !it.isLoading } }
     }
 
-    private fun model() = HomeFeedViewModel(catalog, mockk<MusicDao>(relaxed = true), music, stats, context).also {
+    private fun model() = HomeFeedViewModel(catalog, mockk<MusicDao>(relaxed = true), music, mockk<com.aro.music.data.preferences.HomeLayoutPreferences> { every { layout } returns flowOf(com.aro.music.data.preferences.HomeLayout()) }, stats, context).also {
         store.put("home", it)
     }
 

@@ -68,6 +68,13 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
     onQueueRelease: (Float, Float) -> Unit,
     onShowCastClicked: () -> Unit
 ) {
+    val artworkQuality by playerViewModel.albumArtQuality.collectAsStateWithLifecycle()
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val artworkMotion = androidx.compose.runtime.remember(currentSong?.id, configuration.screenWidthDp, configuration.screenHeightDp) {
+        PlayerArtworkMotion { playerContentExpansionFraction.value }
+    }
+    val useArtworkMotion = !fullPlayerLoadingTweaks.delayAll && !fullPlayerLoadingTweaks.delayAlbumCarousel
+    CompositionLocalProvider(LocalPlayerArtworkMotion provides if (useArtworkMotion) artworkMotion else null) {
     currentSong?.let { currentSongNonNull ->
         miniPlayerScheme?.let { readyScheme ->
             CompositionLocalProvider(
@@ -237,6 +244,11 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
             }
         }
     }
+    if (useArtworkMotion) PlayerArtworkMotionOverlay(artworkMotion, currentSong?.let {
+        com.aro.music.data.innertube.InnerTubeArtwork.forSong(it.albumArtUriString, it.contentUriString)
+    }, targetSize = if (artworkQuality.maxSize == 0) SafeOriginalAlbumArtSize else coil.size.Size(artworkQuality.maxSize, artworkQuality.maxSize))
+    }
+
 }
 
 @OptIn(UnstableApi::class)

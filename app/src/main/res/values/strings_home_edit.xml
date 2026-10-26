@@ -1,0 +1,12 @@
+<resources>
+    <string name="home_edit_title" translatable="false">Edit Home</string>
+    <string name="home_edit_hint" translatable="false">Drag sections to reorder. Choose which sections appear.</string>
+    <string name="home_edit_reset" translatable="false">Reset layout</string>
+    <string name="home_edit_save" translatable="false">Save layout</string>
+    <string name="home_edit_recent" translatable="false">Recently played</string>
+    <string name="home_edit_daily_mix" translatable="false">Daily Mix</string>
+    <string name="home_edit_your_mix" translatable="false">Your Mix</string>
+    <string name="home_edit_discover" translatable="false">Discover</string>
+    <string name="home_edit_move_up" translatable="false">Move up</string>
+    <string name="home_edit_move_down" translatable="false">Move down</string>
+</resources>

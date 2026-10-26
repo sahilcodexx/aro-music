@@ -1,5 +1,6 @@
 package com.aro.music.data.innertube
 
+import com.aro.music.data.preferences.dataStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.aro.music.data.service.tile.LastPlaylistTileService
@@ -90,7 +91,7 @@ class RemoteCatalogDetailTest {
                     entry.musicRepository().cacheCatalogSongs(listOf(seed))
                     stats.recordPlayback(seed.id, 30_000)
                     instrumentation.runOnMainSync {
-                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), stats, isolatedContext)
+                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), com.aro.music.data.preferences.HomeLayoutPreferences(isolatedContext.dataStore), stats, isolatedContext)
                         store.put("home", model)
                         model.onSongPlayed(seed)
                     }
@@ -107,7 +108,7 @@ class RemoteCatalogDetailTest {
                         model.state.value.personalSections.first { it.title == "Recommended for you" })
                     instrumentation.runOnMainSync {
                         store.clear()
-                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), stats, isolatedContext)
+                        model = com.aro.music.presentation.viewmodel.HomeFeedViewModel(repository, memory.musicDao(), entry.musicRepository(), com.aro.music.data.preferences.HomeLayoutPreferences(isolatedContext.dataStore), stats, isolatedContext)
                         store.put("home", model)
                         model.onSongPlayed(nextSong)
                     }

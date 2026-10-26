@@ -84,6 +84,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aro.music.R
+import com.aro.music.data.preferences.HomeSection
 import com.aro.music.data.innertube.HomeCatalogItem
 import com.aro.music.presentation.components.HomeSongShelfPlaceholder
 import com.aro.music.presentation.components.HomeCatalogShelf
@@ -140,6 +141,11 @@ fun HomeScreen(
 ) {
     val homeFeedViewModel: HomeFeedViewModel = hiltViewModel()
     val homeFeed by homeFeedViewModel.state.collectAsStateWithLifecycle()
+    val homeLayout by homeFeedViewModel.homeLayout.collectAsStateWithLifecycle()
+    var showHomeEditor by remember { mutableStateOf(false) }
+    if (showHomeEditor) com.aro.music.presentation.components.EditHomeSheet(homeLayout,
+        onDismiss = { showHomeEditor = false },
+        onSave = { homeFeedViewModel.saveHomeLayout(it); showHomeEditor = false })
     val context = LocalContext.current
     // DETECTAR MODO BENCHMARK
     val isBenchmarkMode = remember {
@@ -336,6 +342,7 @@ fun HomeScreen(
                         // onOpenSidebar() // Disabled
                     },
                     onBrandClick = { showBetaDetails = true },
+                    onEditHome = { showHomeEditor = true },
                     isScrolled = isScrolledPastThreshold.value
                 )
             }
@@ -357,7 +364,12 @@ fun HomeScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    listOf("Recently played", context.getString(R.string.home_speed_dial)).forEachIndexed { index, title ->
+                    homeLayout.order.filterNot { it in homeLayout.hidden }.forEach { homeSection ->
+                        when (homeSection) {
+                    HomeSection.RECENT,
+                    HomeSection.SPEED_DIAL -> {
+                        val index = if (homeSection == HomeSection.RECENT) 0 else 1
+                        val title = if (index == 0) "Recently played" else context.getString(R.string.home_speed_dial)
                         item(key = if (index == 0) "home_recent" else "home_speed_dial", contentType = "personal_shelf") {
                             val section = homeFeed.personalSections.firstOrNull { it.title == title }
                             if (!homeFeed.personalReady || section == null) {
@@ -376,6 +388,7 @@ fun HomeScreen(
                             }
                         }
                     }
+                    HomeSection.DAILY_MIX -> {
                     // Daily Mix
                     if (dailyMixSongs.isNotEmpty()) {
                         item(
@@ -409,6 +422,8 @@ fun HomeScreen(
                         }
                     }
 
+                    }
+                    HomeSection.YOUR_MIX -> {
                     if (yourMixSongs.isEmpty()) {
                         item(
                             key = "your_mix_placeholder",
@@ -462,6 +477,8 @@ fun HomeScreen(
                         }
                     }
 
+                    }
+                    HomeSection.DISCOVER -> {
                     homeFeed.sections.distinctBy { it.title }
                         .filterNot { listeningMixSongs.isNotEmpty() && it.title == context.getString(R.string.home_listening_recommendations) }.forEach { section ->
                         item(key = "catalog:${section.title}", contentType = "catalog_shelf") {
@@ -506,6 +523,9 @@ fun HomeScreen(
                         }
                     }
 
+                    }
+                    HomeSection.STATS -> {
+
                     if (homeStatsOverview != null) {
                         item(
                             key = "listening_stats_preview",
@@ -515,6 +535,9 @@ fun HomeScreen(
                                 summary = homeStatsOverview,
                                 onClick = { navController.navigateSafely(Screen.Stats.route) }
                             )
+                        }
+                    }
+                    }
                         }
                     }
                 }
